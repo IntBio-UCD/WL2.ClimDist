@@ -1,0 +1,144 @@
+---
+title: "Climate_corrs_pcas"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code for Figures 1 and S1; Table S2 and S3 
+
+## Load libraries
+```{r}
+library(tidyverse)
+library(ggrepel) #for repelling labels 
+library(corrplot) #plotting correlations 
+
+#making topo maps:
+library(elevatr)
+library(terra)
+library(sf)
+library(giscoR)
+library(marmap)
+```
+
+## Load Climate Data
+```{r}
+all_clim <- read_csv("../Processed.Data/Climate/All_Clim.csv")
+```
+
+## Map of populations (Figure 1a)
+```{r}
+pops_garden_locs <- all_clim %>% 
+  mutate_at(c("Lat", "Long"), as.double) %>% 
+  select(parent.pop:Long) %>% 
+  distinct()
+states <- map_data("state") %>% filter(region == "california")
+
+ggplot() +
+  geom_polygon(data = states, aes(x = long, y = lat, group = group), fill = "gray") +
+  coord_quickmap(xlim = c(-125, -114), ylim = c(35.8, 41))+
+  geom_point(data = pops_garden_locs,
+             aes(x = Long, y = Lat, color=elev_m),
+             size = 3) +
+  geom_label_repel(data = pops_garden_locs,
+         aes(x = Long, y = Lat,
+             label = `parent.pop`),
+         min.segment.length = 0,
+         max.overlaps = 100,
+         #force = 3,
+         box.padding = 0.4,
+         label.padding = 0.15,
+         label.size = 0.1,
+         size = 3) +
+  labs(color="Elevation (m)") +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  theme_void()
+ggsave("../Figures/Pop_Map_Figure1a.png", width = 10, height = 10, units = "in")
+```
+
+## Climate variable correlations (Figure S1)
+
+### Calculate 30 year climate averages 
+```{r}
+all_clim_avgs <- all_clim %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, 
+           timeframe, Season) %>% 
+  summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx",
+                 "ann_tmean", "mean_diurnal_range", "temp_seasonality", "temp_ann_range",
+                 "tmean_wettest_month", "tmean_driest_month", "ann_ppt",
+                 "ppt_seasonality","ppt_warmest_month", "ppt_coldest_month"), 
+               c(mean), na.rm = TRUE)
+```
+
+### Recent Corrs - Water Year
+```{r}
+recent_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(timeframe=="recent", Season=="Water Year") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_recent_wtr_yr = cor(recent_wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_recent_wtr_yr <- cor.mtest(recent_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+
+corrplot(cor.norm_recent_wtr_yr, type="upper",
+         tl.srt = 45, p.mat = cor.sig_recent_wtr_yr$p, 
+         sig.level = 0.05, insig="blank")
+```
+
+### Historical Corrs - Water year
+```{r}
+historic_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(timeframe=="historic", Season=="Water Year") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_historic_wtr_yr = cor(historic_wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_historic_wtr_yr <- cor.mtest(historic_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+
+corrplot(cor.norm_historic_wtr_yr, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic_wtr_yr$p, 
+         sig.level = 0.05, insig="blank")
+```
+
+### Recent Corrs - Growth Season
+```{r}
+recent_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(timeframe=="recent", Season=="Growth Season") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_recent_wtr_yr = cor(recent_wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_recent_wtr_yr <- cor.mtest(recent_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+
+corrplot(cor.norm_recent_wtr_yr, type="upper",
+         tl.srt = 45, p.mat = cor.sig_recent_wtr_yr$p, 
+         sig.level = 0.05, insig="blank")
+```
+
+### Historical Corrs - Growth Season
+```{r}
+historic_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(timeframe=="historic", Season=="Growth Season") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_historic_wtr_yr = cor(historic_wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_historic_wtr_yr <- cor.mtest(historic_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+
+corrplot(cor.norm_historic_wtr_yr, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic_wtr_yr$p, 
+         sig.level = 0.05, insig="blank")
+```
+
+## Climate Change PCAs (Figure 1b-c; Table S2, S3)
+
+
+## WL2 Yearly Variation PCAs (Figure S2)
