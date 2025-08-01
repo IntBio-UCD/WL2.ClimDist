@@ -212,6 +212,8 @@ PC_anova_wtr_yr <- lmer_results_wtr_year %>% select(-data, -glm) %>% unnest(anov
   filter(p.value < 0.05) %>%
   arrange(term, p.value)
 PC_anova_wtr_yr #PC2 and PC4 most sig, PC1 and PC7 also have sig timeframe effects 
+
+lmer_results_wtr_year %>% select(-data, -glm) %>% unnest(anova) %>% filter(PC=="PC1" | PC=="PC2" |PC=="PC3" | PC=="PC4") 
 ```
 
 #### Plot climate change PCA
@@ -406,6 +408,8 @@ PC_anova_grwssn <- lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova)
 PC_anova_grwssn #PC2 and PC4 most sig, PC7 also has sig timeframe effects 
 #PC2 also has a significant timeframe*elev_m effect
 #PC9 has sig timeframe*lat and timeframe*elev*lat effects 
+
+lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>% filter(PC=="PC1" | PC=="PC2" |PC=="PC3" | PC=="PC4") 
 ```
 
 #### Plot climate change PCA
