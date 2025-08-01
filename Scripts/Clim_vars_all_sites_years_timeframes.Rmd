@@ -169,7 +169,8 @@ flint_all_year_wtr_yr <- flint_all_year_mosnums %>%
                                 wtr_yr >= 1964 & wtr_yr < 1994 ~ "historic",
                                 wtr_yr >= 1994 & wtr_yr < 2024 ~ "recent")) %>%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %>%
-                         filter(wtr_yr != 1895, wtr_yr < 2024) %>% #remove years with less than 12 months of data 
+                         filter(wtr_yr != 1895) %>% #remove years with less than 12 months of data 
+                        filter(if_else(parent.pop!="WL2_Garden", wtr_yr<2024, wtr_yr<=2024)) %>% #only keep the WL2 garden climate for 2024 water year 
                          mutate(months_wtryr = case_when(
                            month == "nov" ~ 1,
                            month == "dec" ~ 2,
@@ -750,6 +751,7 @@ bioclim_60_grwseason <- full_join(bioclim_60_calc, all_periods_60)
 
 #summarize flint by year to merge it with the bioclim data
 flint_yrly_avgs_wtr_yr <- flint_all_year_wtr_yr %>% 
+  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim 
   filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
   rename(year=wtr_yr, year_cal=year) %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %>% 
@@ -761,6 +763,7 @@ flint_yrly_avgs_grwssn <- flint_60_grwseason %>%
 
 #subset bioclim water year
 bioclim_wtryr_to_merge <- bioclim_wtryr %>% 
+  mutate(timeframe=if_else(parent.pop=="WL2_Garden", "2024", timeframe)) %>% #keep WL2 2024 clim 
   filter(timeframe!="beforehistoric", parent.pop!="UCD_Garden") %>% 
   rename(year=wtr_yr) 
 

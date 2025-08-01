@@ -555,7 +555,8 @@ flint_all_year_wtr_yr &lt;- flint_all_year_mosnums %&gt;%
                                 wtr_yr &gt;= 1964 &amp; wtr_yr &lt; 1994 ~ &quot;historic&quot;,
                                 wtr_yr &gt;= 1994 &amp; wtr_yr &lt; 2024 ~ &quot;recent&quot;)) %&gt;%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %&gt;%
-                         filter(wtr_yr != 1895, wtr_yr &lt; 2024) %&gt;% #remove years with less than 12 months of data 
+                         filter(wtr_yr != 1895) %&gt;% #remove years with less than 12 months of data 
+                        filter(if_else(parent.pop!=&quot;WL2_Garden&quot;, wtr_yr&lt;2024, wtr_yr&lt;=2024)) %&gt;% #only keep the WL2 garden climate for 2024 water year 
                          mutate(months_wtryr = case_when(
                            month == &quot;nov&quot; ~ 1,
                            month == &quot;dec&quot; ~ 2,
@@ -572,35 +573,35 @@ flint_all_year_wtr_yr &lt;- flint_all_year_mosnums %&gt;%
   select(parent.pop:month, timeframe, wtr_yr, months_wtryr, aet:tmx)  #organize the columns 
 summary(flint_all_year_wtr_yr)</code></pre>
 <pre><code>##   parent.pop        elevation.group        elev_m           Lat           
-##  Length:38400       Length:38400       Min.   :  16.0   Length:38400      
+##  Length:38412       Length:38412       Min.   :  16.0   Length:38412      
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1934.5   Mode  :character  
-##                                        Mean   :1599.2                     
+##                                        Mean   :1599.3                     
 ##                                        3rd Qu.:2353.6                     
 ##                                        Max.   :2872.3                     
 ##                                                                           
 ##      Long                year          month                timeframe    
-##  Length:38400       Min.   :1895   apr    : 3200   beforehistoric:20400  
-##  Class :character   1st Qu.:1927   aug    : 3200   historic      : 9000  
-##  Mode  :character   Median :1959   dec    : 3200   recent        : 9000  
-##                     Mean   :1959   feb    : 3200                         
-##                     3rd Qu.:1991   jan    : 3200                         
-##                     Max.   :2023   jul    : 3200                         
-##                                    (Other):19200                         
+##  Length:38412       Min.   :1895   apr    : 3201   beforehistoric:20400  
+##  Class :character   1st Qu.:1927   aug    : 3201   historic      : 9000  
+##  Mode  :character   Median :1959   dec    : 3201   recent        : 9000  
+##                     Mean   :1959   feb    : 3201   NA&#39;s          :   12  
+##                     3rd Qu.:1991   jan    : 3201                         
+##                     Max.   :2024   jul    : 3201                         
+##                                    (Other):19206                         
 ##      wtr_yr      months_wtryr        aet              cwd        
 ##  Min.   :1896   Min.   : 1.00   Min.   :  0.00   Min.   :  0.00  
 ##  1st Qu.:1928   1st Qu.: 3.75   1st Qu.:  5.10   1st Qu.: 25.07  
 ##  Median :1960   Median : 6.50   Median : 19.61   Median : 46.70  
-##  Mean   :1960   Mean   : 6.50   Mean   : 33.10   Mean   : 55.27  
-##  3rd Qu.:1991   3rd Qu.: 9.25   3rd Qu.: 53.75   3rd Qu.: 80.57  
-##  Max.   :2023   Max.   :12.00   Max.   :208.40   Max.   :213.40  
+##  Mean   :1960   Mean   : 6.50   Mean   : 33.11   Mean   : 55.27  
+##  3rd Qu.:1992   3rd Qu.: 9.25   3rd Qu.: 53.75   3rd Qu.: 80.57  
+##  Max.   :2024   Max.   :12.00   Max.   :208.40   Max.   :213.40  
 ##                                                                  
 ##       pck              pet              ppt               tmn         
 ##  Min.   :   0.0   Min.   :  7.80   Min.   :   0.00   Min.   :-20.210  
 ##  1st Qu.:   0.0   1st Qu.: 35.60   1st Qu.:   8.83   1st Qu.: -2.730  
 ##  Median :   0.0   Median : 81.00   Median :  49.87   Median :  2.530  
-##  Mean   : 143.4   Mean   : 88.38   Mean   :  97.49   Mean   :  2.538  
-##  3rd Qu.: 119.0   3rd Qu.:134.60   3rd Qu.: 137.85   3rd Qu.:  7.570  
+##  Mean   : 143.4   Mean   : 88.38   Mean   :  97.49   Mean   :  2.539  
+##  3rd Qu.: 119.1   3rd Qu.:134.60   3rd Qu.: 137.87   3rd Qu.:  7.570  
 ##  Max.   :2598.1   Max.   :214.20   Max.   :1244.49   Max.   : 21.350  
 ##                                                                       
 ##       tmx       
@@ -681,32 +682,32 @@ bioclim_wtryr &lt;- full_join(bioclim_wtr_yr_calc, all_periods_wtryr)</code></pr
 ## wtr_yr)`</code></pre>
 <pre class="r"><code>summary(bioclim_wtryr)</code></pre>
 <pre><code>##   parent.pop        elevation.group        elev_m                timeframe   
-##  Length:3200        Length:3200        Min.   :  16.0   beforehistoric:1700  
+##  Length:3201        Length:3201        Min.   :  16.0   beforehistoric:1700  
 ##  Class :character   Class :character   1st Qu.: 748.9   historic      : 750  
 ##  Mode  :character   Mode  :character   Median :1934.5   recent        : 750  
-##                                        Mean   :1599.2                        
+##                                        Mean   :1599.3   NA&#39;s          :   1  
 ##                                        3rd Qu.:2353.6                        
 ##                                        Max.   :2872.3                        
 ##      wtr_yr       ann_tmean       mean_diurnal_range temp_seasonality
 ##  Min.   :1896   Min.   : 0.5342   Min.   : 9.548     Min.   :5.059   
-##  1st Qu.:1928   1st Qu.: 5.5171   1st Qu.:12.781     1st Qu.:6.192   
-##  Median :1960   Median : 8.5569   Median :13.692     Median :6.619   
-##  Mean   :1960   Mean   : 9.3923   Mean   :13.708     Mean   :6.610   
-##  3rd Qu.:1991   3rd Qu.:13.8173   3rd Qu.:14.534     3rd Qu.:6.987   
-##  Max.   :2023   Max.   :18.0538   Max.   :18.652     Max.   :8.346   
+##  1st Qu.:1928   1st Qu.: 5.5175   1st Qu.:12.781     1st Qu.:6.192   
+##  Median :1960   Median : 8.5587   Median :13.691     Median :6.619   
+##  Mean   :1960   Mean   : 9.3921   Mean   :13.706     Mean   :6.610   
+##  3rd Qu.:1992   3rd Qu.:13.8158   3rd Qu.:14.533     3rd Qu.:6.988   
+##  Max.   :2024   Max.   :18.0538   Max.   :18.652     Max.   :8.346   
 ##  temp_ann_range     ann_ppt       ppt_seasonality  tmean_wettest_month
 ##  Min.   :25.91   Min.   : 145.6   Min.   : 58.96   Min.   :-10.330    
-##  1st Qu.:31.14   1st Qu.: 807.7   1st Qu.:100.07   1st Qu.: -1.261    
-##  Median :32.55   Median :1090.1   Median :114.12   Median :  2.020    
+##  1st Qu.:31.14   1st Qu.: 807.8   1st Qu.:100.08   1st Qu.: -1.260    
+##  Median :32.55   Median :1090.4   Median :114.11   Median :  2.010    
 ##  Mean   :32.72   Mean   :1169.9   Mean   :115.38   Mean   :  2.602    
-##  3rd Qu.:34.08   3rd Qu.:1463.5   3rd Qu.:128.00   3rd Qu.:  6.659    
+##  3rd Qu.:34.08   3rd Qu.:1463.2   3rd Qu.:128.00   3rd Qu.:  6.655    
 ##  Max.   :42.90   Max.   :3545.7   Max.   :226.46   Max.   : 17.080    
 ##  tmean_driest_month ppt_warmest_month ppt_coldest_month
 ##  Min.   :-4.845     Min.   : 0.000    Min.   :  0.01   
-##  1st Qu.:13.409     1st Qu.: 0.000    1st Qu.:100.17   
-##  Median :17.073     Median : 0.895    Median :182.01   
-##  Mean   :17.400     Mean   : 6.246    Mean   :217.84   
-##  3rd Qu.:22.370     3rd Qu.: 7.713    3rd Qu.:303.11   
+##  1st Qu.:13.410     1st Qu.: 0.000    1st Qu.:100.20   
+##  Median :17.070     Median : 0.900    Median :182.05   
+##  Mean   :17.399     Mean   : 6.246    Mean   :217.84   
+##  3rd Qu.:22.370     3rd Qu.: 7.710    3rd Qu.:303.06   
 ##  Max.   :29.065     Max.   :88.960    Max.   :951.79</code></pre>
 <p>Note: bioclim_wtryr includes the 2 common garden sites</p>
 </div>
@@ -1702,6 +1703,7 @@ bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pr
 
 #summarize flint by year to merge it with the bioclim data
 flint_yrly_avgs_wtr_yr &lt;- flint_all_year_wtr_yr %&gt;% 
+  mutate(timeframe=if_else(parent.pop==&quot;WL2_Garden&quot;, &quot;2024&quot;, timeframe)) %&gt;% #keep WL2 2024 clim 
   filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
   rename(year=wtr_yr, year_cal=year) %&gt;% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
@@ -1713,6 +1715,7 @@ flint_yrly_avgs_grwssn &lt;- flint_60_grwseason %&gt;%
 
 #subset bioclim water year
 bioclim_wtryr_to_merge &lt;- bioclim_wtryr %&gt;% 
+  mutate(timeframe=if_else(parent.pop==&quot;WL2_Garden&quot;, &quot;2024&quot;, timeframe)) %&gt;% #keep WL2 2024 clim 
   filter(timeframe!=&quot;beforehistoric&quot;, parent.pop!=&quot;UCD_Garden&quot;) %&gt;% 
   rename(year=wtr_yr) 
 
