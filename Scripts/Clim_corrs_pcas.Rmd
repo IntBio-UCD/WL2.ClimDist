@@ -281,7 +281,68 @@ wtr_yr_avgs_locs.pc_avg %>%
   geom_text_repel(aes(label = parent.pop)) +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+#wtr_yr_avgs_locs.pc_avg %>% filter(parent.pop=="WL2")
+#wtr_yr_avgs_loadings
 ```
+
+```{r}
+#PC1 = positive PPT and PCK, negative ANN_TMEAN
+#PC2 = positive ppt_seasonality and ppt_coldest month, negative temp_ann_range
+#PC4 = positive CWD and temp_seasonality and negative ann_tmean
+home_sites_pca <- wtr_yr_avgs_locs.pc_avg %>%  
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(x="PC1 (50.25%)", y="PC2 (18.25%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  annotate("text", x = 1.3, y= 1.16, label = "WL2", colour = "purple", size=7) +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4.5, y = -5.4, label = "Warm \n No Snow", size=6) +
+  annotate("text", x = 4.5, y = -5.4, label = "Cold \n Snow", size=6) +
+  annotate("text", x = -6.2, y = -3, label = "Low PPT \n Seasonality", size=6) +
+  annotate("text", x = -6.2, y = 3, label = "High PPT \n Seasonality", size=6) +
+  coord_cartesian(ylim = c(-4, 4), xlim = c(-5,5), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+
+## add WL2 garden 2023 and 2024
+WL2GRDN_wtryr_pc_prep_2023 <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2023, Season=="Water Year") %>% 
+  select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, ppt_coldest_month) 
+WL2GRDN_wtryr_predicted_2023 <- predict(wtr_yr_avgs.pc, newdata = WL2GRDN_wtryr_pc_prep_2023)
+
+WL2GRDN_wtryr_pc_prep_2024 <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Water Year") %>% #need 2024 water year data for WL2 garden 
+  select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, ppt_coldest_month) 
+WL2GRDN_wtryr_2024_predicted <- predict(wtr_yr_avgs.pc, newdata = WL2GRDN_wtryr_pc_prep_2024)
+
+home_sites_pca$data <- rbind(home_sites_pca$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    timeframe = c("2023", "2024"),
+    PC1 = c(WL2GRDN_wtryr_predicted_2023[, "PC1"], WL2GRDN_wtryr_2024_predicted[, "PC1"]),
+    PC2 = c(WL2GRDN_wtryr_predicted_2023[, "PC2"], WL2GRDN_wtryr_2024_predicted[, "PC2"]),
+    PC3 = c(WL2GRDN_wtryr_predicted_2023[, "PC3"], WL2GRDN_wtryr_2024_predicted[, "PC3"]),
+    PC4 = c(WL2GRDN_wtryr_predicted_2023[, "PC4"], WL2GRDN_wtryr_2024_predicted[, "PC4"]),
+    PC5 = c(WL2GRDN_wtryr_predicted_2023[, "PC5"], WL2GRDN_wtryr_2024_predicted[, "PC5"]),
+    PC6 = c(WL2GRDN_wtryr_predicted_2023[, "PC6"], WL2GRDN_wtryr_2024_predicted[, "PC6"]),
+    PC7 = c(WL2GRDN_wtryr_predicted_2023[, "PC7"], WL2GRDN_wtryr_2024_predicted[, "PC7"]),
+    PC8 = c(WL2GRDN_wtryr_predicted_2023[, "PC8"], WL2GRDN_wtryr_2024_predicted[, "PC8"]),
+    group = c("new", "new2")
+  )
+)
+
+home_sites_pca + 
+  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
+  annotate("text", x = 4.49, y= 2.7, label = "WL2 \n Garden \n 2023", colour = "purple", size=6) +
+  annotate("text", x = -0.71, y= 1.9, label = "WL2 \n Garden \n 2024", colour = "purple", size=6) 
+ggsave("../Figures/Wtr_Year_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
+```
+
 
 ### Growth Season PCA
 ```{r}
