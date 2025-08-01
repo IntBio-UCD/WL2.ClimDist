@@ -290,7 +290,7 @@ wtr_yr_avgs_locs.pc_avg %>%
 #PC1 = positive PPT and PCK, negative ANN_TMEAN
 #PC2 = positive ppt_seasonality and ppt_coldest month, negative temp_ann_range
 #PC4 = positive CWD and temp_seasonality and negative ann_tmean
-home_sites_pca <- wtr_yr_avgs_locs.pc_avg %>%  
+home_sites_pca_wtryr <- wtr_yr_avgs_locs.pc_avg %>%  
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
@@ -319,7 +319,7 @@ WL2GRDN_wtryr_pc_prep_2024 <- all_clim %>%
   select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, ppt_coldest_month) 
 WL2GRDN_wtryr_2024_predicted <- predict(wtr_yr_avgs.pc, newdata = WL2GRDN_wtryr_pc_prep_2024)
 
-home_sites_pca$data <- rbind(home_sites_pca$data, 
+home_sites_pca_wtryr$data <- rbind(home_sites_pca_wtryr$data, 
   data.frame(
     parent.pop = "WL2_Garden",
     elev_m = 2020,
@@ -336,8 +336,8 @@ home_sites_pca$data <- rbind(home_sites_pca$data,
   )
 )
 
-home_sites_pca + 
-  geom_point(data=filter(home_sites_pca$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
+home_sites_pca_wtryr + 
+  geom_point(data=filter(home_sites_pca_wtryr$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
   annotate("text", x = 4.49, y= 2.7, label = "WL2 \n Garden \n 2023", colour = "purple", size=6) +
   annotate("text", x = -0.71, y= 1.9, label = "WL2 \n Garden \n 2024", colour = "purple", size=6) 
 ggsave("../Figures/Wtr_Year_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
@@ -356,8 +356,168 @@ cor.norm_grwssn = cor(grwssn_avgs_normalized) #test correlations among the trait
 cor.sig_grwssn <- cor.mtest(grwssn_avgs_normalized, method = "pearson") #get pearson's test p-values 
 cor.norm_grwssn
 cor.sig_grwssn$p
-
 #tmn, tmx, tmean_driest_month and ann_tmean all highly correlated (90-98%) - only keep ann_tmean 
+#ppt_warmest_month highly neg corr with tmn, ann_tmean - take it out 
+
+grwssn_avgs <- all_clim_avgs %>% 
+  filter(Season=="Growth Season") %>% 
+  ungroup()
+grwssn_avgs.pc = prcomp(grwssn_avgs[c(8:10, 13:17, 19:20, 22)], scale = TRUE, center = TRUE)
+summary(grwssn_avgs.pc)
+tibble(PC=str_c("PC",str_pad(1:11,2,pad="0")),
+       percent_var=grwssn_avgs.pc$sdev[1:11]^2/sum(grwssn_avgs.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+grwssn_avgs.pc.dat = data.frame(grwssn_avgs.pc$x)
+grwssn_avgs_locs.pc = cbind(grwssn_avgs, grwssn_avgs.pc.dat)
+grwssn_avgs_loadings = data.frame(varnames=rownames(grwssn_avgs.pc$rotation), grwssn_avgs.pc$rotation)
+grwssn_avgs_loadings
+```
+
+#### Permanova 
+```{r}
+grwssn_avgs_locs.pc_dist <- grwssn_avgs_locs.pc %>% ungroup() %>% select(PC1:PC11)
+dist_matrix_grwssn <- dist(grwssn_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_grwssn <- adonis2(dist_matrix_grwssn ~ timeframe*elev_m*Lat, data = grwssn_avgs_locs.pc) #use adonis2 to run the permanova
+permanova_results_grwssn #look at output 
+#get stats per term in the model:
+permanova_results_grwssn_terms <- adonis2(dist_matrix_grwssn ~ timeframe*elev_m*Lat, data = grwssn_avgs_locs.pc, by = "terms")
+permanova_results_grwssn_terms
+
+#LM on PCs (follow up on permanova)
+lmer_results_grwssn <- grwssn_avgs_locs.pc %>%
+  ungroup() %>% 
+  select(timeframe, parent.pop, elev_m, Lat, Long, PC1:PC11) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(timeframe, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ timeframe*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+PC_anova_grwssn <- lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+PC_anova_grwssn #PC2 and PC4 most sig, PC7 also has sig timeframe effects 
+#PC2 also has a significant timeframe*elev_m effect
+#PC9 has sig timeframe*lat and timeframe*elev*lat effects 
+```
+
+#### Plot climate change PCA
+```{r}
+#prep the pc for making a plot with arrows distinguishing recent vs. historical time 
+grwssn_avgs_locs.pc_avg <- grwssn_avgs_locs.pc %>%
+  group_by(parent.pop, elev_m, timeframe) %>%
+  summarise(across(.cols=starts_with("PC", ignore.case = FALSE), .fns = mean)) %>%
+  ungroup()
+
+autoplot(grwssn_avgs.pc, data = grwssn_avgs,
+         x=1, y=2,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+autoplot(grwssn_avgs.pc, data = grwssn_avgs,
+         x=2, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+grwssn_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+grwssn_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+#grwssn_avgs_locs.pc_avg %>% filter(parent.pop=="WL2")
+#grwssn_avgs_loadings
+```
+
+```{r}
+#PC1 = neg ann_tmean, tmean_wettest_month, ann_ppt
+#PC2 = positive temp_seasonality and temp_ann_range, negative ppt
+#PC4 = negative mean_diurnal_range
+home_sites_pca_grwssn <- grwssn_avgs_locs.pc_avg %>%  
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(x="PC1 (38.76%)", y="PC2 (26.73%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  annotate("text", x = 0.73, y= -0.15, label = "WL2", colour = "purple", size=7) +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8) +
+  annotate("text", x = -4, y = -5.2, label = "Warm \n Wet", size=6) +
+  annotate("text", x = 3.5, y = -5.2, label = "Cold \n Dry", size=6) +
+  annotate("text", x = -5.4, y = -3, label = "Low Temp \n Seasonality", size=6) +
+  annotate("text", x = -5.4, y = 2.7, label = "High Temp \n Seasonality", size=6) +
+  coord_cartesian(ylim = c(-4, 3), xlim = c(-4.5,4), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+
+## add WL2 garden 2023 and 2024
+WL2GRDN_grwssn_pc_prep_2023 <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2023, Season=="Growth Season") %>% 
+  select(cwd:ppt, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_range, tmean_wettest_month, ann_ppt, ppt_seasonality, ppt_coldest_month) 
+WL2GRDN_grwssn_predicted_2023 <- predict(grwssn_avgs.pc, newdata = WL2GRDN_grwssn_pc_prep_2023)
+
+WL2GRDN_grwssn_pc_prep_2024 <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Growth Season") %>% #need 2024 Growth Season data for WL2 garden 
+  select(cwd:ppt, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_range, tmean_wettest_month, ann_ppt, ppt_seasonality, ppt_coldest_month) 
+WL2GRDN_grwssn_2024_predicted <- predict(grwssn_avgs.pc, newdata = WL2GRDN_grwssn_pc_prep_2024)
+
+home_sites_pca_grwssn$data <- rbind(home_sites_pca_grwssn$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    timeframe = c("2023", "2024"),
+    PC1 = c(WL2GRDN_grwssn_predicted_2023[, "PC1"], WL2GRDN_grwssn_2024_predicted[, "PC1"]),
+    PC2 = c(WL2GRDN_grwssn_predicted_2023[, "PC2"], WL2GRDN_grwssn_2024_predicted[, "PC2"]),
+    PC3 = c(WL2GRDN_grwssn_predicted_2023[, "PC3"], WL2GRDN_grwssn_2024_predicted[, "PC3"]),
+    PC4 = c(WL2GRDN_grwssn_predicted_2023[, "PC4"], WL2GRDN_grwssn_2024_predicted[, "PC4"]),
+    PC5 = c(WL2GRDN_grwssn_predicted_2023[, "PC5"], WL2GRDN_grwssn_2024_predicted[, "PC5"]),
+    PC6 = c(WL2GRDN_grwssn_predicted_2023[, "PC6"], WL2GRDN_grwssn_2024_predicted[, "PC6"]),
+    PC7 = c(WL2GRDN_grwssn_predicted_2023[, "PC7"], WL2GRDN_grwssn_2024_predicted[, "PC7"]),
+    PC8 = c(WL2GRDN_grwssn_predicted_2023[, "PC8"], WL2GRDN_grwssn_2024_predicted[, "PC8"]),
+    PC9 = c(WL2GRDN_grwssn_predicted_2023[, "PC9"], WL2GRDN_grwssn_2024_predicted[, "PC9"]),
+    PC10 = c(WL2GRDN_grwssn_predicted_2023[, "PC10"], WL2GRDN_grwssn_2024_predicted[, "PC10"]),
+    PC11 = c(WL2GRDN_grwssn_predicted_2023[, "PC11"], WL2GRDN_grwssn_2024_predicted[, "PC11"]),
+    group = c("new", "new2")
+  )
+)
+
+home_sites_pca_grwssn + 
+  geom_point(data=filter(home_sites_pca_grwssn$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
+  annotate("text", x = -0.07, y= -2.6, label = "WL2 Garden \n 2023", colour = "purple", size=6) +
+  annotate("text", x = 1.5, y= 3, label = "WL2 Garden 2024", colour = "purple", size=6) 
+ggsave("../Figures/Growth_Season_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
 
