@@ -585,7 +585,7 @@ snow_no_end_last_month_fixed <- snow_no_end_nextyr_lastmonth %>%
 
 snow_grwseason_60 <- snow_60first_last_month %>% 
   group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
-  filter(month>firstmonth) %>% #first and last month are in grow month format not calendar year 
+  filter(month>firstmonth) %>% 
   filter(month<=lastmonth) %>% 
   bind_rows(snow_no_end_last_month_fixed) %>% 
   arrange(parent.pop, year_cal, month) %>% 
@@ -595,6 +595,64 @@ xtabs(~parent.pop+month, data=snow_grwseason_60)
 snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
   scale_x_continuous(breaks=c(1, 2, 3, 4, 5,6,7,8,9,10, 11, 12,13)) +
   facet_wrap(~parent.pop)
+```
+
+### WL2 Garden 2024 Growth Season Climate
+Calculate this separately so it's not included in the 60 year summary stats 
+```{r}
+WL2_2024_clim <- pop_elev_climate %>% 
+  filter(parent.pop == "WL2_Garden") %>% 
+  mutate(month = recode(month, #convert months to numbers 
+  jan = 1,
+  feb = 2,
+  mar = 3,
+  apr = 4,
+  may = 5,
+  jun = 6,
+  jul = 7,
+  aug = 8,
+  sep = 9,
+  oct = 10,
+  nov = 11,
+  dec = 12
+)) %>% 
+  filter(year==2024) %>%  
+  select(parent.pop:Long, year_cal=year, month, cwd, pck, ppt, tmn, tmx) %>% 
+  arrange(year_cal, month)
+
+#first month
+WL2_2024_first_month <- WL2_2024_clim %>%
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  filter(pck==0) %>% 
+  filter(tmn > 0) %>% 
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
+WL2_2024_first_month_tomerge <- WL2_2024_first_month %>% 
+  select(parent.pop:elev_m, year_cal, firstmonth=month)
+WL2_2024_first_month_col <- full_join(WL2_2024_clim, WL2_2024_first_month_tomerge)
+
+#last month 
+WL2_2024_last_month <- WL2_2024_first_month_col %>%
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  filter(month>firstmonth) %>% 
+  #filter(month>4) %>% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
+  filter(if_else(pck>70, pck>70, 
+                 if_else(pck>0, tmn < 0, tmn <= -5))) %>%  #-5 is moderate freeze (Pardee et al. 2017)
+  arrange(month) %>% 
+  filter(row_number()==1) #get first month after growstart for each pop and year with pck >70 OR pck>0 & tmn <0 OR tmn <-5
+WL2_2024_last_month_tomerge <- WL2_2024_last_month %>% 
+  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+WL2_2024_last_month_col <- full_join(WL2_2024_first_month_col, WL2_2024_last_month_tomerge) %>% 
+  select(parent.pop, elevation.group, elev_m, firstmonth, lastmonth, year_cal:tmx)
+#first month = 5, last month = 11
+
+#filter growth season months only
+WL2_2024_grwssn <- WL2_2024_last_month_col %>% 
+  group_by(parent.pop, elevation.group, elev_m, year_cal) %>% 
+  filter(month>firstmonth) %>% 
+  filter(month<=lastmonth) %>% 
+  arrange(parent.pop, year_cal, month) %>% 
+  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 ```
 
 ## Flint for growing season months only
@@ -608,8 +666,12 @@ nosnow_grwseason_60_prep <- nosnow_grwseason_60 %>%
 snow_grwseason_60_prep <- snow_grwseason_60 %>% 
   select(parent.pop:elev_m, year=year_cal, #grow season months in calendar year format for snow pops
          firstmonth:lastmonth, month:tmx)
+WL2_2024_grwssn_prep <- WL2_2024_grwssn %>% 
+  select(parent.pop:elev_m, year=year_cal,
+         firstmonth:lastmonth, month:tmx)
 
 flint_60_grwseason <- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %>% 
+  bind_rows(WL2_2024_grwssn_prep) %>% 
   mutate(timeframe = case_when(
                                 year >= 1964 & year < 1994 ~ "historic",
                                 year >= 1994 & year < 2024 ~ "recent")) %>% 
