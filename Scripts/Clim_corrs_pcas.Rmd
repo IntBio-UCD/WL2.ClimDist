@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggrepel) #for repelling labels 
 library(corrplot) #plotting correlations 
+library(vegan) #for permanova 
+library(ggfortify) #plotting PCAs
 
 #making topo maps:
 library(elevatr)
@@ -66,6 +68,9 @@ ggsave("../Figures/Pop_Map_Figure1a.png", width = 10, height = 10, units = "in")
 ### Calculate 30 year climate averages 
 ```{r}
 all_clim_avgs <- all_clim %>% 
+  select(-Lat, -Long) %>% 
+  filter(parent.pop!="WL2_Garden") %>% #remove the garden 
+  left_join(pops_garden_locs) %>% #add in Lat Long for growth season rows 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, 
            timeframe, Season) %>% 
   summarise_at(c("cwd",  "pck", "ppt", "tmn", "tmx",
@@ -157,15 +162,125 @@ cor.norm_wtr_yr = cor(wtr_yr_avgs_normalized) #test correlations among the trait
 cor.sig_wtr_yr <- cor.mtest(wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
 cor.norm_wtr_yr
 cor.sig_wtr_yr$p
-
-#tmn, tmx, tmean_wettest_month, tmean_driest_month and ann_tmean all highly correlated (98-99%) - only keep ann_tmean 
 #ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
-#pck and ppt_warmest_month 90% correlated
+#tmn, tmx, tmean_wettest_month, tmean_driest_month and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
+#ppt warmest month highly neg correlated with tmn, ann_tmean, tmean_driest - take it out 
+#temp ann range and mean diurnal range highly corr - keep temp_ann_range
 
 wtr_yr_avgs <- all_clim_avgs %>% 
   filter(Season=="Water Year") %>% 
   ungroup()
-wtr_yr_avgs.pc = prcomp(wtr_yr_avgs[c()], scale = TRUE, center = TRUE)
+wtr_yr_avgs.pc = prcomp(wtr_yr_avgs[c(8:9, 13, 15:16, 19:20, 22)], scale = TRUE, center = TRUE)
+summary(wtr_yr_avgs.pc)
+tibble(PC=str_c("PC",str_pad(1:8,2,pad="0")),
+       percent_var=wtr_yr_avgs.pc$sdev[1:8]^2/sum(wtr_yr_avgs.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+wtr_yr_avgs.pc.dat = data.frame(wtr_yr_avgs.pc$x)
+wtr_yr_avgs_locs.pc = cbind(wtr_yr_avgs, wtr_yr_avgs.pc.dat)
+wtr_yr_avgs_loadings = data.frame(varnames=rownames(wtr_yr_avgs.pc$rotation), wtr_yr_avgs.pc$rotation)
+wtr_yr_avgs_loadings
+```
+
+#### Permanova 
+```{r}
+wtr_yr_avgs_locs.pc_dist <- wtr_yr_avgs_locs.pc %>% ungroup() %>% select(PC1:PC8)
+dist_matrix_wtr_year <- dist(wtr_yr_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_wtr_year <- adonis2(dist_matrix_wtr_year ~ timeframe*elev_m*Lat, data = wtr_yr_avgs_locs.pc) #use adonis2 to run the permanova
+permanova_results_wtr_year #look at output 
+#get stats per term in the model:
+permanova_results_wtr_year_terms <- adonis2(dist_matrix_wtr_year ~ timeframe*elev_m*Lat, data = wtr_yr_avgs_locs.pc, by = "terms")
+permanova_results_wtr_year_terms
+
+#LM on PCs (follow up on permanova)
+lmer_results_wtr_year <- wtr_yr_avgs_locs.pc %>%
+  ungroup() %>% 
+  select(timeframe, parent.pop, elev_m, Lat, Long, PC1:PC8) %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(timeframe, parent.pop, elev_m, Lat, Long, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ timeframe*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+PC_anova_wtr_yr <- lmer_results_wtr_year %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(term, p.value)
+PC_anova_wtr_yr #PC2 and PC4 most sig, PC1 and PC7 also have sig timeframe effects 
+```
+
+#### Plot climate change PCA
+```{r}
+#prep the pc for making a plot with arrows distinguishing recent vs. historical time 
+wtr_yr_avgs_locs.pc_avg <- wtr_yr_avgs_locs.pc %>%
+  group_by(parent.pop, elev_m, timeframe) %>%
+  summarise(across(.cols=starts_with("PC", ignore.case = FALSE), .fns = mean)) %>%
+  ungroup()
+
+autoplot(wtr_yr_avgs.pc, data = wtr_yr_avgs,
+         x=1, y=2,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+autoplot(wtr_yr_avgs.pc, data = wtr_yr_avgs,
+         x=2, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+autoplot(wtr_yr_avgs.pc, data = wtr_yr_avgs,
+         x=1, y=4,
+         colour='elev_m', alpha=0.5,
+         label=TRUE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+wtr_yr_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+wtr_yr_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC2, y=PC4, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
+
+wtr_yr_avgs_locs.pc_avg %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC4, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=2, alpha=0.7) +
+  geom_text_repel(aes(label = parent.pop)) +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed")  +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .8)
 ```
 
 ### Growth Season PCA
