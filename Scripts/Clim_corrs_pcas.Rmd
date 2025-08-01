@@ -34,7 +34,8 @@ all_clim <- read_csv("../Processed.Data/Climate/All_Clim.csv")
 ```{r}
 pops_garden_locs <- all_clim %>% 
   mutate_at(c("Lat", "Long"), as.double) %>% 
-  select(parent.pop:Long) %>% 
+  select(parent.pop:Long) %>%
+  filter(!is.na(Lat), !is.na(Long)) %>% 
   distinct()
 states <- map_data("state") %>% filter(region == "california")
 
@@ -88,6 +89,7 @@ cor.sig_recent_wtr_yr <- cor.mtest(recent_wtr_yr_avgs_normalized, method = "pear
 corrplot(cor.norm_recent_wtr_yr, type="upper",
          tl.srt = 45, p.mat = cor.sig_recent_wtr_yr$p, 
          sig.level = 0.05, insig="blank")
+#800 x 734
 ```
 
 ### Historical Corrs - Water year
@@ -104,41 +106,86 @@ cor.sig_historic_wtr_yr <- cor.mtest(historic_wtr_yr_avgs_normalized, method = "
 corrplot(cor.norm_historic_wtr_yr, type="upper",
          tl.srt = 45, p.mat = cor.sig_historic_wtr_yr$p, 
          sig.level = 0.05, insig="blank")
+#800 x 734
 ```
 
 ### Recent Corrs - Growth Season
 ```{r}
-recent_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+recent_grwssn_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="recent", Season=="Growth Season") %>% 
   ungroup() %>% 
   select(cwd:ppt_coldest_month) %>% 
   scale() #center and scale the data 
 
-cor.norm_recent_wtr_yr = cor(recent_wtr_yr_avgs_normalized) #test correlations among the traits
-cor.sig_recent_wtr_yr <- cor.mtest(recent_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_recent_grwssn = cor(recent_grwssn_avgs_normalized) #test correlations among the traits
+cor.sig_recent_grwssn <- cor.mtest(recent_grwssn_avgs_normalized, method = "pearson") #get pearson's test p-values 
 
-corrplot(cor.norm_recent_wtr_yr, type="upper",
-         tl.srt = 45, p.mat = cor.sig_recent_wtr_yr$p, 
+corrplot(cor.norm_recent_grwssn, type="upper",
+         tl.srt = 45, p.mat = cor.sig_recent_grwssn$p, 
          sig.level = 0.05, insig="blank")
+#800 x 734
 ```
 
 ### Historical Corrs - Growth Season
 ```{r}
-historic_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+historic_grwssn_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="historic", Season=="Growth Season") %>% 
   ungroup() %>% 
   select(cwd:ppt_coldest_month) %>% 
   scale() #center and scale the data 
 
-cor.norm_historic_wtr_yr = cor(historic_wtr_yr_avgs_normalized) #test correlations among the traits
-cor.sig_historic_wtr_yr <- cor.mtest(historic_wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_historic_grwssn = cor(historic_grwssn_avgs_normalized) #test correlations among the traits
+cor.sig_historic_grwssn <- cor.mtest(historic_grwssn_avgs_normalized, method = "pearson") #get pearson's test p-values 
 
-corrplot(cor.norm_historic_wtr_yr, type="upper",
-         tl.srt = 45, p.mat = cor.sig_historic_wtr_yr$p, 
+corrplot(cor.norm_historic_grwssn, type="upper",
+         tl.srt = 45, p.mat = cor.sig_historic_grwssn$p, 
          sig.level = 0.05, insig="blank")
+#800 x 734
 ```
 
 ## Climate Change PCAs (Figure 1b-c; Table S2, S3)
 
+### Water Year PCA
+```{r}
+wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(Season=="Water Year") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_wtr_yr = cor(wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_wtr_yr <- cor.mtest(wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_wtr_yr
+cor.sig_wtr_yr$p
+
+#tmn, tmx, tmean_wettest_month, tmean_driest_month and ann_tmean all highly correlated (98-99%) - only keep ann_tmean 
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
+#pck and ppt_warmest_month 90% correlated
+
+wtr_yr_avgs <- all_clim_avgs %>% 
+  filter(Season=="Water Year") %>% 
+  ungroup()
+wtr_yr_avgs.pc = prcomp(wtr_yr_avgs[c()], scale = TRUE, center = TRUE)
+```
+
+### Growth Season PCA
+```{r}
+grwssn_avgs_normalized <- all_clim_avgs %>% 
+  filter(Season=="Growth Season") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_grwssn = cor(grwssn_avgs_normalized) #test correlations among the traits
+cor.sig_grwssn <- cor.mtest(grwssn_avgs_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_grwssn
+cor.sig_grwssn$p
+
+#tmn, tmx, tmean_driest_month and ann_tmean all highly correlated (90-98%) - only keep ann_tmean 
+```
+
 
 ## WL2 Yearly Variation PCAs (Figure S2)
+```{r}
+
+```
