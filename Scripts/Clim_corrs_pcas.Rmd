@@ -520,7 +520,7 @@ home_sites_pca_grwssn$data <- rbind(home_sites_pca_grwssn$data,
 
 home_sites_pca_grwssn + 
   geom_point(data=filter(home_sites_pca_grwssn$data, parent.pop == "WL2_Garden"), size=6, shape = 18, show.legend = FALSE) +
-  annotate("text", x = -0.07, y= -2.6, label = "WL2 Garden \n 2023", colour = "purple", size=6) +
+  annotate("text", x = -0.04, y= -1.5, label = "WL2 Garden \n 2023", colour = "purple", size=6) +
   annotate("text", x = 1.5, y= 3, label = "WL2 Garden 2024", colour = "purple", size=6) 
 ggsave("../Figures/Growth_Season_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
@@ -735,7 +735,7 @@ wl2_yrl_var_pca_grwssn$data <- rbind(wl2_yrl_var_pca_grwssn$data,
 
 wl2_yrl_var_pca_grwssn + 
   geom_point(data=filter(wl2_yrl_var_pca_grwssn$data, parent.pop == "WL2_Garden"), size=8, shape = 18, show.legend = FALSE) +
-  annotate("text", x = 3.24, y= -4.5, label = "WL2 Garden 2023", colour = "purple", size=7) +
+  annotate("text", x = 1.19, y= -1.5, label = "WL2 Garden \n 2023", colour = "purple", size=7) +
   annotate("text", x = -0.51, y= 4.6, label = "WL2 Garden 2024", colour = "purple", size=7) 
 ggsave("../Figures/Growth_Ssn_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 
