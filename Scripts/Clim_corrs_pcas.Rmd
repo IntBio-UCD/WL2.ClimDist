@@ -18,6 +18,7 @@ library(ggrepel) #for repelling labels
 library(corrplot) #plotting correlations 
 library(vegan) #for permanova 
 library(ggfortify) #plotting PCAs
+library(viridis) #for color scale
 
 #making topo maps:
 library(elevatr)
@@ -317,7 +318,7 @@ WL2GRDN_wtryr_predicted_2023 <- predict(wtr_yr_avgs.pc, newdata = WL2GRDN_wtryr_
 
 WL2GRDN_wtryr_pc_prep_2024 <- all_clim %>% 
   ungroup() %>% 
-  filter(parent.pop=="WL2_Garden", year==2024, Season=="Water Year") %>% #need 2024 water year data for WL2 garden 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Water Year") %>% 
   select(cwd:pck, ann_tmean, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, ppt_coldest_month) 
 WL2GRDN_wtryr_2024_predicted <- predict(wtr_yr_avgs.pc, newdata = WL2GRDN_wtryr_pc_prep_2024)
 
@@ -493,7 +494,7 @@ WL2GRDN_grwssn_predicted_2023 <- predict(grwssn_avgs.pc, newdata = WL2GRDN_grwss
 
 WL2GRDN_grwssn_pc_prep_2024 <- all_clim %>% 
   ungroup() %>% 
-  filter(parent.pop=="WL2_Garden", year==2024, Season=="Growth Season") %>% #need 2024 Growth Season data for WL2 garden 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Growth Season") %>% 
   select(cwd:ppt, ann_tmean, mean_diurnal_range, temp_seasonality, temp_ann_range, tmean_wettest_month, ann_ppt, ppt_seasonality, ppt_coldest_month) 
 WL2GRDN_grwssn_2024_predicted <- predict(grwssn_avgs.pc, newdata = WL2GRDN_grwssn_pc_prep_2024)
 
@@ -526,6 +527,219 @@ ggsave("../Figures/Growth_Season_PC1-PC2_PlusGarden.png", width = 7.4, height = 
 
 
 ## WL2 Yearly Variation PCAs (Figure S2)
-```{r}
 
+### Water Year 
+```{r}
+wl2_wtryr_var <- all_clim %>% 
+  filter(parent.pop=="WL2", Season=="Water Year") %>% 
+  ungroup()
+
+wl2_wtryr_var_normalized <- wl2_wtryr_var %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_wtr_yr_var = cor(wl2_wtryr_var_normalized) #test correlations among the traits
+cor.sig_wtr_yr_var <- cor.mtest(wl2_wtryr_var_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_wtr_yr_var
+cor.sig_wtr_yr_var$p
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
+#ann_tmean highly corr with tmn, tmx - take it out 
+
+wl2_wtryr_var.pc = prcomp(wl2_wtryr_var[c(8:9, 11:12, 14:22)], scale = TRUE, center = TRUE)
+summary(wl2_wtryr_var.pc)
+tibble(PC=str_c("PC",str_pad(1:13,2,pad="0")),
+       percent_var=wl2_wtryr_var.pc$sdev[1:13]^2/sum(wl2_wtryr_var.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+wl2_wtryr_var.pc.dat = data.frame(wl2_wtryr_var.pc$x)
+wl2_wtryr_var_locs.pc = cbind(wl2_wtryr_var, wl2_wtryr_var.pc.dat) %>% select(parent.pop:year, PC1:PC13)
+wl2_wtryr_var_loadings = data.frame(varnames=rownames(wl2_wtryr_var.pc$rotation), wl2_wtryr_var.pc$rotation)
+wl2_wtryr_var_loadings
+```
+
+#### Plot the PCA
+```{r}
+autoplot(wl2_wtryr_var.pc, data = wl2_wtryr_var,
+         colour='year', alpha=0.6,
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_color_viridis() +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+wl2_yrl_var_pca_wtryr <- wl2_wtryr_var_locs.pc %>% 
+  mutate(group=str_c(year))  %>%
+  ggplot(aes(x=PC1, y=PC2, color=year)) +
+  geom_point(size=4, alpha=0.7) +
+  scale_color_viridis() +
+  labs(x="PC1 (32.06%)", y="PC2 (19.37%)", color="Year") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  #PC1: cwd and tmx = pos; pck and ann_ppt = neg:
+  annotate("text", x = -5, y = -6.4, label = "Wet \n Snow", size=6) + 
+  annotate("text", x = 4, y = -6.4, label = "Dry \n No Snow", size=6) +
+  #PC2: tmn = pos; mean diurnal range = neg:
+  annotate("text", x = -7.8, y = -3.7, label = "Low Min \n Temp", size=6) +
+  annotate("text", x = -7.8, y = 4, label = "High Min \n Temp", size=6) +
+  coord_cartesian(ylim = c(-5, 5), xlim = c(-6,5), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+
+## add WL2 garden 2023 and 2024
+WL2GRDN_wtryr_pc_prep_2023_var <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2023, Season=="Water Year") %>% 
+  select(cwd:pck, tmn:tmx, mean_diurnal_range, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, tmean_wettest_month, tmean_driest_month, ppt_warmest_month, ppt_coldest_month) 
+WL2GRDN_wtryr_predicted_2023_var <- predict(wl2_wtryr_var.pc, newdata = WL2GRDN_wtryr_pc_prep_2023_var)
+
+WL2GRDN_wtryr_pc_prep_2024_var <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Water Year") %>% 
+  select(cwd:pck, tmn:tmx, mean_diurnal_range, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, tmean_wettest_month, tmean_driest_month, ppt_warmest_month, ppt_coldest_month) 
+WL2GRDN_wtryr_2024_var_predicted <- predict(wl2_wtryr_var.pc, newdata = WL2GRDN_wtryr_pc_prep_2024_var)
+
+wl2_yrl_var_pca_wtryr$data <- rbind(wl2_yrl_var_pca_wtryr$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elevation.group="High",
+    elev_m = 2020,
+    Lat = 38.8263,
+    Long=-120.2524,
+    timeframe = c("2023", "2024"),
+    year = c(2023, 2024),
+    PC1 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC1"], WL2GRDN_wtryr_2024_var_predicted[, "PC1"]),
+    PC2 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC2"], WL2GRDN_wtryr_2024_var_predicted[, "PC2"]),
+    PC3 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC3"], WL2GRDN_wtryr_2024_var_predicted[, "PC3"]),
+    PC4 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC4"], WL2GRDN_wtryr_2024_var_predicted[, "PC4"]),
+    PC5 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC5"], WL2GRDN_wtryr_2024_var_predicted[, "PC5"]),
+    PC6 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC6"], WL2GRDN_wtryr_2024_var_predicted[, "PC6"]),
+    PC7 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC7"], WL2GRDN_wtryr_2024_var_predicted[, "PC7"]),
+    PC8 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC8"], WL2GRDN_wtryr_2024_var_predicted[, "PC8"]),
+    PC9 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC9"], WL2GRDN_wtryr_2024_var_predicted[, "PC9"]),
+    PC10 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC10"], WL2GRDN_wtryr_2024_var_predicted[, "PC10"]),
+    PC11 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC11"], WL2GRDN_wtryr_2024_var_predicted[, "PC11"]),
+    PC12 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC12"], WL2GRDN_wtryr_2024_var_predicted[, "PC12"]),
+    PC13 = c(WL2GRDN_wtryr_predicted_2023_var[, "PC13"], WL2GRDN_wtryr_2024_var_predicted[, "PC13"]),
+    group = c("new", "new2")
+  )
+)
+
+wl2_yrl_var_pca_wtryr + 
+  geom_point(data=filter(wl2_yrl_var_pca_wtryr$data, parent.pop == "WL2_Garden"), size=8, shape = 18, show.legend = FALSE) +
+  annotate("text", x = -5.5, y= 1.2, label = "WL2 \n Garden \n 2023", colour = "purple", size=7) +
+  annotate("text", x = 0.9, y= 3, label = "WL2 Garden 2024", colour = "purple", size=7) 
+ggsave("../Figures/Wtr_Year_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+```
+
+### Growth Season 
+```{r}
+wl2_grwssn_var <- all_clim %>% 
+  filter(parent.pop=="WL2", Season=="Growth Season") %>% 
+  ungroup()
+
+wl2_grwssn_var_normalized <- wl2_grwssn_var %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_grwssn_var = cor(wl2_grwssn_var_normalized) #test correlations among the traits
+cor.sig_grwssn_var <- cor.mtest(wl2_grwssn_var_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_grwssn_var
+cor.sig_grwssn_var$p
+#ann_tmean highly corr with tmn, tmx - take it out 
+
+wl2_grwssn_var.pc = prcomp(wl2_grwssn_var[c(8:12, 14:22)], scale = TRUE, center = TRUE)
+summary(wl2_grwssn_var.pc)
+tibble(PC=str_c("PC",str_pad(1:14,2,pad="0")),
+       percent_var=wl2_grwssn_var.pc$sdev[1:14]^2/sum(wl2_grwssn_var.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+wl2_grwssn_var.pc.dat = data.frame(wl2_grwssn_var.pc$x)
+wl2_grwssn_var_locs.pc = cbind(wl2_grwssn_var, wl2_grwssn_var.pc.dat) %>% select(parent.pop:year, PC1:PC14)
+wl2_grwssn_var_loadings = data.frame(varnames=rownames(wl2_grwssn_var.pc$rotation), wl2_grwssn_var.pc$rotation)
+wl2_grwssn_var_loadings
+```
+
+#### Plot the PCA
+```{r}
+autoplot(wl2_grwssn_var.pc, data = wl2_grwssn_var,
+         colour='year', alpha=0.6,
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_color_viridis() +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+
+wl2_yrl_var_pca_grwssn <- wl2_grwssn_var_locs.pc %>% 
+  mutate(group=str_c(year))  %>%
+  ggplot(aes(x=PC1, y=PC2, color=year)) +
+  geom_point(size=4, alpha=0.7) +
+  scale_color_viridis() +
+  labs(x="PC1 (27.67%)", y="PC2 (22.13%)", color="Year") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  #PC1: pck and ppt_coldest_month = neg:
+  annotate("text", x = -4.5, y = -5.8, label = "Snow", size=6) + 
+  annotate("text", x = 3.2, y = -5.8, label = "No Snow", size=6) +
+  #PC2: cwd and tmx = pos:
+  annotate("text", x = -6.6, y = -3.7, label = "Wet \n Cold", size=6) +
+  annotate("text", x = -6.6, y = 3.5, label = "Dry \n Hot", size=6) +
+  coord_cartesian(ylim = c(-4.5, 4.5), xlim = c(-5.5,3.5), clip = "off") +
+  theme_classic() +
+  theme(text=element_text(size=28))
+
+## add WL2 garden 2023 and 2024
+WL2GRDN_grwssn_pc_prep_2023_var <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2023, Season=="Growth Season") %>% 
+  select(cwd:tmx, mean_diurnal_range, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, tmean_wettest_month, tmean_driest_month, ppt_warmest_month, ppt_coldest_month) 
+WL2GRDN_grwssn_predicted_2023_var <- predict(wl2_grwssn_var.pc, newdata = WL2GRDN_grwssn_pc_prep_2023_var)
+
+WL2GRDN_grwssn_pc_prep_2024_var <- all_clim %>% 
+  ungroup() %>% 
+  filter(parent.pop=="WL2_Garden", year==2024, Season=="Growth Season") %>% 
+  select(cwd:tmx, mean_diurnal_range, temp_seasonality, temp_ann_range, ann_ppt, ppt_seasonality, tmean_wettest_month, tmean_driest_month, ppt_warmest_month, ppt_coldest_month) 
+WL2GRDN_grwssn_2024_var_predicted <- predict(wl2_grwssn_var.pc, newdata = WL2GRDN_grwssn_pc_prep_2024_var)
+
+wl2_yrl_var_pca_grwssn$data <- rbind(wl2_yrl_var_pca_grwssn$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elevation.group="High",
+    elev_m = 2020,
+    Lat = 38.8263,
+    Long=-120.2524,
+    timeframe = c("2023", "2024"),
+    year = c(2023, 2024),
+    PC1 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC1"], WL2GRDN_grwssn_2024_var_predicted[, "PC1"]),
+    PC2 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC2"], WL2GRDN_grwssn_2024_var_predicted[, "PC2"]),
+    PC3 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC3"], WL2GRDN_grwssn_2024_var_predicted[, "PC3"]),
+    PC4 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC4"], WL2GRDN_grwssn_2024_var_predicted[, "PC4"]),
+    PC5 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC5"], WL2GRDN_grwssn_2024_var_predicted[, "PC5"]),
+    PC6 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC6"], WL2GRDN_grwssn_2024_var_predicted[, "PC6"]),
+    PC7 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC7"], WL2GRDN_grwssn_2024_var_predicted[, "PC7"]),
+    PC8 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC8"], WL2GRDN_grwssn_2024_var_predicted[, "PC8"]),
+    PC9 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC9"], WL2GRDN_grwssn_2024_var_predicted[, "PC9"]),
+    PC10 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC10"], WL2GRDN_grwssn_2024_var_predicted[, "PC10"]),
+    PC11 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC11"], WL2GRDN_grwssn_2024_var_predicted[, "PC11"]),
+    PC12 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC12"], WL2GRDN_grwssn_2024_var_predicted[, "PC12"]),
+    PC13 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC13"], WL2GRDN_grwssn_2024_var_predicted[, "PC13"]),
+    PC14 = c(WL2GRDN_grwssn_predicted_2023_var[, "PC14"], WL2GRDN_grwssn_2024_var_predicted[, "PC14"]),
+    group = c("new", "new2")
+  )
+)
+
+wl2_yrl_var_pca_grwssn + 
+  geom_point(data=filter(wl2_yrl_var_pca_grwssn$data, parent.pop == "WL2_Garden"), size=8, shape = 18, show.legend = FALSE) +
+  annotate("text", x = 3.24, y= -4.5, label = "WL2 Garden 2023", colour = "purple", size=7) +
+  annotate("text", x = -0.51, y= 4.6, label = "WL2 Garden 2024", colour = "purple", size=7) 
+ggsave("../Figures/Growth_Ssn_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, units = "in")
+
+#WL2GRDN_grwssn_pc_prep_2023_var %>% select(pck)
+#WL2GRDN_grwssn_pc_prep_2024_var %>% select(pck)
+#wl2_grwssn_var %>% select(pck)
 ```
