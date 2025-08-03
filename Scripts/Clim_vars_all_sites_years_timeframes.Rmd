@@ -776,5 +776,5 @@ bioclim_wtryr_to_merge <- bioclim_wtryr %>%
 wtr_yr_clim <- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %>% mutate(Season="Water Year")
 grwssn_clim <- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %>% mutate(Season="Growth Season")
 all_clim <- bind_rows(wtr_yr_clim, grwssn_clim)
-write_csv(all_clim, "../Processed.Data/Climate/All_Clim.csv")
+write_csv(all_clim, "../Processed.Data/All_Clim.csv")
 ```
