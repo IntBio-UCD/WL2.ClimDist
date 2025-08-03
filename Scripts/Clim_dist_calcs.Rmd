@@ -11,18 +11,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for calculating climate distance (Figure S3; Table S4)
 
-To Do
-
--   Calculate average sub distance
-
--   Compare growth season to water year 
-
 ## Load Libraries
 ```{r}
 library(tidyverse)
 library(boot) #for bootstrapping 
 library(broom) #for tidy function
 library(geosphere) #for calculating geographic distance
+library(lmerTest) #for mixed effect models 
 ```
 
 ## Load Climate Data
@@ -430,6 +425,15 @@ sub_dist_2023 <- sub_dist %>% filter(WL2_year==2023) %>% select(parent.pop:Seaso
 sub_dist_2024 <- sub_dist %>% filter(WL2_year==2024) %>% select(parent.pop:Season, WL2_year, cwd_dist:ann_ppt_dist)
 ```
 
+### Average subtraction distance
+```{r}
+sub_dist_avg <- sub_dist %>% 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, Season) %>% 
+  summarise_at(c("cwd_dist", "pck_dist", "ann_tmean_dist", "ann_ppt_dist"),
+               c(mean), na.rm = TRUE) %>% 
+  rename_with(.cols = c(6:9), ~paste0(.x, '_AVG'))
+```
+
 ### Plot the results 
 ```{r}
 #2023
@@ -513,6 +517,47 @@ sub_dist_2024 %>%
   theme_classic() +
   theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
   facet_wrap(~timeframe+Season)
+
+#average 
+sub_dist_avg %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist_AVG), y=cwd_dist_AVG, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="CWD Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_avg %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist_AVG), y=pck_dist_AVG, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PCK Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_avg %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist_AVG), y=ann_tmean_dist_AVG, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Temp Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_avg %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist_AVG), y=ann_ppt_dist_AVG, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PPT Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
 ```
 
 ## Merge all distances
@@ -538,16 +583,43 @@ ppt_dist_prep <- sub_dist %>%
          Season=if_else(Season=="Growth Season", "GrwSsn", "Wtr_Year")) %>% 
   pivot_wider(names_from = timeframe:WL2_year, values_from = ann_ppt_dist, names_prefix = "PPTDist_")
 
-#need to add average sub dist 
+temp_dist_avg_prep <- sub_dist_avg %>% 
+  select(parent.pop:Season, ann_tmean_dist_AVG) %>% 
+  mutate(timeframe=if_else(timeframe=="historic", "Historic", "Recent"),
+         Season=if_else(Season=="Growth Season", "GrwSsn", "Wtr_Year")) %>% 
+  pivot_wider(names_from = timeframe:Season, values_from = ann_tmean_dist_AVG, names_prefix = "AvgTempDist_")
+
+ppt_dist_avg_prep <- sub_dist_avg %>% 
+  select(parent.pop:Season, ann_ppt_dist_AVG) %>% 
+  mutate(timeframe=if_else(timeframe=="historic", "Historic", "Recent"),
+         Season=if_else(Season=="Growth Season", "GrwSsn", "Wtr_Year")) %>% 
+  pivot_wider(names_from = timeframe:Season, values_from = ann_ppt_dist_AVG, names_prefix = "AvgPPTDist_")
 
 #Merge
 clim_geo_dist <- all_gowers_prep %>% 
   left_join(wl2_gowers_avg_prep) %>% 
   left_join(temp_dist_prep) %>% 
   left_join(ppt_dist_prep) %>% 
+  left_join(temp_dist_avg_prep) %>% 
+  left_join(ppt_dist_avg_prep) %>% 
   mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020.1158) %>% 
   mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
-         Elev_Dist=elev_m-WL2_Elev) #Add Elevation and Geographic Distance 
-
+         Elev_Dist=elev_m-WL2_Elev) %>% #Add Elevation and Geographic Distance 
+  select(parent.pop:AvgPPTDist_Recent_Wtr_Year, Geographic_Dist, Elev_Dist)
+write_csv(clim_geo_dist, "../Processed.Data/All_Clim_Dist.csv")
 ```
+
 ## Compare Growth Season and Water Year 
+```{r}
+all_clim_scaled <- all_clim %>% 
+  filter(parent.pop!="WL2_Garden") %>% 
+  mutate_at(c("ann_tmean","ann_ppt","cwd","pck", "elev_m"),scale)
+temp_mod <- lmer(ann_tmean ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
+summary(temp_mod)
+ppt_mod <- lmer(ann_ppt ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
+summary(ppt_mod)
+pck_mod <- lmer(pck ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
+summary(pck_mod)
+cwd_mod <- lmer(cwd ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
+summary(cwd_mod)
+```
