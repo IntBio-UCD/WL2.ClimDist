@@ -11,11 +11,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for calculating climate distance (Figure S3; Table S4)
 
+To Do
+
+-   Calculate average sub distance
+
+-   Compare growth season to water year 
+
 ## Load Libraries
 ```{r}
 library(tidyverse)
 library(boot) #for bootstrapping 
 library(broom) #for tidy function
+library(geosphere) #for calculating geographic distance
 ```
 
 ## Load Climate Data
@@ -192,7 +199,7 @@ boot_recent_wtryr_results_2023 <- tidy(gowers.boot_2023_recent_wtryr,conf.int=TR
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Recent", Season="Water Year", Year=2023)
 boot_gowers_recent_wtryr_pops_2023 <- bind_cols(pops, boot_recent_wtryr_results_2023) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # water year - historic
@@ -206,7 +213,7 @@ boot_historic_wtryr_results_2023 <- tidy(gowers.boot_2023_historic_wtryr,conf.in
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Historic", Season="Water Year", Year=2023)
 boot_gowers_historic_wtryr_pops_2023 <- bind_cols(pops, boot_historic_wtryr_results_2023) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # growth season - recent
@@ -220,7 +227,7 @@ boot_recent_grwssn_results_2023 <- tidy(gowers.boot_2023_recent_grwssn,conf.int=
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Recent", Season="Growth Season", Year=2023)
 boot_gowers_recent_grwssn_pops_2023 <- bind_cols(pops, boot_recent_grwssn_results_2023) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # growth season - historic
@@ -234,7 +241,7 @@ boot_historic_grwssn_results_2023 <- tidy(gowers.boot_2023_historic_grwssn,conf.
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Historic", Season="Growth Season", Year=2023)
 boot_gowers_historic_grwssn_pops_2023 <- bind_cols(pops, boot_historic_grwssn_results_2023) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 ```
 
@@ -251,7 +258,7 @@ boot_recent_wtryr_results_2024 <- tidy(gowers.boot_2024_recent_wtryr,conf.int=TR
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Recent", Season="Water Year", Year=2024)
 boot_gowers_recent_wtryr_pops_2024 <- bind_cols(pops, boot_recent_wtryr_results_2024) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # water year - historic
@@ -265,7 +272,7 @@ boot_historic_wtryr_results_2024 <- tidy(gowers.boot_2024_historic_wtryr,conf.in
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Historic", Season="Water Year", Year=2024)
 boot_gowers_historic_wtryr_pops_2024 <- bind_cols(pops, boot_historic_wtryr_results_2024) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # growth season - recent
@@ -279,7 +286,7 @@ boot_recent_grwssn_results_2024 <- tidy(gowers.boot_2024_recent_grwssn,conf.int=
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Recent", Season="Growth Season", Year=2024)
 boot_gowers_recent_grwssn_pops_2024 <- bind_cols(pops, boot_recent_grwssn_results_2024) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 
 # growth season - historic
@@ -293,20 +300,21 @@ boot_historic_grwssn_results_2024 <- tidy(gowers.boot_2024_historic_grwssn,conf.
   rename(Gowers_Dist = statistic) %>% 
   mutate(timeframe="Historic", Season="Growth Season", Year=2024)
 boot_gowers_historic_grwssn_pops_2024 <- bind_cols(pops, boot_historic_grwssn_results_2024) %>% 
-  select(parent.pop:Long, timeframe, Season, Gowers_Dist, conf.low, conf.high) %>% 
+  select(parent.pop:Long, timeframe, Season, Year, Gowers_Dist, conf.low, conf.high) %>% 
   arrange(Gowers_Dist)
 ```
 
 ### Average gower's distance 
 ```{r}
-wl2_gowers_avg <- bind_rows(boot_gowers_recent_wtryr_pops_2023,
+all_gowers <- bind_rows(boot_gowers_recent_wtryr_pops_2023,
                             boot_gowers_historic_wtryr_pops_2023,
                             boot_gowers_recent_grwssn_pops_2023,
                             boot_gowers_historic_grwssn_pops_2023,
                             boot_gowers_recent_wtryr_pops_2024,
                             boot_gowers_historic_wtryr_pops_2024,
                             boot_gowers_recent_grwssn_pops_2024,
-                            boot_gowers_historic_grwssn_pops_2024) %>% 
+                            boot_gowers_historic_grwssn_pops_2024) 
+wl2_gowers_avg <- all_gowers %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, Season) %>% 
   summarise(Avg_Gowers=mean(Gowers_Dist, na.rm=TRUE))
 ```
@@ -402,16 +410,144 @@ ggsave("../Figures/growthseason_AvgGowers_fromWL2.png", width = 24, height = 8, 
 
 ## Subtraction Distances
 ```{r}
+wl2_garden_clim <- all_clim %>% 
+  filter(parent.pop=="WL2_Garden", year>=2023) %>%
+  rename_with(.cols = c(8:22), ~paste0(.x, '_WL2')) %>% 
+  select(Season, WL2_year=year, cwd_WL2:ppt_coldest_month_WL2)
 
+sub_dist <- all_clim %>% 
+  filter(parent.pop!="WL2_Garden") %>% 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, Season) %>% 
+  summarise_at(c("cwd", "pck", "ann_tmean", "ann_ppt"),
+               c(mean), na.rm = TRUE) %>% #get 30 year averages
+  left_join(wl2_garden_clim) %>% 
+  mutate(cwd_dist=cwd - cwd_WL2,
+         pck_dist=pck - pck_WL2,
+         ann_tmean_dist=ann_tmean - ann_tmean_WL2,
+         ann_ppt_dist=ann_ppt - ann_ppt_WL2) 
+
+sub_dist_2023 <- sub_dist %>% filter(WL2_year==2023) %>% select(parent.pop:Season, WL2_year, cwd_dist:ann_ppt_dist)
+sub_dist_2024 <- sub_dist %>% filter(WL2_year==2024) %>% select(parent.pop:Season, WL2_year, cwd_dist:ann_ppt_dist)
 ```
 
 ### Plot the results 
 ```{r}
+#2023
+sub_dist_2023 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="CWD Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
 
+sub_dist_2023 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PCK Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_2023 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Temp Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_2023 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PPT Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+#2024
+sub_dist_2024 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="CWD Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_2024 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PCK Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_2024 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="Temp Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
+
+sub_dist_2024 %>% 
+  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  geom_col(width = 0.7,position = position_dodge(0.75)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(y="PPT Distance \n from WL2", fill="Elevation (m)", x="Population") +
+  theme_classic() +
+  theme(text=element_text(size=25), axis.text.x = element_text(angle = 45,  hjust = 1)) +
+  facet_wrap(~timeframe+Season)
 ```
 
 ## Merge all distances
 ```{r}
-#add Elevation Distance and Geographic Distance 
+#PREP
+all_gowers_prep <- all_gowers %>% 
+  select(parent.pop:Gowers_Dist) %>% 
+  mutate(Season=if_else(Season=="Water Year", "Wtr_Year", "GrwSsn")) %>% 
+  pivot_wider(names_from = timeframe:Year, values_from = Gowers_Dist, names_prefix = "GD_") 
+
+wl2_gowers_avg_prep <- wl2_gowers_avg %>% 
+  pivot_wider(names_from = timeframe:Season, values_from = Avg_Gowers, names_prefix = "AvgGD_") 
+
+temp_dist_prep <- sub_dist %>% 
+  select(parent.pop:Season, WL2_year, ann_tmean_dist) %>% 
+  mutate(timeframe=if_else(timeframe=="historic", "Historic", "Recent"),
+         Season=if_else(Season=="Growth Season", "GrwSsn", "Wtr_Year")) %>% 
+  pivot_wider(names_from = timeframe:WL2_year, values_from = ann_tmean_dist, names_prefix = "TempDist_")
+
+ppt_dist_prep <- sub_dist %>% 
+  select(parent.pop:Season, WL2_year, ann_ppt_dist) %>% 
+  mutate(timeframe=if_else(timeframe=="historic", "Historic", "Recent"),
+         Season=if_else(Season=="Growth Season", "GrwSsn", "Wtr_Year")) %>% 
+  pivot_wider(names_from = timeframe:WL2_year, values_from = ann_ppt_dist, names_prefix = "PPTDist_")
+
+#need to add average sub dist 
+
+#Merge
+clim_geo_dist <- all_gowers_prep %>% 
+  left_join(wl2_gowers_avg_prep) %>% 
+  left_join(temp_dist_prep) %>% 
+  left_join(ppt_dist_prep) %>% 
+  mutate(WL2_Lat=38.82599, WL2_Long=-120.2509, WL2_Elev=2020.1158) %>% 
+  mutate(Geographic_Dist=distHaversine(cbind(WL2_Long, WL2_Lat), cbind(Long, Lat)),
+         Elev_Dist=elev_m-WL2_Elev) #Add Elevation and Geographic Distance 
 
 ```
+## Compare Growth Season and Water Year 
