@@ -1,0 +1,12 @@
+---
+title: "Clim_dist_fitness_figs"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code for figures relating climate distance to fitness (Figure 2-4; S4-S7)

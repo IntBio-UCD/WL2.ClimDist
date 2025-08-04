@@ -1,0 +1,12 @@
+---
+title: "Clim_dist_fitness_models"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code for models relating climate distance to fitness (Table 1-2)

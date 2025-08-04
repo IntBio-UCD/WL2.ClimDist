@@ -1,0 +1,105 @@
+---
+title: "Clim_dist_fitness_prep"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code for prepping fitness to relate to clmate distance (Figure 2-4; S4-S7; Table 1-2)
+
+## Libraries
+```{r}
+library(tidyverse)
+```
+
+## Load Climate Distance Data
+```{r}
+clim_geo_dist <- read_csv("../Processed.Data/All_Clim_Dist.csv") %>% 
+  rename(pop=parent.pop) #change column name to match fitness data 
+```
+
+## Load Fitness Data
+```{r}
+wl2_surv_1020 <- read_csv("../Raw.Data/WL2_mort_pheno_20231020_corrected.csv") 
+
+#need to add in 10/27 mortality:
+wl2_ann_cens <- read_csv("../Raw.Data/WL2_annual_census_20231027_corrected.csv") %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  unite(BedLoc, bed:`bed-col`, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) #remove buffers 
+wl2_surv_1027 <- wl2_ann_cens %>% 
+  filter(pheno=="X") %>% 
+  select(death.date_2=date, block:bed, bed.row=`bed-row`, bed.col=`bed-col`, pop:rep) #add in 10/27 death dates
+
+#merge and fix data issues 
+wl2_surv_y1 <- left_join(wl2_surv_1020, wl2_surv_1027) %>% 
+  mutate(death.date=if_else(is.na(death.date), death.date_2, death.date)) %>% 
+  mutate(pop= str_replace(pop, "Y08", "YO8")) %>% 
+  mutate(pop= str_replace(pop, "Y04", "YO4")) %>% 
+  unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
+  filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
+  filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  filter(!is.na(pop), !str_detect(Genotype, ".*buff*")) %>%  #remove buffers 
+  select(block:rep, death.date, bud.date, survey.notes) #just keep mortality and budding info 
+write_csv(wl2_surv_y1, "../Processed.Data/WL2_Mortality_2023.csv")
+```
+
+## Calculate Establishment
+```{r}
+wl2_establishment <- wl2_surv_y1 %>% 
+  left_join(clim_geo_dist) %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  mutate(Establishment=if_else(is.na(death.date), 1,
+                               if_else(death.date=="2023-07-26" | death.date=="2023-08-02" | death.date=="2023-08-09", 0,
+                                       1)))
+write_csv(wl2_establishment, "../Processed.Data/WL2_Establishment.csv")
+```
+
+## Survival to Budding Y1
+```{r}
+wl2_surv_to_rep_y1 <- wl2_surv_y1 %>% 
+  mutate(death.date=mdy(death.date)) %>% 
+  left_join(wl2_establishment) %>% 
+  left_join(clim_geo_dist) %>% 
+  filter(Establishment==1) %>% #filter to only indivs that established 
+  mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for the plant that started budding the week of the annual census 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) 
+
+wl2_surv_to_rep_y1 %>% group_by(pop) %>% filter(SurvtoRep_Y1>0) %>% summarise(n=n()) %>% arrange(n) 
+#only TM2 and FR budded in year 1 
+
+write_csv(wl2_surv_to_rep_y1, "../Processed.Data//WL2_SurvtoRep_y1.csv")
+```
+
+## Fruit Number Y1
+```{r}
+wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, flowers=num.flw, fruits=num.fruit) %>% 
+  filter(fruits>0) %>% 
+  mutate(FrFlN=fruits+flowers) %>% 
+  left_join(clim_geo_dist)
+wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #all TM2
+
+write_csv(wl2_fruits_y1, "../Processed.Data/WL2_Traits/WL2_Fruits_Y1.csv")
+```
+
+## First Year Survival
+```{r}
+
+```
+
+## Winter Survival
+
+## Survival to Budding Y1
+
+## Fruit Number Y1
+
+## Prob of Successfully Reproducing
+
+## Total Fruit Number
