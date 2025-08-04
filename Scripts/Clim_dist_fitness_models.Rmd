@@ -10,3 +10,728 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Code for models relating climate distance to fitness (Table 1-2)
+
+## Libraries
+```{r}
+library(tidyverse)
+library(lmerTest) #mixed models
+library(broom.mixed) #tidy mixed model results 
+library(tidymodels) #model workflows 
+```
+
+## Read in Data
+```{r}
+wl2_establishment <- read_csv("../Processed.Data/WL2_Establishment.csv")
+first_yr_surv <- read_csv("../Processed.Data/WL2_Y1Surv.csv")
+
+winter_surv <- read_csv("../Processed.Data/WL2_WinterSurv.csv")
+wl2_surv_to_bud_y2 <- read_csv("../Processed.Data/WL2_Surv_to_Rep_Y2.csv")
+wl2_fruits_y2 <- read_csv("../Processed.Data/WL2_Fruits_Y2.csv")
+
+wl2_prob_rep <- read_csv("../Processed.Data/WL2_ProbFit.csv") %>% rename(AvgGD_Recent_Water_Yr=`AvgGD_Recent_Water Year`)
+wlt_tot_fitness <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv")
+```
+
+## Scale Predictors and Data Transformations
+```{r}
+wl2_fruits_y2_scaled <- wl2_fruits_y2 %>% mutate_at(c("GrwSsn_GD_Recent","Wtr_Year_GD_Recent",                                                           "GrwSsn_GD_Historical","Wtr_Year_GD_Historical","Geographic_Dist"),
+                                                            scale) %>% 
+  filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% 
+  drop_na(fruits, FrFlN) %>% 
+  mutate(logFruits=log(fruits + 1),
+         log10Fruits=log10(fruits + 1),
+         logFrFLs=log(FrFlN + 1),
+         log10FrFLs=log10(FrFlN + 1)) #log transformation, add 1 for 0s 
+```
+
+## Set Model Engines
+```{r}
+glmer.model_binomial <- 
+  linear_reg() %>% 
+  set_engine("glmer", family=binomial)
+```
+
+## Establishment Models
+```{r}
+#basic model workflow 
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = Establishment, predictors = c(pop, mf, block))
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#pop block model best by AIC and BIC
+
+#Add in Geo and tmp/ppt dist
+surv_GD_wflow_sub <- workflow() %>%
+  add_variables(outcomes = Establishment, predictors = c(pop, mf, block, contains("Dist"))) 
+surv_GD_fits_sub <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) 
+surv_GD_fits_wl2_sub <- surv_GD_fits_sub %>%
+  mutate(fit = map(wflow, fit, data = wl2_establishment_scaled_sub))
+surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models the best
+#show results:
+surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = Establishment, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+surv_GD_fits <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Establishment ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) 
+surv_GD_fits_wl2 <- surv_GD_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models the best
+#show results:
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+```
+
+## First Year Surv Models
+```{r}
+#basic model workflow 
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = Survival, predictors = c(pop, mf, block))
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled))
+#mod_test <- glmer(Survival ~ (1|pop/mf) + (1|block), data=wl2_y1_surv_scaled, family=binomial)
+#summary(mod_test)
+#no issues with mf 
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#pop block model best by AIC and BIC, full model close behind
+
+#Add in Geo and tmp/ppt dist
+surv_GD_wflow_sub <- workflow() %>%
+  add_variables(outcomes = Survival, predictors = c(pop, mf, block, contains("Dist"))) 
+surv_GD_fits_sub <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_sub %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) 
+surv_GD_fits_wl2_sub <- surv_GD_fits_sub %>%
+  mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled_sub))
+surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models the best
+surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+surv_GD_wflow <- workflow() %>%
+  add_variables(outcomes = Survival, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+surv_GD_fits <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ (1|pop/mf) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow %>% 
+      add_model(glmer.model_binomial, formula = Survival ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) 
+surv_GD_fits_wl2 <- surv_GD_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled))
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models the best
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+```
+
+## Winter Surv Models
+```{r}
+#basic model workflow 
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block))
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled))
+#mod_test <- glmer(WinterSurv ~ (1|pop/mf) + (1|block), data=wl2_winter_surv_scaled, family=binomial)
+#summary(mod_test)
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with just pop best by AIC and BIC, but nothing wrong with the full model, so use that 
+
+#Add in Geo and tmp/ppt dist
+surv_GD_wflow_wl2_sub <- workflow() %>%
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains("Dist"))) 
+surv_GD_fits_wl2_sub <- tibble(wflow=list(
+  pop.mf.block = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = winter_surv_sub_dist_scaled_2324))
+surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+surv_GD_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+surv_GD_fits_wl2 <- tibble(wflow=list(
+  pop.mf.block = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_winter_surv_scaled_2324))
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#WY recent model the best 
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+```
+
+## Surv to Buds Y2 Models
+```{r}
+#basic model workflow 
+surv_wflow <- workflow() %>% 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block))
+
+surv_fits <- tibble(wflow=list(
+  pop = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop))},
+  
+  pop.mf = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf))},
+  
+  pop.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {surv_wflow %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+surv_fits_wl2 <- surv_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+#mod_test <- glmer(SurvtoRep_y2 ~ (1|pop/mf) + (1|block), data=wl2_surv_to_rep_y2_scaled, family=binomial)
+#summary(mod_test)
+#Warning: Model failed to converge with max|grad| = 0.0354704 (tol = 0.002, component 1)
+surv_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop and block (but excluding mf) is best by AIC and BIC, convergence issues with mf included 
+
+#Add in Geo and tmp/ppt dist
+surv_GD_wflow_wl2_sub <- workflow() %>%
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("Dist"))) 
+
+surv_GD_fits_wl2_sub <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_sub_2324))
+surv_GD_fits_wl2_sub %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+surv_GD_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+
+surv_GD_fits_wl2 <- tibble(wflow=list(
+  pop.block = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled_2324))
+surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#water year models preferred by AIC 
+#show results:
+surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+# recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
+```
+
+## Fruit N Y2 Models
+```{r}
+#base models:
+fruits_modelslog <- tribble(
+  ~name,          ~f,
+  "1_pop",              "logFruits ~ (1|pop)", 
+  "2_pop.mf",           "logFruits ~  (1|pop/mf)", 
+  "3_pop.block",        "logFruits ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logFruits ~  (1|pop/mf) + (1|block)"
+)
+#run the models 
+fruits_modelslog <- fruits_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_2324_nozeros_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+fruits_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#model with pop.block best by AIC and BIC 
+
+#Add in Geo and tmp/ppt dist
+fruits_models_log_CD_GD_sub <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)"
+)
+#run the models 
+fruits_models_log_CD_GD_sub <- fruits_models_log_CD_GD_sub %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_2324_nozeros_scaled_sub)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+#boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
+fruits_models_log_CD_GD_sub %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+fruits_models_log_CD_GD_sub %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#show results:
+fruits_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value)
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+fruits_models_log_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)"
+)
+#run the models 
+fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_fruits_y2_2324_nozeros_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+fruits_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#pop.block preferred by AIC & BIC, GS models are close after
+#show results:
+fruits_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+#  arrange(p.value)
+```
+
+## Fruit + Flowers Y2
+```{r}
+#base models:
+FrFlN_modelslog <- tribble(
+  ~name,          ~f,
+  "1_pop",              "logFrFlN ~ (1|pop)", 
+  "2_pop.mf",           "logFrFlN ~  (1|pop/mf)", 
+  "3_pop.block",        "logFrFlN ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logFrFlN ~  (1|pop/mf) + (1|block)"
+)
+#run the models 
+FrFlN_modelslog <- FrFlN_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+
+FrFlN_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+FrFlN_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#model with pop.block best by AIC and BIC 
+
+#Add in Geo and tmp/ppt dist
+FrFlN_models_log_CD_GD_sub <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logFrFlN ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFrFlN ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFrFlN ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFrFlN ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFrFlN ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop/mf) + (1|block)"
+)
+#run the models 
+FrFlN_models_log_CD_GD_sub <- FrFlN_models_log_CD_GD_sub %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled_sub)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+#boundary (singular) fit: see help('isSingular') warning for all models with climate distance 
+FrFlN_models_log_CD_GD_sub %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+FrFlN_models_log_CD_GD_sub %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#show results:
+FrFlN_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value)
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+FrFlN_models_log_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logFrFlN ~  (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFrFlN ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFrFlN ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFrFlN ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFrFlN ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop/mf) + (1|block)"
+)
+#run the models 
+FrFlN_models_log_CD_GD <- FrFlN_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_FrFlN_y2_2324_nozeros_scaled)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+FrFlN_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+FrFlN_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#pop.block preferred by AIC & BIC, WY models are close after
+#show results:
+FrFlN_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+#  arrange(p.value)
+```
+
+## Prob Fruits Models
+```{r}
+#basic model workflow:
+prob_fitness_wflow <- workflow() %>% 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, block))
+prob_fitness_fits <- tibble(wflow=list(
+  pop = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop))},
+  
+  pop.mf = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf))},
+  
+  pop.block = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop) + (1|block))},
+  
+  pop.mf.block = {prob_fitness_wflow %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf) + (1|block))}
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow)
+prob_fitness_fits_wl2 <- prob_fitness_fits %>%
+  mutate(fit = map(wflow, fit, data = wl2_prob_fitness))
+prob_fitness_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#model with pop and block (but excluding mf) is best by AIC and BIC
+
+#Add in geo and temp/ppt distance
+prob_fitness_SUB_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = ProbFitness, predictors = c(pop, block, contains("Dist"))) 
+prob_fitness_SUB_fits_wl2 <- tibble(wflow=list(
+  pop.block = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent+ Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_prob_fitness_sub))
+prob_fitness_SUB_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma)
+#show results:
+prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "Dist") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+
+#Add in geo and Gowers clim distance
+prob_fitness_GD_wflow_wl2 <- workflow() %>%
+  add_variables(outcomes = ProbFitness, predictors = c(pop, block, contains("GD"), Geographic_Dist)) 
+prob_fitness_GD_fits_wl2 <- tibble(wflow=list(
+  pop.block = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop) + (1|block))},
+  
+  GS_Recent = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  GS_Historical = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Recent = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Recent + Geographic_Dist + (1|pop) + (1|block))},
+  
+  WY_Historical = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block))}
+  
+),
+name=names(wflow)
+) %>% 
+  select(name,wflow) %>%
+  mutate(fit = map(wflow, fit, data = wl2_prob_fitness))
+prob_fitness_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% arrange(AIC) %>% select(-wflow:-sigma) #water year models preferred by AIC 
+#show results:
+prob_fitness_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) %>%
+  select(-wflow:-group)# %>%
+#  arrange(p.value)
+# recent and historical water year CD are sig, geo dist is not sig in those models. The GS_RECENT model had convergence issues.
+```
+
+## Total Fruits Models 
+```{r}
+#base models:
+rep_output_modelslog <- tribble(
+  ~name,          ~f,
+  "1_pop",              "logTotalFitness ~ (1|pop)", 
+  "2_pop.mf",           "logTotalFitness ~  (1|pop/mf)", 
+  "3_pop.block",        "logTotalFitness ~ (1|pop) + (1|block)", 
+  "4_pop.mf.block",     "logTotalFitness ~  (1|pop/mf) + (1|block)"
+)
+#run the models 
+rep_output_modelslog <- rep_output_modelslog %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_rep_output)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_modelslog %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#model with pop.block best by AIC and BIC 
+
+#Troubleshoot weird GrwSsn-Temp_Dist results (positive coefficient, but figure indicates it should be neg...)
+mod_temp_test <- lmer(logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|block), data=wl2_rep_output_sub)
+summary(mod_temp_test)
+
+#Add in Geo and temp/ppt dist
+rep_output_SUB_models_log_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  GrwSsn_TempDist_Recent + GrwSsn_PPTDist_Recent + Geographic_Dist + (1|pop) + (1|block)", 
+  "3a_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3b_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic*GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3c_GS_Historical",  "logTotalFitness ~  GrwSsn_TempDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "3d_GS_Historical",  "logTotalFitness ~  GrwSsn_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_TempDist_Recent + Wtr_Year_PPTDist_Recent + Geographic_Dist +(1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_TempDist_Historic + Wtr_Year_PPTDist_Historic + Geographic_Dist + (1|pop) + (1|block)"
+)
+#run the models 
+rep_output_SUB_models_log_CD_GD <- rep_output_SUB_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_rep_output_sub)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_SUB_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#pop block best by AIC and BIC ...
+#pop.mf preferred by AIC & BIC, WY models are close after
+rep_output_SUB_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term, estimate:p.value) %>% 
+  filter(str_detect(term, "Dist")) %>%
+  drop_na(p.value)
+#  arrange(p.value)
+
+#Add in Geo and Gowers clim dist
+rep_output_models_log_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  GrwSsn_GD_Recent + Geographic_Dist + (1|pop) + (1|block)", 
+  "3_GS_Historical",  "logTotalFitness ~  GrwSsn_GD_Historical + Geographic_Dist + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logTotalFitness ~  Wtr_Year_GD_Recent + Geographic_Dist +(1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  Wtr_Year_GD_Historical + Geographic_Dist + (1|pop) + (1|block)"
+)
+#run the models 
+rep_output_models_log_CD_GD <- rep_output_models_log_CD_GD %>%
+  mutate(lmer = map(f, ~ lmer(as.formula(.), 
+                            data = wl2_rep_output)), #run the models 
+         predict = map(lmer, predict), # predicting from original data...
+         glance = map(lmer, glance)) #glance at the model results
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(BIC) #look at the model fitting info 
+rep_output_models_log_CD_GD %>% select(-f, -lmer) %>% unnest(glance) %>% arrange(AIC) #look at the model fitting info 
+#pop block best by AIC and BIC ...
+#pop.mf preferred by AIC & BIC, WY models are close after
+#show results:
+rep_output_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value)
+#  arrange(p.value)
+```
