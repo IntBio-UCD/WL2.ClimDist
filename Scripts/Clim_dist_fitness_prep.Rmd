@@ -222,8 +222,7 @@ write_csv(wl2_prob_fitness, "../Processed.Data/WL2_ProbFit.csv")
 ```{r}
 wl2_rep_output <- wl2_total_fitness %>% 
   filter(Total_Fitness > 0) %>% 
-  mutate(logTotalFitness=log(Total_Fitness)) %>% 
-  select(block:Elev_Dist, Total_Fitness:logTotalFitness)
+  select(block:Elev_Dist, Total_Fitness)
 
 write_csv(wl2_rep_output, "../Processed.Data/WL2_TotalRepOutput.csv")
 ```

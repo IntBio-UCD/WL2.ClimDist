@@ -813,8 +813,7 @@ write_csv(wl2_prob_fitness, &quot;../Processed.Data/WL2_ProbFit.csv&quot;)</code
 <h2>Total Fruit Number</h2>
 <pre class="r"><code>wl2_rep_output &lt;- wl2_total_fitness %&gt;% 
   filter(Total_Fitness &gt; 0) %&gt;% 
-  mutate(logTotalFitness=log(Total_Fitness)) %&gt;% 
-  select(block:Elev_Dist, Total_Fitness:logTotalFitness)
+  select(block:Elev_Dist, Total_Fitness)
 
 write_csv(wl2_rep_output, &quot;../Processed.Data/WL2_TotalRepOutput.csv&quot;)</code></pre>
 </div>
