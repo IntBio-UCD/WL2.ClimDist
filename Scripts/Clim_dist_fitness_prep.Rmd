@@ -52,6 +52,7 @@ write_csv(wl2_surv_y1, "../Processed.Data/WL2_Mortality_2023.csv")
 ```
 
 ```{r}
+#post-winter surv check 
 post_winter <- read_csv("../Raw.Data/WL2_status_check_20240603_corrected.csv",
                          na = c("", "NA", "-", "N/A")) 
 post_winter_clean <- post_winter %>% 
@@ -63,25 +64,29 @@ post_winter_clean <- post_winter %>%
   filter(BedLoc!="B_32_A") %>% #get rid of duplicate locations
   unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
   filter(pop!="buffer", !str_detect(mf, "buf")) %>% 
-  mutate(mf=as.double(mf), rep=as.double(rep))
+  mutate(mf=as.double(mf), rep=as.double(rep)) %>% 
+  select(-`bed- row`, -`bed- col`)
 
+#year 2 pop info 
 wl2_y2_pops <- read_csv("../Raw.Data/Final_2023_2024_Pop_Loc_Info.csv") %>%
   select(Pop.Type:unique.ID) %>% 
   filter(Pop.Type=="2023-survivor") %>% 
   select(Pop.Type, loc:bed, row=bedrow, col=bedcol, pop:unique.ID)
-wl2_blocks <- read_csv("../input/WL2_Data/CorrectedCSVs/WL2_mort_pheno_20231020_corrected.csv") %>% 
+wl2_blocks <- read_csv("../Raw.Data/WL2_mort_pheno_20231020_corrected.csv") %>% 
   unite(BedLoc, bed:bed.col, sep="_", remove = FALSE) %>% 
   filter(BedLoc!="K_5_C") %>% #get rid of duplicate locations
   select(block, pop, mf, rep) %>% #add in block info 
   mutate(mf=as.double(mf), rep=as.double(rep)) #convert to num
 wl2_y2_pops_blocks <- left_join(wl2_y2_pops, wl2_blocks)
 
+#year 2 survival info 
 wl2_20241023 <- read_csv("../Raw.Data/WL2_mort_pheno_20241023_corrected.csv") %>% #note this has 2023 and 2024 plants
   select(-block)
 wl2_surv_y2 <- left_join(wl2_y2_pops_blocks, wl2_20241023) %>%  
   rename(Genotype=unique.ID)
 
-wl2_ann_cens_2024 <- read_csv("../input/WL2_Data/WL2_Annual_Census_20241023_corrected.csv")
+#year 2 rep info 
+wl2_ann_cens_2024 <- read_csv("../Raw.Data/WL2_Annual_Census_20241023_corrected.csv")
 wl2_ann_cens_2024_pops <- left_join(wl2_y2_pops_blocks, wl2_ann_cens_2024) %>%  
   rename(Genotype=unique.ID)
 ```
@@ -93,7 +98,8 @@ wl2_establishment <- wl2_surv_y1 %>%
   mutate(death.date=mdy(death.date)) %>% 
   mutate(Establishment=if_else(is.na(death.date), 1,
                                if_else(death.date=="2023-07-26" | death.date=="2023-08-02" | death.date=="2023-08-09", 0,
-                                       1)))
+                                       1))) %>% 
+  select(-survey.notes)
 write_csv(wl2_establishment, "../Processed.Data/WL2_Establishment.csv")
 ```
 
@@ -105,7 +111,8 @@ wl2_surv_to_rep_y1 <- wl2_surv_y1 %>%
   left_join(clim_geo_dist) %>% 
   filter(Establishment==1) %>% #filter to only indivs that established 
   mutate(bud.date=if_else(Genotype=="TM2_1_11", "10/27/23", bud.date)) %>% #add in bud date for the plant that started budding the week of the annual census 
-  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) 
+  mutate(SurvtoRep_Y1=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(-survey.notes)
 
 wl2_surv_to_rep_y1 %>% group_by(pop) %>% filter(SurvtoRep_Y1>0) %>% summarise(n=n()) %>% arrange(n) 
 #only TM2 and FR budded in year 1 
@@ -116,12 +123,13 @@ write_csv(wl2_surv_to_rep_y1, "../Processed.Data//WL2_SurvtoRep_y1.csv")
 ## Fruit Number Y1
 ```{r}
 wl2_fruits_y1 <- wl2_ann_cens %>% select(block:rep, y1_flowers=num.flw, y1_fruits=num.fruit) %>% 
-  filter(fruits>0) %>% 
+  filter(y1_fruits>0) %>% 
   mutate(FrFlN_y1=y1_fruits+y1_flowers) %>% 
-  left_join(clim_geo_dist)
+  left_join(clim_geo_dist) %>% 
+  select(-`bed-row`, -`bed-col`)
 wl2_fruits_y1 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #all TM2
 
-write_csv(wl2_fruits_y1, "../Processed.Data/WL2_Traits/WL2_Fruits_Y1.csv")
+write_csv(wl2_fruits_y1, "../Processed.Data/WL2_Fruits_Y1.csv")
 ```
 
 ## First Year Survival
@@ -131,11 +139,12 @@ first_yr_surv <- wl2_surv_y1 %>%
   left_join(wl2_establishment) %>% 
   left_join(clim_geo_dist) %>% 
   filter(Establishment==1) %>% #filter to only indivs that established 
-  mutate(Y1Survival=if_else(is.na(death.date), 1, 0)) 
+  mutate(Y1Survival=if_else(is.na(death.date), 1, 0)) %>% 
+  select(-survey.notes)
 
 first_yr_surv %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n) #min sample size = 4 
 
-write_csv(first_yr_surv, "../Processed.Data//WL2_Y1Surv.csv")
+write_csv(first_yr_surv, "../Processed.Data/WL2_Y1Surv.csv")
 ```
 
 ## Winter Survival
@@ -143,9 +152,10 @@ write_csv(first_yr_surv, "../Processed.Data//WL2_Y1Surv.csv")
 winter_surv <- post_winter_clean %>% 
   left_join(clim_geo_dist) %>% 
   filter(death.date == "A" | death.date == "B" | death.date == "C" | death.date == "D") %>% 
-  mutate(WinterSurv=if_else(death.date=="D", 0, 1))
+  mutate(WinterSurv=if_else(death.date=="D", 0, 1)) %>% 
+  select(-survey.notes)
 
-write_csv(winter_surv, "../Processed.Data//WL2_WinterSurv.csv")
+write_csv(winter_surv, "../Processed.Data/WL2_WinterSurv.csv")
 ```
 
 ## Survival to Budding Y2
@@ -155,38 +165,43 @@ wl2_surv_to_rep_y2 <- wl2_surv_y2 %>%
   mutate(bud.date=if_else(Genotype=="SC_6_15" | Genotype=="SC_5_6" | 
                             Genotype=="CC_9_6" | Genotype=="WL2_8_4",
                           "Missed", bud.date)) %>% #add in bud date for plants with a later rep date 
-  mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) 
+  mutate(SurvtoRep_y2=if_else(is.na(bud.date), 0, 1)) %>% 
+  select(pop:block, death.date, elevation.group:SurvtoRep_y2)
 
-#wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
+wl2_surv_to_rep_y2 %>% group_by(pop) %>% summarise(n=n()) %>% arrange(n)
 #LV1, SQ1, and WR only have 1 indiv alive in 2024
 
-write_csv(wl2_surv_to_rep_y2, "../Processed.Data//WL2_Surv_to_Rep_Y2.csv")
+write_csv(wl2_surv_to_rep_y2, "../Processed.Data/WL2_Surv_to_Rep_Y2.csv")
 ```
 
 ## Fruit Number Y2
 ```{r}
-wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% select(Pop.Type:block, y2_flowers=num.flw, y2_fruits=num.fruit) %>%
+wl2_fruits_y2 <- wl2_ann_cens_2024_pops %>% 
+  select(Pop.Type:block, y2_flowers=num.flw, y2_fruits=num.fruit) %>%
   mutate(FrFlN_y2=y2_fruits+y2_flowers) %>% 
-  left_join(clim_geo_dist)
+  left_join(clim_geo_dist) %>% 
+  select(pop:block, y2_flowers:Elev_Dist)
 
 wl2_fruits_y2_nozeros <- wl2_fruits_y2 %>% 
-  filter(fruits>0)
-summary(wl2_fruits_y2_nozeros)
+  filter(y2_fruits>0)
 
 wl2_FRFLs_y2_nozeros <- wl2_fruits_y2 %>% 
-  filter(FrFlN>0)
-summary(wl2_FRFLs_y2_nozeros)
+  filter(FrFlN_y2>0)
 
-write_csv(wl2_fruits_y2_nozeros, "../Processed.Data//WL2_Fruits_Y2.csv")
+write_csv(wl2_fruits_y2_nozeros, "../Processed.Data/WL2_Fruits_Y2.csv")
 ```
 
 ## Merge all fitness components
 ```{r}
 wl2_total_fitness <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>% 
   left_join(wl2_fruits_y1) %>% 
+  select(-death.date, -bud.date) %>% #remove y1 death and bud dates 
+  mutate(mf=as.numeric(mf), rep=as.numeric(rep)) %>% #convert these cols to numeric for merging 
   left_join(winter_surv) %>% 
+  select(-death.date) %>% 
   left_join(wl2_surv_to_rep_y2) %>% 
   left_join(wl2_fruits_y2) %>% 
+  select(-death.date) %>% 
   mutate(SurvtoRep_Y1=if_else(is.na(SurvtoRep_Y1), 0, SurvtoRep_Y1),
          y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
          y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
