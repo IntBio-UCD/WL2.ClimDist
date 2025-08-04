@@ -1360,7 +1360,7 @@ snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ1&quot;, firstmonth==1)
 ## 1 WL2        high             2020.          1        12     2014    2014     2
 ## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
 ## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
-<pre class="r"><code>#Check with J&amp;J about the above WL1 and WL2 cases, for now just leave them in </code></pre>
+<pre class="r"><code>#Will leave these cases in </code></pre>
 </div>
 <div id="deal-with-weird-cases-1" class="section level4">
 <h4>Deal with weird cases</h4>
@@ -1737,7 +1737,7 @@ wtr_yr_clim &lt;- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %&gt
 <pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
 ## year)`</code></pre>
 <pre class="r"><code>all_clim &lt;- bind_rows(wtr_yr_clim, grwssn_clim)
-write_csv(all_clim, &quot;../Processed.Data/Climate/All_Clim.csv&quot;)</code></pre>
+write_csv(all_clim, &quot;../Processed.Data/All_Clim.csv&quot;)</code></pre>
 </div>
 </div>
 

@@ -519,7 +519,7 @@ snow_60_last_month_col %>% filter(parent.pop=="WL1", firstmonth<3) %>%
   filter(pck>70, month>firstmonth, month<10) #3 years with high snow pack 1 or 2 months post germ (1991, 2009, 2018)
 snow_60_last_month_col %>% filter(parent.pop=="WL2", firstmonth<=3) %>% 
   filter(pck>70, month>firstmonth, month<10) #1 year with high snow pack 1 month post germ (2014) 
-#Check with J&J about the above WL1 and WL2 cases, for now just leave them in 
+#Will leave these cases in 
 ```
 
 #### Deal with weird cases
