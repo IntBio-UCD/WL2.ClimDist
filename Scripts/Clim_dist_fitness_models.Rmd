@@ -663,7 +663,7 @@ rep_output_SUB_models_log_CD_GD <- tribble(
   #Troubleshoot weird GrwSsn-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
   "3b_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
   "3c_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "3d_GS_Historical",  "logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
+  "3d_GS_Historical",  "logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)",
   
   #water year models:
   "4_WY_Recent",      "logTotalFitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist +(1|pop) + (1|block)",
