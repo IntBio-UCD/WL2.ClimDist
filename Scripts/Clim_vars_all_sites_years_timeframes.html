@@ -392,15 +392,6 @@ S4-S7; Table 1-2)</p></li>
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
 <pre class="r"><code>sem &lt;- function(x, na.rm=FALSE) { #standard error function 
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
-} 
-
-true_round &lt;- function(number, digits) { #rounding function that bypasses R&#39;s round to even default
-  posneg &lt;- sign(number)
-  number &lt;- abs(number) * 10^digits
-  number &lt;- number + 0.5 + sqrt(.Machine$double.eps)
-  number &lt;- trunc(number)
-  number &lt;- number / 10 ^ digits
-  number * posneg
 } </code></pre>
 </div>
 <div id="load-the-pop-and-location-data" class="section level2">
@@ -553,10 +544,11 @@ flint_all_year_wtr_yr &lt;- flint_all_year_mosnums %&gt;%
   mutate(timeframe = case_when(
                                 wtr_yr &lt; 1964 ~ &quot;beforehistoric&quot;,
                                 wtr_yr &gt;= 1964 &amp; wtr_yr &lt; 1994 ~ &quot;historic&quot;,
-                                wtr_yr &gt;= 1994 &amp; wtr_yr &lt; 2024 ~ &quot;recent&quot;)) %&gt;%
+                                wtr_yr &gt;= 1994 &amp; wtr_yr &lt; 2024 ~ &quot;recent&quot;,
+                                wtr_yr == 2024 ~ &quot;2024&quot;)) %&gt;%
                          mutate(timeframe = as.factor(timeframe), month = as.factor(month)) %&gt;%
                          filter(wtr_yr != 1895) %&gt;% #remove years with less than 12 months of data 
-                        filter(if_else(parent.pop!=&quot;WL2_Garden&quot;, wtr_yr&lt;2024, wtr_yr&lt;=2024)) %&gt;% #only keep the WL2 garden climate for 2024 water year 
+                        filter(if_else(parent.pop!=&quot;WL2_Garden&quot;, wtr_yr&lt;2024, wtr_yr&lt;=2024)) %&gt;% #Since the home sites climate ends in 2023, need to keep 2024 for the garden (for climate distance comparisons)
                          mutate(months_wtryr = case_when(
                            month == &quot;nov&quot; ~ 1,
                            month == &quot;dec&quot; ~ 2,
@@ -581,10 +573,10 @@ summary(flint_all_year_wtr_yr)</code></pre>
 ##                                        Max.   :2872.3                     
 ##                                                                           
 ##      Long                year          month                timeframe    
-##  Length:38412       Min.   :1895   apr    : 3201   beforehistoric:20400  
-##  Class :character   1st Qu.:1927   aug    : 3201   historic      : 9000  
-##  Mode  :character   Median :1959   dec    : 3201   recent        : 9000  
-##                     Mean   :1959   feb    : 3201   NA&#39;s          :   12  
+##  Length:38412       Min.   :1895   apr    : 3201   2024          :   12  
+##  Class :character   1st Qu.:1927   aug    : 3201   beforehistoric:20400  
+##  Mode  :character   Median :1959   dec    : 3201   historic      : 9000  
+##                     Mean   :1959   feb    : 3201   recent        : 9000  
 ##                     3rd Qu.:1991   jan    : 3201                         
 ##                     Max.   :2024   jul    : 3201                         
 ##                                    (Other):19206                         
@@ -682,10 +674,10 @@ bioclim_wtryr &lt;- full_join(bioclim_wtr_yr_calc, all_periods_wtryr)</code></pr
 ## wtr_yr)`</code></pre>
 <pre class="r"><code>summary(bioclim_wtryr)</code></pre>
 <pre><code>##   parent.pop        elevation.group        elev_m                timeframe   
-##  Length:3201        Length:3201        Min.   :  16.0   beforehistoric:1700  
-##  Class :character   Class :character   1st Qu.: 748.9   historic      : 750  
-##  Mode  :character   Mode  :character   Median :1934.5   recent        : 750  
-##                                        Mean   :1599.3   NA&#39;s          :   1  
+##  Length:3201        Length:3201        Min.   :  16.0   2024          :   1  
+##  Class :character   Class :character   1st Qu.: 748.9   beforehistoric:1700  
+##  Mode  :character   Mode  :character   Median :1934.5   historic      : 750  
+##                                        Mean   :1599.3   recent        : 750  
 ##                                        3rd Qu.:2353.6                        
 ##                                        Max.   :2872.3                        
 ##      wtr_yr       ann_tmean       mean_diurnal_range temp_seasonality
@@ -748,7 +740,7 @@ pop_elev_climate_60 &lt;- pop_elev_climate %&gt;%
   arrange(parent.pop, year_cal, month)</code></pre>
 <pre><code>## Joining with `by = join_by(month)`</code></pre>
 <pre class="r"><code>pop_elev_climate_60_avgs &lt;- pop_elev_climate_60 %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, month) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %&gt;% 
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
 names(pop_elev_climate_60_avgs) &lt;- gsub(&quot;fn2&quot;, &quot;sem&quot;, colnames(pop_elev_climate_60_avgs))
 names(pop_elev_climate_60_avgs) &lt;-gsub(&quot;fn1&quot;, &quot;mean&quot;, colnames(pop_elev_climate_60_avgs))
@@ -776,95 +768,104 @@ pops</p>
 unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH </code></pre>
 <pre><code>## [1] &quot;BH&quot;  &quot;CC&quot;  &quot;IH&quot;  &quot;SC&quot;  &quot;TM2&quot;</code></pre>
 <pre class="r"><code>summary(nosnow_pops_60) #3rd quartile of CWD = 85.15</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m          month      
-##  Length:60          Length:60          Min.   :313.0   Min.   : 1.00  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.: 3.75  
-##  Mode  :character   Mode  :character   Median :421.5   Median : 6.50  
-##                                        Mean   :415.8   Mean   : 6.50  
-##                                        3rd Qu.:454.1   3rd Qu.: 9.25  
-##                                        Max.   :511.4   Max.   :12.00  
-##     cwd_mean         pck_mean         ppt_mean          tmn_mean     
-##  Min.   : 12.60   Min.   :0.0000   Min.   :  1.187   Min.   : 1.908  
-##  1st Qu.: 30.12   1st Qu.:0.0000   1st Qu.: 12.895   1st Qu.: 4.387  
-##  Median : 56.57   Median :0.0000   Median : 59.540   Median : 8.216  
-##  Mean   : 62.21   Mean   :0.2264   Mean   : 75.540   Mean   : 8.674  
-##  3rd Qu.: 85.15   3rd Qu.:0.0000   3rd Qu.:134.436   3rd Qu.:13.258  
-##  Max.   :165.57   Max.   :4.8048   Max.   :208.515   Max.   :17.019  
-##     tmx_mean        cwd_sem          pck_sem          ppt_sem       
-##  Min.   :12.29   Min.   :0.1267   Min.   :0.0000   Min.   : 0.5377  
-##  1st Qu.:15.99   1st Qu.:0.4431   1st Qu.:0.0000   1st Qu.: 2.1691  
-##  Median :22.38   Median :1.1976   Median :0.0000   Median : 7.0161  
-##  Mean   :22.75   Mean   :1.7809   Mean   :0.1455   Mean   : 7.7627  
-##  3rd Qu.:30.46   3rd Qu.:3.1102   3rd Qu.:0.0000   3rd Qu.:12.1532  
-##  Max.   :34.94   Max.   :7.2511   Max.   :2.5238   Max.   :18.8062  
-##     tmn_sem          tmx_sem           PckSum      
-##  Min.   :0.1526   Min.   :0.1682   Min.   :0.1170  
-##  1st Qu.:0.1783   1st Qu.:0.2054   1st Qu.:0.4248  
-##  Median :0.1858   Median :0.2393   Median :0.4755  
-##  Mean   :0.1880   Mean   :0.2426   Mean   :2.7170  
-##  3rd Qu.:0.1990   3rd Qu.:0.2769   3rd Qu.:2.7337  
-##  Max.   :0.2163   Max.   :0.3145   Max.   :9.8342</code></pre>
-<pre class="r"><code>nosnow_pops_60_tojoin &lt;- nosnow_pops_60 %&gt;% select(parent.pop:elev_m, PckSum) %&gt;% distinct() #pull out PckSum
+<pre><code>##   parent.pop        elevation.group        elev_m          Lat           
+##  Length:60          Length:60          Min.   :313.0   Length:60         
+##  Class :character   Class :character   1st Qu.:379.2   Class :character  
+##  Mode  :character   Mode  :character   Median :421.5   Mode  :character  
+##                                        Mean   :415.8                     
+##                                        3rd Qu.:454.1                     
+##                                        Max.   :511.4                     
+##      Long               month          cwd_mean         pck_mean     
+##  Length:60          Min.   : 1.00   Min.   : 12.60   Min.   :0.0000  
+##  Class :character   1st Qu.: 3.75   1st Qu.: 30.12   1st Qu.:0.0000  
+##  Mode  :character   Median : 6.50   Median : 56.57   Median :0.0000  
+##                     Mean   : 6.50   Mean   : 62.21   Mean   :0.2264  
+##                     3rd Qu.: 9.25   3rd Qu.: 85.15   3rd Qu.:0.0000  
+##                     Max.   :12.00   Max.   :165.57   Max.   :4.8048  
+##     ppt_mean          tmn_mean         tmx_mean        cwd_sem      
+##  Min.   :  1.187   Min.   : 1.908   Min.   :12.29   Min.   :0.1267  
+##  1st Qu.: 12.895   1st Qu.: 4.387   1st Qu.:15.99   1st Qu.:0.4431  
+##  Median : 59.540   Median : 8.216   Median :22.38   Median :1.1976  
+##  Mean   : 75.540   Mean   : 8.674   Mean   :22.75   Mean   :1.7809  
+##  3rd Qu.:134.436   3rd Qu.:13.258   3rd Qu.:30.46   3rd Qu.:3.1102  
+##  Max.   :208.515   Max.   :17.019   Max.   :34.94   Max.   :7.2511  
+##     pck_sem          ppt_sem           tmn_sem          tmx_sem      
+##  Min.   :0.0000   Min.   : 0.5377   Min.   :0.1526   Min.   :0.1682  
+##  1st Qu.:0.0000   1st Qu.: 2.1691   1st Qu.:0.1783   1st Qu.:0.2054  
+##  Median :0.0000   Median : 7.0161   Median :0.1858   Median :0.2393  
+##  Mean   :0.1455   Mean   : 7.7627   Mean   :0.1880   Mean   :0.2426  
+##  3rd Qu.:0.0000   3rd Qu.:12.1532   3rd Qu.:0.1990   3rd Qu.:0.2769  
+##  Max.   :2.5238   Max.   :18.8062   Max.   :0.2163   Max.   :0.3145  
+##      PckSum      
+##  Min.   :0.1170  
+##  1st Qu.:0.4248  
+##  Median :0.4755  
+##  Mean   :2.7170  
+##  3rd Qu.:2.7337  
+##  Max.   :9.8342</code></pre>
+<pre class="r"><code>nosnow_pops_60_tojoin &lt;- nosnow_pops_60 %&gt;% select(parent.pop:Long, PckSum) %&gt;% distinct() #pull out PckSum
 nosnow_pops_60_years &lt;- left_join(nosnow_pops_60_tojoin, pop_elev_climate_60) #add PckSum to full 60 year data frame </code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
 <pre class="r"><code>#first month
 nosnow_60_first_month &lt;- nosnow_pops_60_years %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, grow_yr) %&gt;% 
   filter(ppt&gt;=25) %&gt;% 
   arrange(growmonth) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with germinating inducing rain 
 nosnow_60_first_month_tomerge &lt;- nosnow_60_first_month %&gt;% 
-  select(parent.pop:elev_m, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, firstmonth=growmonth) #first month is in grow month not calendar month format
 #merge:
 nosnow_60_first_month_col &lt;- full_join(nosnow_pops_60_years, nosnow_60_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, grow_yr)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## grow_yr)`</code></pre>
 <pre class="r"><code>#last month
 nosnow_60_last_month &lt;- nosnow_60_first_month_col %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, grow_yr) %&gt;% 
   filter(growmonth&gt;firstmonth) %&gt;% #start the search at the first month of the growth season 
   filter(cwd&gt;85.15) %&gt;% #last month is when cwd gets too high 
   arrange(growmonth) %&gt;% 
   filter(row_number()==1)
 nosnow_60_last_month_tomerge &lt;- nosnow_60_last_month %&gt;% 
-  select(parent.pop:elev_m, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
+  select(parent.pop:Long, grow_yr, lastmonth=growmonth) #last month is in grow month not calendar month format
 nosnow_60_last_month_col &lt;- full_join(nosnow_60_first_month_col, nosnow_60_last_month_tomerge) %&gt;% 
   select(parent.pop:growmonth, firstmonth, lastmonth, cwd:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, grow_yr)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## grow_yr)`</code></pre>
 <div id="checking-for-weird-cases" class="section level4">
 <h4>Checking for weird cases</h4>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(is.na(lastmonth)) %&gt;% arrange(grow_yr) #16 cases in IH with no last month </code></pre>
 <pre><code>## # A tibble: 192 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.   9.83 39.093… -120…     1964    1965     9
-##  2 IH         low               454.   9.83 39.093… -120…     1964    1965    10
-##  3 IH         low               454.   9.83 39.093… -120…     1964    1965    11
-##  4 IH         low               454.   9.83 39.093… -120…     1964    1965    12
-##  5 IH         low               454.   9.83 39.093… -120…     1965    1965     1
-##  6 IH         low               454.   9.83 39.093… -120…     1965    1965     2
-##  7 IH         low               454.   9.83 39.093… -120…     1965    1965     3
-##  8 IH         low               454.   9.83 39.093… -120…     1965    1965     4
-##  9 IH         low               454.   9.83 39.093… -120…     1965    1965     5
-## 10 IH         low               454.   9.83 39.093… -120…     1965    1965     6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…   9.83     1964    1965     9
+##  2 IH         low               454. 39.093… -120…   9.83     1964    1965    10
+##  3 IH         low               454. 39.093… -120…   9.83     1964    1965    11
+##  4 IH         low               454. 39.093… -120…   9.83     1964    1965    12
+##  5 IH         low               454. 39.093… -120…   9.83     1965    1965     1
+##  6 IH         low               454. 39.093… -120…   9.83     1965    1965     2
+##  7 IH         low               454. 39.093… -120…   9.83     1965    1965     3
+##  8 IH         low               454. 39.093… -120…   9.83     1965    1965     4
+##  9 IH         low               454. 39.093… -120…   9.83     1965    1965     5
+## 10 IH         low               454. 39.093… -120…   9.83     1965    1965     6
 ## # ℹ 182 more rows
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;IH&quot;) #most of above = cases where the next Sept is the month with cwd past the threshold --&gt; figure out how to add this month into the final climate </code></pre>
 <pre><code>## # A tibble: 720 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.   9.83 39.093… -120…     1963    1964     9
-##  2 IH         low               454.   9.83 39.093… -120…     1963    1964    10
-##  3 IH         low               454.   9.83 39.093… -120…     1963    1964    11
-##  4 IH         low               454.   9.83 39.093… -120…     1963    1964    12
-##  5 IH         low               454.   9.83 39.093… -120…     1964    1964     1
-##  6 IH         low               454.   9.83 39.093… -120…     1964    1964     2
-##  7 IH         low               454.   9.83 39.093… -120…     1964    1964     3
-##  8 IH         low               454.   9.83 39.093… -120…     1964    1964     4
-##  9 IH         low               454.   9.83 39.093… -120…     1964    1964     5
-## 10 IH         low               454.   9.83 39.093… -120…     1964    1964     6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…   9.83     1963    1964     9
+##  2 IH         low               454. 39.093… -120…   9.83     1963    1964    10
+##  3 IH         low               454. 39.093… -120…   9.83     1963    1964    11
+##  4 IH         low               454. 39.093… -120…   9.83     1963    1964    12
+##  5 IH         low               454. 39.093… -120…   9.83     1964    1964     1
+##  6 IH         low               454. 39.093… -120…   9.83     1964    1964     2
+##  7 IH         low               454. 39.093… -120…   9.83     1964    1964     3
+##  8 IH         low               454. 39.093… -120…   9.83     1964    1964     4
+##  9 IH         low               454. 39.093… -120…   9.83     1964    1964     5
+## 10 IH         low               454. 39.093… -120…   9.83     1964    1964     6
 ## # ℹ 710 more rows
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
@@ -877,129 +878,129 @@ pop_elev_climate %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% filter(month==
 ## # ℹ 4 more variables: pet &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(is.na(firstmonth)) %&gt;% arrange(grow_yr) #0 cases </code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(firstmonth&gt;4) #1 case in BH (2014) where first month is after December, this is fine, right?</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     2013    2014     9
-##  2 BH         low               511.  0.117 37.409… -119…     2013    2014    10
-##  3 BH         low               511.  0.117 37.409… -119…     2013    2014    11
-##  4 BH         low               511.  0.117 37.409… -119…     2013    2014    12
-##  5 BH         low               511.  0.117 37.409… -119…     2014    2014     1
-##  6 BH         low               511.  0.117 37.409… -119…     2014    2014     2
-##  7 BH         low               511.  0.117 37.409… -119…     2014    2014     3
-##  8 BH         low               511.  0.117 37.409… -119…     2014    2014     4
-##  9 BH         low               511.  0.117 37.409… -119…     2014    2014     5
-## 10 BH         low               511.  0.117 37.409… -119…     2014    2014     6
-## 11 BH         low               511.  0.117 37.409… -119…     2014    2014     7
-## 12 BH         low               511.  0.117 37.409… -119…     2014    2014     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     2013    2014     9
+##  2 BH         low               511. 37.409… -119…  0.117     2013    2014    10
+##  3 BH         low               511. 37.409… -119…  0.117     2013    2014    11
+##  4 BH         low               511. 37.409… -119…  0.117     2013    2014    12
+##  5 BH         low               511. 37.409… -119…  0.117     2014    2014     1
+##  6 BH         low               511. 37.409… -119…  0.117     2014    2014     2
+##  7 BH         low               511. 37.409… -119…  0.117     2014    2014     3
+##  8 BH         low               511. 37.409… -119…  0.117     2014    2014     4
+##  9 BH         low               511. 37.409… -119…  0.117     2014    2014     5
+## 10 BH         low               511. 37.409… -119…  0.117     2014    2014     6
+## 11 BH         low               511. 37.409… -119…  0.117     2014    2014     7
+## 12 BH         low               511. 37.409… -119…  0.117     2014    2014     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth&lt;4) %&gt;% arrange(parent.pop, grow_yr) #1 case in BH 1979 where last month is less than 4 (earlier than December), it&#39;s actually only 1 month post start</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth==firstmonth) %&gt;% arrange(parent.pop, grow_yr) #0 cases</code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth==1) %&gt;% arrange(parent.pop, grow_yr) #0 cases where Sept is last month </code></pre>
 <pre><code>## # A tibble: 0 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [0]
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
 ## # ℹ 17 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   PckSum &lt;dbl&gt;, Lat &lt;chr&gt;, Long &lt;chr&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, PckSum &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
 ## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
 ## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(lastmonth&lt;6) #1 case where Oct-Dec is the last month (same BH as above)</code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(growmonth==firstmonth+1, cwd&gt;85.15) %&gt;% arrange(parent.pop, grow_yr) #1 case where cwd is high in the second growth month (same BH as above - 1979)</code></pre>
 <pre><code>## # A tibble: 1 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m PckSum Lat      Long  year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 BH         low               511.  0.117 37.40985 -119…     1978    1979    10
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat      Long  PckSum year_cal grow_yr month
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+## 1 BH         low               511. 37.40985 -119…  0.117     1978    1979    10
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;BH&quot;, grow_yr==1979) #next growmonth with high enough CWD = 10, use that instead of 2? </code></pre>
 <pre><code>## # A tibble: 12 × 17
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 BH         low               511.  0.117 37.409… -119…     1978    1979     9
-##  2 BH         low               511.  0.117 37.409… -119…     1978    1979    10
-##  3 BH         low               511.  0.117 37.409… -119…     1978    1979    11
-##  4 BH         low               511.  0.117 37.409… -119…     1978    1979    12
-##  5 BH         low               511.  0.117 37.409… -119…     1979    1979     1
-##  6 BH         low               511.  0.117 37.409… -119…     1979    1979     2
-##  7 BH         low               511.  0.117 37.409… -119…     1979    1979     3
-##  8 BH         low               511.  0.117 37.409… -119…     1979    1979     4
-##  9 BH         low               511.  0.117 37.409… -119…     1979    1979     5
-## 10 BH         low               511.  0.117 37.409… -119…     1979    1979     6
-## 11 BH         low               511.  0.117 37.409… -119…     1979    1979     7
-## 12 BH         low               511.  0.117 37.409… -119…     1979    1979     8
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 BH         low               511. 37.409… -119…  0.117     1978    1979     9
+##  2 BH         low               511. 37.409… -119…  0.117     1978    1979    10
+##  3 BH         low               511. 37.409… -119…  0.117     1978    1979    11
+##  4 BH         low               511. 37.409… -119…  0.117     1978    1979    12
+##  5 BH         low               511. 37.409… -119…  0.117     1979    1979     1
+##  6 BH         low               511. 37.409… -119…  0.117     1979    1979     2
+##  7 BH         low               511. 37.409… -119…  0.117     1979    1979     3
+##  8 BH         low               511. 37.409… -119…  0.117     1979    1979     4
+##  9 BH         low               511. 37.409… -119…  0.117     1979    1979     5
+## 10 BH         low               511. 37.409… -119…  0.117     1979    1979     6
+## 11 BH         low               511. 37.409… -119…  0.117     1979    1979     7
+## 12 BH         low               511. 37.409… -119…  0.117     1979    1979     8
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 </div>
 <div id="deal-with-weird-cases" class="section level4">
 <h4>Deal with weird cases</h4>
 <pre class="r"><code>summary(nosnow_60_last_month_col) #first month in data set = 1, last month in data set = 12 (in grow months)</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m          PckSum      
-##  Length:3600        Length:3600        Min.   :313.0   Min.   :0.1170  
-##  Class :character   Class :character   1st Qu.:379.2   1st Qu.:0.4248  
-##  Mode  :character   Mode  :character   Median :421.5   Median :0.4755  
-##                                        Mean   :415.8   Mean   :2.7170  
-##                                        3rd Qu.:454.1   3rd Qu.:2.7337  
-##                                        Max.   :511.4   Max.   :9.8342  
-##                                                                        
-##      Lat                Long              year_cal       grow_yr    
-##  Length:3600        Length:3600        Min.   :1963   Min.   :1964  
-##  Class :character   Class :character   1st Qu.:1978   1st Qu.:1979  
-##  Mode  :character   Mode  :character   Median :1993   Median :1994  
-##                                        Mean   :1993   Mean   :1994  
-##                                        3rd Qu.:2008   3rd Qu.:2008  
-##                                        Max.   :2023   Max.   :2023  
-##                                                                     
+<pre><code>##   parent.pop        elevation.group        elev_m          Lat           
+##  Length:3600        Length:3600        Min.   :313.0   Length:3600       
+##  Class :character   Class :character   1st Qu.:379.2   Class :character  
+##  Mode  :character   Mode  :character   Median :421.5   Mode  :character  
+##                                        Mean   :415.8                     
+##                                        3rd Qu.:454.1                     
+##                                        Max.   :511.4                     
+##                                                                          
+##      Long               PckSum          year_cal       grow_yr    
+##  Length:3600        Min.   :0.1170   Min.   :1963   Min.   :1964  
+##  Class :character   1st Qu.:0.4248   1st Qu.:1978   1st Qu.:1979  
+##  Mode  :character   Median :0.4755   Median :1993   Median :1994  
+##                     Mean   :2.7170   Mean   :1993   Mean   :1994  
+##                     3rd Qu.:2.7337   3rd Qu.:2008   3rd Qu.:2008  
+##                     Max.   :9.8342   Max.   :2023   Max.   :2023  
+##                                                                   
 ##      month         growmonth       firstmonth      lastmonth    
 ##  Min.   : 1.00   Min.   : 1.00   Min.   :1.000   Min.   : 2.00  
 ##  1st Qu.: 3.75   1st Qu.: 3.75   1st Qu.:2.000   1st Qu.:10.00  
@@ -1025,13 +1026,13 @@ pop_elev_climate %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% filter(month==
 ##  Max.   :37.76  
 ## </code></pre>
 <pre class="r"><code>nosnow_60_last_month_col %&gt;% filter(parent.pop==&quot;IH&quot;) %&gt;% summarise(maxEnd=max(lastmonth, na.rm=TRUE)) #max end = 12 in grow months </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;. You can
-## override using the `.groups` argument.</code></pre>
-<pre><code>## # A tibble: 1 × 4
-## # Groups:   parent.pop, elevation.group [1]
-##   parent.pop elevation.group elev_m maxEnd
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt;
-## 1 IH         low               454.     12</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;. You can override using the `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 1 × 6
+## # Groups:   parent.pop, elevation.group, elev_m, Lat [1]
+##   parent.pop elevation.group elev_m Lat      Long       maxEnd
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;       &lt;dbl&gt;
+## 1 IH         low               454. 39.09332 -120.92114     12</code></pre>
 <pre class="r"><code>nosnow_60first_last_month &lt;- nosnow_60_last_month_col %&gt;% 
   mutate(lastmonth=if_else(parent.pop==&quot;IH&quot; &amp; grow_yr==2005, 12, #use the max end for the cases were CWD never &gt; 85.15
          if_else(parent.pop==&quot;IH&quot; &amp; grow_yr==2019, 12, #use the max end for the cases were CWD never &gt; 85.15
@@ -1065,13 +1066,13 @@ season</h4>
   bind_rows(IH_2023_sept) %&gt;% 
   arrange(year_cal, month) %&gt;% 
   select(-PckSum) %&gt;% #remove this since we lost it on the new rows 
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, grow_yr) %&gt;% 
   filter(growmonth&gt;firstmonth) %&gt;% #first and last month are in grow month format not calendar year 
   filter(growmonth&lt;=lastmonth) %&gt;% 
   arrange(parent.pop, grow_yr, growmonth)
 
 nosnow_grwseason_60 &lt;- nosnow_60first_last_month %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, grow_yr) %&gt;% 
   filter(growmonth&gt;firstmonth) %&gt;% #first and last month are in grow month format not calendar year 
   filter(growmonth&lt;=lastmonth) %&gt;% 
   bind_rows(IH_sept_last_month_fixed) %&gt;% 
@@ -1092,20 +1093,20 @@ xtabs(~parent.pop+month, data=nosnow_grwseason_60)</code></pre>
 <p><img role="img" src="data:image/png;base64,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CKycgAToynWpAyJAgAABAgQIECBAgAABAgQIECBAIAtIgGYJjwQIECBAgAABAgQIECBAgAABAgQIrJyABOjKdakDIkCAAAECBAgQIECAAAECBAgQIEAgC0iAZgmPBAgQIECAAAECBAgQIECAAAECBAisnIAE6Mp1qQMiQIAAAQIECBAgQIAAAQIECBAgQCALSIBmCY8ECBAgQIAAAQIECBAgQIAAAQIECKycgAToynWpAyJAgAABAgQIECBAgAABAgQIECBAIAtIgGYJjwQIECBAgAABAgQIECBAgAABAgQIrJyABOjKdakDIkCAAAECBAgQIECAAAECBAgQIEAgC0iAZgmPBAgQIECAAAECBAgQIECAAAECBAisnIAE6Mp1qQMiQIAAAQIECBAgQIAAAQIECBAgQCALSIBmCY8ECBAgQIAAAQIrKXDkyJHRxzVFHaODUAEBAgQIECBAgECRwNaivexEgACBmsAXvvCF9Mu//Mu1tX++ePbZZ6eLL7549u97v/d70+7dux9T7u1vf3v6+Mc/nr7/+78//diP/dhjtldXvOUtb0n/63/9r3T11VenH/mRH6luMk+AAAECBNK9996bPvCBD6QPfehD6c/+7M/S0aNH044dO9JFF12U/vpf/+vphS98YTr99NM7paaoo7MBGwkQIEDgcSFwyy23pF/91V9Nu3btSr/4i7+4dsz33HNP+tmf/dnZ8utf//rG10i58Ne//vX02te+drb4xje+ce5zWN7PIwECjwpIgD5qYY4AgREC8c6YL33pS601/NEf/dFs22/+5m+mf/2v/3V68pOffFLZb37zm7P9L7300pPWNy184xvfmJW9/PLLmzZbR4AAAQKPY4H/+T//Z/qFX/iFdOjQoZlCJD6/4zu+I919993pT//0T9N/+k//Kf3O7/zOrMwll1zSKDVFHY0VW0mAAAECjzuB+++/f/baJd4UUp0efPDBtddPMd81VcueOHGiq6htBAi0CEiAtsBYTYBAmUC80Pz3//7fr+0cT9DHjh1LkbT8jd/4jfS1r30t/eRP/mT6rd/6rbRt27a1cmYIECBAgMBYgY9+9KPpda973aya+MTBy172svTUpz51rdo//uM/Tr/yK7+S/uRP/iT9zM/8TLrhhhvSE57whLXtMTNFHSdVaIEAAQIECBAgQOCUC/gO0FPeBQIgsFoC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L6ZNmzal7/qu70p/+2//7fTkJz+58dCOHTuWbrzxxvTpT386HThwIF166aXpiiuuSNdcc03asmVL4z5WEiBAgAABAgQIECBAgAABAgQIECCw+AIrlQB98MEH03/4D/8hvfvd757J7969Ox09ejR94QtfSH/wB3+Qfu7nfi49//nPP6lXDh48mF7+8pen2267bbb+3HPPTTfffPPs38c//vF03XXXpW3btp20jwUCBAgQIECAAAECBAgQIECAAAECBJZDYKU+Av+f//N/niU/zzvvvPTLv/zL6b3vfW96//vfn37iJ34iPfzww+kXfuEX0u23335Sz7z2ta+dJT+vuuqq9L73vS+95z3vSe985zvTJZdckj72sY+lG2644aTyFggQIECAAAECBAgQIECAAAECBAgQWB6BlUmAHj58eJb83Lx5c/r5n//59KxnPSvFfHyE/cd//MdnH2uPd4P+4R/+4Vrv3HrrrelTn/pUOv3009PrXve6FO8YjemJT3xieuMb3zjb96abbkqHDh1a28cMAQIECBAgQIAAAQIECBAgQIAAAQLLI7AyCdDf+73fS5EE/ZEf+ZF0+eWXP6YHfuqnfir99E//dHrGM56xtu2jH/3obP55z3te2rFjx9r6mImPwj/72c9Ox48fT5EENREgQIAAAQIECBAgQIAAAQIECBAgsHwCK5MAjR8wiumv/JW/0tgLz3zmM9MLX/jCkxKg8d2gMcXH35umSIDG9LnPfa5ps3UECBAgQIAAAQIECBAgQIAAAQIECCy4wMr8CNJdd901o37qU5+avvrVr87etXnLLbek+GGkpz3taemlL33pY34F/mtf+9psn7PPPruxm/L6/ANJjYW+tfI//sf/mB566KHGzZGQjZj6TFu3/nl3nHnmmX2Kn1Sm+mv1p512WiqpI/aLqWTfajDx1QMldcR+McVXEpT88FTVYOfOnemRRx6phtVrPmKItkviz37RULyjuBpPr8a/VSjqGOsXbcW5VHIM+Rw844wzivw2bdo0O9R4LGk/7z/GbxbAt/6L82j79u15sfdj9Ftp/NkvGou28/H0bvxbBeP8K22/2l4cR0kf5PM2rqETJ04MCX1WNl/HsVDSfm5wjF+uI86j6nWZ1897zP1YEn/2izai7ZI6cswl+7YdW9+6cv/F9ZPjaKuzaX22i21jxuGxdtF+nEP5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AnQwmR0IECBAgAABAgQIECBAgAABAgQIEFgWAQnQZekpcRIgQIAAAQIECBAgQIAAAQIECBAgMFhAAnQwmR0IECBAgAABAgQIECBAgAABAgQIEFgWAQnQZekpcRIgQIAAAQIECBAgQIAAAQIECBAgMFhAAnQwmR0IECBAgAABAgQIECBAgAABAgQIEFgWAQnQZekpcRIgQIAAAQIECBAgQIAAAQIECBAgMFhAAnQwmR0IECBAgAABAgQIECBAgAABAgQIEFgWAQnQZekpcRIgQIAAAQIECBAgQIAAAQIECBAgMFhg6+A97EBggQWuueaaQdHt379/UHmFCRAgQIAAAQIECBAgQIAAAQIElkvAO0CXq79ES4AAAQIECBAgQIAAAQIECBAgQIDAAAEJ0AFYihIgQIAAAQIECBAgQIAAAQIECBAgsFwCEqDL1V+iJUCAAAECBAgQIECAAAECBAgQIEBggIAE6AAsRQkQIECAAAECBAgQIECAAAECBAgQWC4BCdDl6i/REiBAgAABAgQIECBAgAABAgQIECAwQEACdACWogQIECBAgAABAgQIECBAgAABAgQILJeABOhy9ZdoCRAgQIAAAQIECBAgQIAAAQIECBAYICABOgBLUQIECBAgQIAAAQIECBAgQIAAAQIElktAAnS5+ku0BAgQIECAAAECBAgQIECAAAECBAgMEJAAHYClKAECBAgQIECAAAECBAgQIECAAAECyyUgAbpc/SVaAgQIECBAgAABAgQIECBAgAABAgQGCEiADsBSlAABAgQIECBAgAABAgQIECBAgACB5RKQAF2u/hItAQIECBAgQIAAAQIECBAgQIAAAQIDBCRAB2ApSoAAAQIECBAgQIAAAQIECBAgQIDAcglIgC5Xf4mWAAECBAgQIECAAAECBAgQIECAAIEBAhKgA7AUJUCAAAECBAgQIECAAAECBAgQIEBguQQkQJerv0RLgAABAgQIECBAgAABAgQIECBAgMAAAQnQAViKEiBAgAABAgQIECBAgAABAgQIECCwXAISoMvVX6IlQIAAAQIECBAgQIAAAQIECBAgQGCAgAToACxFCRAgQIAAAQIECBAgQIAAAQIECBBYLgEJ0OXqL9ESIECAAAECBAgQIECAAAECBAgQIDBAYOuAsooWCGzZsiWdccYZvfaMsps2bepdvlpp7Jun0047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AgQIECBAgAABAgQIEFgSAQnQJekoYRIgQIAAAQIECBAgQIAAAQIECBAgMFxAAnS4mT0IECBAgAABAgQIECBAgAABAgQIEFgSAQnQJekoYRIgQIAAAQIECBAgQIAAAQIECBAgMFxAAnS4mT0IECBAgAABAgQIECBAgAABAgQIEFgSAQnQJekoYRIgQIAAAQIECBAgQIAAAQIECBAgMFxAAnS4mT0IECBAgAABAgQIECBAgAABAgQIEFgSAQnQJekoYRIgQIAAAQIECBAgQIAAAQIECBAgMFxAAnS4mT0IECBAgAABAgQIECBAgAABAgQIEFgSga1LEqcwCRAgQIAAAQKPEdi3b99j1nWt2L9/f9dm2wgQIECAwGABz0WDyexAgACBDRfwDtANJ9cgAQIECBAgQIAAAQIECBAgQIAAAQIbJSABulHS2iFAgAABAgQIECBAgAABAgQIECBAYMMFJEA3nFyDBAgQIECAAAECBAgQIECAAAECBAhslIAE6EZJa4cAAQIECBAgQIAAAQIECBAgQIAAgQ0XkADdcHINEiBAgAABAgQIECBAgAABAgQIECCwUQISoBslrR0CBAgQIECAAAECBAgQIECAAAECBDZcQAJ0w8k1SIAAAQIECBAgQIAAAQIECBAgQIDARglIgG6UtHYIECBAgAABAgQIECBAgAABAgQIENhwAQnQDSfXIAECBAgQIECAAAECBAgQIECAAAECGyUgAbpR0tohQIAAAQIECBAgQIAAAQIECBAgQGDDBSRAN5xcgwQIECBAgAABAgQIECBAgAABAgQIbJSABOhGSWuHAAECBAgQIECAAAECBAgQIECAAIENF5AA3XByDRIgQIAAAQIECBAgQIAAAQIECBAgsFECEqAbJa0dAgQIECBAgAABAgQIECBAgAABAgQ2XEACdMPJNUiAAAECBAgQIECAAAECBAgQIECAwEYJSIBulLR2CBAgQIAAAQIECBAgQIAAAQIECBDYcAEJ0A0n1yABAgQIECBAgAABAgQIECBAgAABAhslIAG6UdLaIUCAAAECBAgQIECAAAECBAgQIEBgwwUkQDecXIMECBAgQIAAAQIECBAgQIAAAQIECGyUgAToRklrhwABAgQIECBAgAABAgQIECBAgACBDReQAN1wcg0SIECAAAECBAgQIECAAAECBAgQILBRAhKgGyWtHQIECBAgQIAAAQIECBAgQIAAAQIENlxAAnTDyTVIgAABAgQIECBAgAABAgQIECBAgMBGCUiAbpS0dggQIECAAAECBAgQIECAAAECBAgQ2HABCdANJ9cgAQIECBAgQIAAAQIECBAgQIAAAQIbJbB1oxo6Ve189rOfTW9+85vTVVddla699trGMI4dO5ZuvPHG9OlPfzodOHAgXXrppemKK65I11xzTdqyZUvjPlYSIECAAAECBAgQIECAAAECBAgQILD4AiudAD106FB63etel+644470pCc9qbE3Dh48mF7+8pen2267bbb93HPPTTfffPPs38c//vF03XXXpW3btjXuayUBAgQIECBAgAABAgQIECBAgAABAostsNIfgf+lX/qlWfKzqwte+9rXzpKf8Q7R973vfek973lPeuc735kuueSS9LGPfSzdcMMNXbvbRoAAAQIECBAgQIAAAQIECBAgQIDAAgusbAL0Ax/4QPrQhz6Uzj777Fb+W2+9NX3qU59Kp59++uydort3756VfeITn5je+MY3zj7+ftNNN6V4J6mJAAECBAgQIECAAAECBAgQIECAAIHlE1jJBOg3v/nNWQIzEpl/5+/8ndZe+ehHPzrb9rznPS/t2LHjpHLxUfhnP/vZ6fjx4ymSoCYCBAgQIECAAAECBAgQIECAAAECBJZPYOUSoCdOnJi9m/OBBx5I/+Jf/IvHJDarXfSFL3xhthgff2+aIgEa0+c+97mmzdYRIECAAAECBAgQIECAAAECBAgQILDgAiuXAP3N3/zNdMstt6S/+3f/bnrGM57Ryf+1r31ttr3tY/J5ff6BpM7KbCRAgAABAgQIECBAgAABAgQIECBAYOEEVupX4L/4xS+mt771relpT3ta+nt/7+/NxT58+PCsTE501nc466yzZqtyufr2vPzDP/zDs4/K5+Xq4z/7Z/8sPf/5z6+uap3fvHlz2rRpUzrvvPNay7RtiP3yFN9pun379rzY+zHaj6mk/WojW7ZsKaojH0P0xyOPPFKtstd8jr9X4W8Xqh9rxL5z587Odw4PqT/K1tvo2n/MOdBVb31bW0y5D/bu3VvUB7md0vM4779r16505pln5sVJHtuOuV55nANbt25N27Ztq2+afLkppinPgab65x1EPgfia0BKrsPwy1NJ+3nf6P+4FodO1XEgvte55BhyHSXx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oox3fT7lKU9JX/rSl9JNN910UiPveMc70t133z37QaWrrrrqpG0WCBAgQIAAAQIECBAgQIAAAQIECBBYDoGVeAdoKXV80f+1116bXvOa16R4F2n8mNKll16aPv/5z8/m48uPX/nKV679imJpO/YjQIAAAQIECBAgQIAAAQIECBAgQODUCDyu3wEa5M997nNnH5GPX7v8yEc+kn791399lvyMd4b+23/7b9Pll19+anpGqwQIECBAgAABAgQIECBAgAABAgQIjBZY+XeAvvjFL07xr2u68sor07ve9a7ZR95vu+22FD+OFAnRzZsf9/nhLjbbCBAgQIAAAQIECBAgQIAAAQIECCy8wMonQIf0wJ49e1L8MxEgQIAAAQIECBAgQIAAAQIECBAgsBoC3uK4Gv3oKAgQIECAAAECBAgQIECAAAECBAgQaBCQAG1AsYoAAQIECBAgQIAAAQIECBAgQIAAgdUQkABdjX50FAQIECBAgAABAgQIECBAgAABAgQINAhIgDagWEWAAAECBAgQIECAAAECBAgQIECAwGoISICuRj86CgIECBAgQIAAAQIECBAgQIAAAQIEGgQkQBtQrCJAgAABAgQIECBAgAABAgQIECBAYDUEJEBXox8dBQECBAgQIECAAAECBAgQIECAAAECDQISoA0oVhEgQIAAAQIECBAgQIAAAQIECBAgsBoCEqCr0Y+OggABAgQIECBAgAABAgQIECBAgACBBgEJ0AYUqwgQIECAAAECBAgQIECAAAECBAgQWA0BCdDV6EdHQYAAAQIECBAgQIAAAQIECBAgQIBAg4AEaAOKVQQIECBAgAABAgQIECBAgAABAgQIrIaABOhq9KOjIECAAAECBAgQIECAAAECBAgQIECgQUACtAHFKgIECBAgQIAAAQIECBAgQIAAAQIEVkNAAnQ1+tFRECBAgAABAgQIECBAgAABAgQIECDQICAB2oBiFQECBAgQIECAAAECBAgQIECAAAECqyEgAboa/egoCBAgQIAAAQIECBAgQIAAAQIECBBoEJAAbUCxigABAgQIECBAgAABAgQIECBAgACB1RCQAF2NfnQUBAgQIECAAAECBAgQIECAAAECBAg0CEiANqBYRYAAAQIECBAgQIAAAQIECBAgQIDAaghIgK5GPzoKAgQIECBAgAABAgQIECBAgAABAgQaBCRAG1CsIkCAAAECBAgQIECAAAECBAgQIEBgNQQkQFejHx0FAQIECBAgQIAAAQIECBAgQIAAAQINAhKgDShWESBAgAABAgQIECBAgAABAgQIECCwGgISoKvRj46CAAECBAgQIECAAAECBAgQIECAAIEGAQnQBhSrCBAgQIAAAQIECBAgQIAAAQIECBBYDQEJ0NXoR0dBgAABAgQIECBAgAABAgQIECBAgECDgARoA4pVBAgQIECAAAECBAgQIECAAAECBAishoAE6Gr0o6MgQIAAAQIECBAgQIAAAQIECBAgQKBBQAK0AcUqAgQIECBAgAABAgQIECBAgAABAgRWQ0ACdDX60VEQIECAAAECBAgQIECAAAECBAgQINAgIAHagGIVAQIECBAgQIAAAQIECBAgQIAAAQKrISABuhr96CgIECBAgAABAgQIECBAgAABAgQIEGgQkABtQLGKAAECBAgQIECAAAECBAgQIECAAIHVEJAAXY1+dBQECBAgQIAAAQIECBAgQIAAAQIECDQISIA2oFhFgAABAgQIECBAgAABAgQIECBAgMBqCEiArkY/OgoCBAgQIECAAAECBAgQIECAAAECBBoEJEAbUKwiQIAAAQIECBAgQIAAAQIECBAgQGA1BCRAV6MfHQUBAgQIECBAgAABAgQIECBAgAABAg0CEqANKFYRIECAAAECBAgQIECAAAECBAgQILAaAhKgq9GPjoIAAQIECBAgQIAAAQIECBAgQIAAgQYBCdAGFKsIECBAgAABAgQIECBAgAABAgQIEFgNAQnQ1ehHR0GAAAECBAgQIECAAAECBAgQIECAQIOABGgDilUECBAgQIAAAQIECBAgQIAAAQIECKyGgAToavSjoyBAgAABAgQIECBAgAABAgQIECBAoEFAArQBxSoCBAgQIECAAAECBAgQIECAAAECBFZDYOtqHMbiHsW2bdvSrl27egW4efOf56PPO++8XuWrhTZt2rS2ePrpp6ft27evLfedyXWUtF9tY8uWLWlMHWeffXZ65JFHqlX2ms9+vQp/u1A9zoh9586daceOHUOq6Sxbb6OrcBxD9MOQfbrqa9vWVn8+B/bs2dO2a6/1Y48hrpkzzzyzV1t9C7Udc33/OAe2bt2a4tpd76kppinPgab6+x7TOeec07foSeXCL09j2j/jjDNm12Kuq+9jdRzYvXv3qLGkJP58DUW8p3osrpoNPZaxdtH2ueeeWw2h93ycQ6V2fRqZZzHlNdgnnihTjSmfQ2PH4Wrb1fqr67vm12McrrbXFVMeh7vKVOtqm4/n8ziXhk7rdQ4MPZ7ScXjI8XbFVDoO19vvaqNeNi/nsbxk33wNRV2lY0muo6T9fAzxGOfymDqmuCcuHUuiD+r3xA8++GD18AbND7GY6hqMe7kS/9z/pXZ9YPrEVToO5+unTxy5TD2eqcbhXH881tuobqvPRx/EvyH71Ovoszyv/inG4b179/YJ5TFl4vinGoerlc875lw2n0d9y+f9Sh6b2sjXYdO2oW2MqaN0HJ4XY5+Y4jqsj8Pz6h2zvR7TVGNx5KbqdfeJM58DU47FEqB95EeUOXHiRDp27FivGuLEiE7uW75aaZyc+Sb/4YcfTsePH69u7jUfSZ+4yErajwbi4owpkpcldcSxRwxxcxXHMHQqSfrW4wzDUr+2eOtttJWL9XGjNqYPuuqubmuLKdqeqv22NqpxNM2POQea6svr+sYTye+4bkuuodxW38emmE477bTZddC0rW+9uVxJHTGWRB/E8Zf8ISKuofxkVdLKmj6cAABAAElEQVR+xB5jyUMPPTT7l4+l72NcQ/mGbexYUhJ/voYi3tKxJPzjOOrtx/rSqV5XWz1TjMPZf8w5VGrXdlzV9fMsxozD2a/aXp/5akz5HCr1a2qvWn/T9vq6ONdKr8F6XW3LXTHFOFx6L1FtL86jkoRNjMPxryvGajt95/vWl8fhiD2ej9ZzaospxuFSv3q8bW3Uy1WX8z1dyb7hd6rvifN4XXoe57EkxoGSc6D6h/zSsSQMYxyoXkMlseR+HWIx1Tgc8ZacQ+sxDmeH/DgvrjHjcPgNnerxTDUOV+Oot1HdVp+PMTiu5SH71Ovos9xW/5TjcFsb8+KbchyuttU3njG5iWp7feabYopr4FS+Ls3jcOnriXnH3XTM9X3WIzdRb6O6XI9pUcbielz5ObYae9/58ldTfVt4nJeLG4ejR4/2Uoi/MMWFdt999/UqXy0UJ2e+2YsbnZI6YpCNga5k34gl9o8pbjZK6ogBLuo4fPhwUfKp5N1G9Tjj+OMCO3To0OxYpviv3kZXnfGuq5iG7NNVX9u2tvrjZif+3X///UU33Lm9uMltayOXaXqM8z/+0hnXzAMPPNBUpHhd33jihiuu277liwP61o5NbcRf++NaaNo2tK2SOvJYEtdhOAydYv+4aYyppP3YL8aBuA4jhqFT+EUfxnTkyJGiG+f81/6S+GMMyS88x4zF4VhvP66N0qleV1s9eRweY5dvSmIciQTK0CkMS+36tDXP4qyzzpoloOeVa2orjj0/FzZtb1tXbSuPw/E8NCbZUG2rWn91fdN8HodjDJ56HK621xVTXMNx7nSVqdbVNh/jSJyHQ6f4BMJU43C17b7HE8cf93QRe8k4XG1z3nxbTHEex3NxyThcb7OtjXq56vKy3xPn8XrsPXGMxTEeDp1y4iD2Kx1LYiyKtqv3xFFvPM+WTGHR93yKcbj0NUl+HosYS+/n8nN5qV0fn3nXRZxDpeNwfj3RJ45cph7PVONwrj8e621Ut9XnYxyO823IPvU6+iy31T/lOBznUbw2GjrF88BU43C17bZjrpaJ+THjcL2uectNMcXzUOk4UG+vqf56mfpyHkti3CoZh+v11Zf7xBTHP3Vuoh5HdbkeUx5L6uur+7TNV++JI4lcUke+J67nJvJzbFvbXet9B2iXjm0ECBAgQIAAAQIECBAgQIAAAQIECCy1gAToUnef4AkQIECAAAECBAgQIECAAAECBAgQ6BKQAO3SsY0AAQIECBAgQIAAAQIECBAgQIAAgaUWkABd6u4TPAECBAgQIECAAAECBAgQIECAAAECXQISoF06thEgQIAAAQIECBAgQIAAAQIECBAgsNQCEqBL3X2CJ0CAAAECBAgQIECAAAECBAgQIECgS0ACtEvHNgIECBAgQIAAAQIECBAgQIAAAQIEllpAAnSpu0/wBAgQIECAAAECBAgQIECAAAECBAh0CUiAdunYRoAAAQIECBAgQIAAAQIECBAgQIDAUgtsXeroBX9KBfbt2ze4/f379w/exw4ECBAgQIAAAQIECBAgQIAAAQIESgW8A7RUzn4ECBAgQIAAAQIECBAgQIAAAQIECCy8gATowneRAAkQIECAAAECBAgQIECAAAECBAgQKBWQAC2Vsx8BAgQIECBAgAABAgQIECBAgAABAgsvIAG68F0kQAIECBAgQIAAAQIECBAgQIAAAQIESgUkQEvl7EeAAAECBAgQIECAAAECBAgQIECAwMILSIAufBcJkAABAgQIECBAgAABAgQIECBAgACBUgEJ0FI5+xEgQIAAAQIECBAgQIAAAQIECBAgsPACEqAL30UCJECAAAECBAgQIECAAAECBAgQIECgVEACtFTOfgQIECBAgAABAgQIECBAgAABAgQILLyABOjCd5EACRAgQIAAAQIECBAgQIAAAQIECBAoFZAALZWzHwECBAgQIECAAAECBAgQIECAAAECCy8gAbrwXSRAAgQIECBAgAABAgQIECBAgAABAgRKBSRAS+XsR4AAAQIECBAgQIAAAQIECBAgQIDAwgtIgC58FwmQAAECBAgQIECAAAECBAgQIECAAIFSAQnQUjn7ESBAgAABAgQIECBAgAABAgQIECCw8AISoAvfRQIkQIAAAQIECBAgQIAAAQIECBAgQKBUQAK0VM5+BAgQIECAAAECBAgQIECAAAECBAgsvIAE6MJ3kQAJECBAgAABAgQIECBAgAABAgQIECgVkAAtlbMfAQIECBAgQIAAAQIECBAgQIAAAQILLyABuvBdJEACBAgQIECAAAECBAgQIECAAAECBEoFJEBL5exHgAABAgQIECBAgAABAgQIECBAgMDCC0iALnwXCZAAAQIECBAgQIAAAQIECBAgQIAAgVIBCdBSOfsRIECAAAECBAgQIECAAAECBAgQILDwAhKgC99FAiRAgAABAgQIECBAgAABAgQIECBAoFRAArRUzn4ECBAgQIAAAQIECBAgQIAAAQIECCy8gATowneRAAkQIECAAAECBAgQIECAAAECBAgQKBWQAC2Vsx8BAgQIECBAgAABAgQIECBAgAABAgsvIAG68F0kQAIECBAgQIAAAQIECBAgQIAAAQIESgUkQEvl7EeAAAECBAgQIECAAAECBAgQIECAwMILSIAufBcJkAABAgQIECBAgAABAgQIECBAgACBUgEJ0FI5+xEgQIAAAQIECBAgQIAAAQIECBAgsPACEqAL30UCJECAAAECBAgQIECAAAECBAgQIECgVEACtFTOfgQIECBAgAABAgQIECBAgAABAgQILLyABOjCd5EACRAgQIAAAQIECBAgQIAAAQIECBAoFZAALZWzHwECBAgQIECAAAECBAgQIECAAAECCy8gAbrwXSRAAgQIECBAgAABAgQIECBAgAABAgRKBSRAS+XsR4AAAQIECBAgQIAAAQIECBAgQIDAwgtsXfgIBwZ49913p9/+7d9OX/7yl9Ptt9+ezj///PSd3/md6aUv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QIAAAQIECBAgQIAAAQIjBFYqARoJy3/8j/9xil9l/47v+I70q7/6q+l7vud7WnnOP//82bavfOUrjWXy+ssuu6xxu5UECBAgQIAAAQIECBAgQIAAAQIECCy2wMokQONt5a961avSl7/85fS0pz1tlvx80pOe1Kl/9dVXz7Z/8IMffEy5+JjGhz/84dn6K6644jHbrSBAgAABAgQIECBAgAABAgQIECBAYPEFViYB+vu///vp85///Oxj7W94wxtSn+8+ec5znpOe8pSnpC996UvppptuOqm33vGOd6S77747XXzxxemqq646aZsFAgQIECBAgAABAgQIECBAgAABAgSWQ2AlfgQpvqA7Pu4e01133ZVe9KIXteo/9alPTW9961tn2+OL/q+99toUP5J0/fXXp0984hPp0ksvnSVSYz6+/PiVr3zl7IeJWiu0gQABAgQIECBAgAABAgQIECBAgACBhRVYiQTon/7pn570q4JdvzobvwZYnZ773OemN73pTbME6Ec+8pEU/2KKd4a+4hWvSJdffnm1uHkCBAgQIECAAAECBAgQIECAAAECBJZIYCUSoE9/+tPTf//v/72Y/corr0zvete7Zh95v+2221L8ONKFF16YNm9emW8IKLaxIwECBAgQIECAAAECBAgQIECAAIFlFliJBOhUHbBnz54U/0wECBAgQIAAAQIECBAgQIAAAQIECKyGgLc4rkY/OgoCBAgQIECAAAECBAgQIECAAAECBBoEJEAbUKwiQIAAAQIECBAgQIAAAQIECBAgQGA1BCRAV6MfHQUBAgQIECBAgAABAgQIECBAgAABAg0CEqANKFYRIECAAAECBAgQIECAAAECBAgQILAaAhKgq9GPjoIAAQIECBAgQIAAAQIECBAgQIAAgQYBCdAGFKsIECBAgAABAgQIECBAgAABAgQIEFgNAQnQ1ehHR0GAAAECBAgQIECAAAECBAgQIECAQIOABGgDilUECBAgQIAAAQIECBAgQIAAAQIECKyGgAToavSjoyBAgAABAgQIECBAgAABAgQIECBAoEFAArQBxSoCBAgQIECAAAECBAgQIECAAAECBFZDQAJ0NfrRURAgQIAAAQIECBAgQIAAAQIECBAg0CAgAdqAYhUBAgQIECBAgAABAgQIECBAgAABAqshsHU1DsNRECBAgAABAgQIECBAgMCqC+zbt2/QIe7fv39QeYUJECBAYDUFvAN0NfvVUREgQIAAAQIECBAgQIAAAQIECBAg8C0BCVCnAQECBAgQIECAAAECBAgQIECAAAECKysgAbqyXevACBAgQIAAAQIECBAgQIAAAQIECBCQAHUOECBAgAABAgQIECBAgAABAgQIECCwsgISoCvbtQ6MAAECBAgQIECAAAECBAgQIECAAAEJUOcAAQIECBAgQIAAAQIECBAgQIAAAQIrKyABurJd68AIECBAgAABAgQIECBAgAABAgQIEJAAdQ4QIECAAAECBAgQIECAAAECBAgQILCyAhKgK9u1DowAAQIECBAgQIAAAQIECBAgQIAAAQlQ5wABAgQIECBAgAABAgQIECBAgAABAisrIAG6sl3rwAgQIECAAAECBAgQIECAAAECBAgQ2IqAAAECBAgQIECAAAECBAgQIECAAAECfQT27dvXp9hamf3796/Nn6oZ7wA9VfLaJUCAAAECBAgQIECAAAECBAgQIEBg3QUkQNedWAMECBAgQIAAAQIECBAgQIAAAQIECJwqAQnQUyWvXQIECBAgQIAAAQIECBAgQIAAAQIE1l1AAnTdiTVAgAABAgQIECBAgAABAgQIECBAgMCpEvAjSKdKXrsECBBYcoGhX3wdh7sIX3695OzCJ0CAAAECBAgQIECAAIGBAt4BOhBMcQIECBAgQIAAAQIECBAgQIAAAQIElkdAAnR5+kqkBAgQIECAAAECBAgQIECAAAECBAgMFJAAHQimOAECBAgQIECAAAECBAgQIECAAAECyyMgAbo8fSVSAgQIECBAgAABAgQIECBAgAABAgQGCkiADgRTnAABAgQIECBAgAABAgQIECBAgACB5RHwK/DL01ciJUCAAAECp1Rg3759g9rfv3//oPIKEyBAgAABAgQIECBAYD0EvAN0PVTVSYAAAQIECBAgQIAAAQIECBAgQIDAQghIgC5ENwiCAAECBAgQIECAAAECBAgQIECAAIH1EJAAXQ9VdRIgQIAAAQIECBAgQIAAAQIECBAgsBACEqAL0Q2CIECAAAECBAgQIECAAAECBAgQIEBgPQQkQNdDVZ0ECBAgQIAAAQIECBAgQIAAAQIECCyEgAToQnSDIAgQIECAAAECBAgQIECAAAECBAgQWA8BCdD1UFUnAQIECBAgQIAAAQIECBAgQIAA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fD9WOg7Pc2g65vo+63Ed1tuoLtdjijEgYqivr+4zZH5oPdU+KBnXmmJ79JVa01brCBAgQIAAAQIECBAgQIAAAQIECBAgsMQCEqBL3HlCJ0CAAAECBAgQIECAAAECBAgQIECgW0ACtNvHVgIECBAgQIAAAQIECBAgQIAAAQIEllhAAnSJO0/oBAgQIECAAAECBAgQIECAAAECBAh0C0iAdvvYSoAAAQIECBAgQIAAAQIECBAgQIDAEgtIgC5x5wmdAAECBAgQIECAAAECBAgQIECAAIFuAQnQbh9bCRAgQIAAAQIECBAgQIAAAQIECBBYYgEJ0CXuPKETIECAAAECBAgQIECAAAECBAgQINAtIAHa7WMrAQIECBAgQIAAAQIECBAgQIAAAQJLLCABusSdJ3QCBAgQIECAAAECBAgQIECAAAECBLoFJEC7fWwlQIAAAQIECBAgQIAAAQIECBAgQGCJBSRAl7jzhE6AAAECBAgQIECAAAECBAgQIECAQLeABGi3j60ECBAgQIAAAQIECBAgQIAAAQIECCyxgAToEnee0AkQIECAAAECBAgQIECAAAECBAgQ6BaQAO32sZUAAQIECBAgQIAAAQIECBAgQIAAgSUWkABd4s4TOgECBAgQIECAAAECBAgQIECAAAEC3QISoN0+thIgQIAAAQIECBAgQIAAAQIECBAgsMQCEqBL3HlCJ0CAAAECBAgQIECAAAECBAgQIECgW0ACtNvHVgIECBAgQIAAAQIECBAgQIAAAQIEllhAAnSJO0/oBAgQIECAAAECBAgQIECAAAECBAh0C0iAdvvYSoAAAQIECBAgQIAAAQIECBAgQIDAEgtIgC5x5wmdAAECBAgQIECAAAECBAgQIECAAIFuAQnQbh9bCRAgQIAAAQIECBAgQIAAAQIECBBYYgEJ0CXuPKETIECAAAECBAgQIECAAAECBAgQINAtIAHa7WMrAQIECBAgQIAAAQIECBAgQIAAAQJLLCABusSdJ3QCBAgQIECAAAECBAgQIECAAAECBLoFtnZvtnWRBPbt2zconP379w8qrzABAgQIECBAgAABAgQIECBAgACBVRPwDtBV61HHQ4AAAQIECBAgQIAAAQIECBAgQIDAmoAE6BqFGQIECBAgQIAAAQIECBAgQIAAAQIEVk1AAnTVetTxECBAgAABAgQIECBAgAABAgQIECCwJiABukZhhgABAgQIECBAgAABAgQIECBAgACBVROQAF21HnU8BAgQIECAAAECBAgQIECAAAECBAisCfgV+DUKMwQIECBAgAABAgQIEBgncM011wyqYP/+/YPKK0yAAAECBAgMF/AO0OFm9iBAgAABAgQIECBAgAABAgQIECBAYEkEJECXpKOESYAAAQIECBAgQIAAAQIECBAgQIDAcAEJ0OFm9iBAgAABAgQIECBAgAABAgQIECBAYEkEJECXpKOESYAAAQIECBAgQIAAAQIECBAgQIDAcAEJ0OFm9iBAgAABAgQIECBAgAABAgQI/H/27gT+iqr+//hh33dEjFQUEU1FUBNyVzQxl9wqzZ8LKeXD7BdampWCqamVYq49FAvNUHtIKoWBhYob7rvgliuagsi+r3/f5/c/X+c7zNw7c2bu/d7ldR4P+N47y1meM/fcez/3zBwEEECgSgQIgFbJgaKaCCCAAAIIIIAAAggggAACCCCAAAIIIJBegABoejP2QAABBBBAAAEEEEAAAQQQQAABBBBAAIEqESAAWiUHimoigAACCCCAAAIIIIAAAggggAACCCCAQHoBAqDpzdgDAQQQQAABBBBAAAEEEEAAAQQQQAABBKpEgABolRwoqokAAggggAACCCCAAAIIIIAAAggggAAC6QVapt+FPRBAAAEEEKhMgWOPPTZVxcaPH59qezZGAAEEEEAAAQQQQAABBBCoPgFGgFbfMaPGCCCAAAIIIIAAAggggAACCCCAAAIIIJBQgABoQig2QwABBBBAAAEEEEAAAQQQQAABBBBAAIHqEyAAWn3HjBojgAACCCCAAAIIIIAAAggggAACCCCAQEIB7gH6OdSqVavMxIkTzbPPPmsWLFhg+vfvbwYNGmSGDx9uWrRokZCSzRBAAAEEEEAAAQQQQAABBBBAAAEEEECg0gTqPgC6cOFCc8YZZ5jZs2fbY9O9e3czdepU+2/GjBlmzJgxpnXr1pV23KgPAggggAACCCCAAAIIIIAAAggggAACCCQQqPtL4C+++GIb/BwyZIiZPHmymTRpkrnzzjtNv379zCOPPGKuueaaBIxsggACCCCAAAIIIIAAAggggAACCCCAAAKVKFDXAdBZs2aZp59+2rRr185ccsklpkuXLvYY9enTx4wdO9Ze/j5lyhSzZMmSSjx21AkBBBBA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5t1337VF6jWg10I50/z5881zzz1ni9x8883NdtttV87ibVn//ve/7d/27dubPffcs+zlP//88+azzz6z5e61116mXbt2Za3D+++/3zAocfvttzdf/vKXy1r+0qVLzRNPPGHL3HTTTc3AgQPLWn5cYbkHQL/2ta8ZveAHDx5spk2bZrp37x5XNssRQAABBBBAAAEEEEAAAQQQQAABBBBAAIGSCjTPM/d169aZl156yWb5ve99j+BnnrjkhQACCCCAAAIIIIAAAggggAACCCCAAAKpBXINgGpod4cOHWwlNAKUhAACCCCAAAIIIIAAAggggAACCCCAAAIINKVArgFQNUSXwCu999579i//IYAAAggggAACCCCAAAIIIIAAAggggAACTSWQewDU3ej55ptvbqo2US4CCCCAAAIIIIAAAggggAACCCCAAAIIIGAFcp8ESfcB/fa3v23uvvtu86Mf/cj8+te/Np06dYIbAQQQQAABBBBAAAEEEEAAgZIIPPTQQ0YzsH/44Ydm/fr1ZosttrBXJx500EElKS+c6bx588ztt99u3nrrLbNixQqzww472ImB99tvv/CmZXn+wgsvmOuvv94MGTLEjBw5suRlyt/N/h5VWM+ePc0JJ5wQtSq3ZQsWLDB///vfzRtvvGE++ugj07t3bzN06FBz+OGHm5YtW+ZWTjijcePGNcz6Hl4XfN68eXMzatSo4KJcHy9btszceeed5rXXXjNz5841m222mZ19+9hjjzVt2rTJtay4zHQePP744+add94xbdu2NV/5ylfMt771LaOZwEuRli9fbn7605/aYz169OjYIlatWmUmTpxonn32WaPzpH///mbQoEFm+PDhRrdyzJLuu+8+8+c//9lceOGFRjOuJ0k++8TlmzSvUvWRSY9BJfSRuQdA1en997//tZ2s3nw22WQTs+uuu5ott9zSPo47aFqu0aP7779/oU1YhwACCCCAAAIIIIAAAggggIAVUGDjnHPOMQr4KXXu3Nn+Xbx4sf2rIMdvf/tb065dO/u8FP899dRT5vzzzzcrV6602WsA0JIlS+zjb3zjG+bcc8/NHGRJU2+Vfcopp9gg2IEHHmjGjBmTZnevbRXYe+6552L33Xrrrc2tt94auz7ripkzZ5oLLrjAfPrpp6ZZs2amR48eRgEXJQWlrr322pIFAY8++mhbbrE2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TJ061eifJqDQF0BNTDFkyJDI2UM1G59LmkCJhAACCCCAQCkF9H6kH+OeffZZexm8fsRzadasWWbu3LnmW9/6ltdnVU0IqsvnFSB1t31xefMXAQQQQAABBBBAoGkESjoCdObMmebII4+0E5bovoC66bwCIZp1S7+qjxw50jz33HNN03JKRQCB3AX0A4cmL9IM7Xq9a4SmZtp9+eWXzW233WbOPPNM+7rXjPDBpMvmlfSjSLHL34P78RgBBBBAAAEfAb1f7bHHHvY96oknnmiURfDy90YrEjy56667jP7pntfnnHPORlc8JMiCTRBAAAEEEEAAAQRKIFCSAKgu/VEARDO8T5o0yXz44YcbVV0jvm6++WZ7DybN6kxCAIHaENCXvoMOOsheAq+JjTQiVKNo3KXt7777rvnhD39oR4m6FmviIyVddjhnzhy3mL8IIIAAAgiUTGC//fazeetyd5fWrVtnL3//8pe/bPr37+8WJ/qrkZ833nijDX7qc/BOO+2UaD82QgABBBBAAAEEECi9QEkugVfAwwU1NaJLHzAHDBhgdGnr8uXLzfvvv29efPFFOyrMBUt79+5tTjrppNK3mBIQQKBsAro3mi4z1L8f/OAH5vXXX7cTRygIOnbsWKOZeNVHdO/evaFO6h902SAJAQQQQACBUgrstttuRpe+62okzQavx5rdfeHCheawww5LXLSudNB9rx944AF725df/OIXZu+99068PxsigAACCCCAAAIIlF4g9xGgL7zwgh3xparr0iJ9qNTszn/4wx/MeeedZy666CJz66232g+Yf//73xtGhWlEmD5wkhBAoDoFJk+ebNx9z+JaoImLrrrqKvsFUa/3N99802662Wab2Vtj6IkCoEnSL3/5S3PNNdeYd955J8nmbIMAAggggEAjAU1ktOeee9rL4GfMmGHXpb38Xfe41+dbBT91NYMCoQQ/GzHzBAEEEEAAAQQQqAiB3AOgCkjol3Bd7nrffffZy+DjWnr44Yebf/zjH6Z9+/ZGHyAnTJgQtynLEUCgwgUUAL3jjjvMv/71r4I17dixo+nbt6/dxl3urlGg+sFE6cknn7R/C/33xhtvmKeeesroRxRdNk9CAAEEEEDAR8BdBq/Z4HVV0mOPPWb69etntthii6LZ6f7VZ599tv1Rv0+fPvZHuR122KHofmyAAAIIIIAAAggg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0Sja+fPnJ9o+uJHK6dGjh120bNkys3jx4uDqRI9Vzy5dupiPP/440fbhjXr37m3rr9G/n376aXh10ectWrQwvXr1Mp999plZvXp10e3DG3Tv3t20adPGLp47d67RLRnSpk022cRoRPKSJUvS7mo6dOhgOnfubPdbuHChWbFiReo85N+qVSszb9681PtqMjHVX0llqw5pkwL2Og/nzJlj1q9fn3Z3e/x0HLWv8kibdP7rPMri515vMlyzZk3aKtjXkc7hRYsWpd63Xbt2pmvXrnY/vQb1WkybOnXqZJSPzuG0ST9CaQI6pVWrVmXqS/QaTjOS39W1Z8+e9hzW8yx9iV6Dvn4u2Ke+VA5pk14DSgsWLEi7q+2D1BcpZemL1Zd88sknqcuP28G9LuLWu+WuH85i567myNIP67hleR9Te/QaXr58uWta4r+y13sq/bD/+5g737L0w3oPz/I+pgOufmTp0qWJj73bUH2I2pC1H9ZnGX2mSZv0OUB9ab33w9X8mXizzTazh70SPhNn+Uynz5PBz8T6rElCAAEEEECgWgVyvQReCKeffrrRlx+9WQ4dOtRoVvjwB8gNGzbYe4WOGjXKHHHEETZYsttuu6W6b2i1glNvBBBAAAEEEEAAAQQQQAABBBBAAAEEECifQO4B0G222cbccMMNtgUaPXPBBRfYEUn6NX377bc3/fr1s6ObttpqK3P11VfbkWoa7XTbbbcZflUs34GnJAQQQAABBBBAAAEEEEAAAQQQQAABBOpBIPcAqNBGjBhh7r33XtOnT58GQ10K+Prrr5t33nmn0SWJhx12mHnxxRfNdttt17AtDxBAAAEEEEAAAQQQQAABBBBAAAEEEEAAgTwESnYjF90L9OCDDza6x+d9991nA5+6B43uqaRRovq39957m/333z+PdpAHAggggAACCCCAAAIIIIAAAggggAACCCCwkUDJAqAqSfcC1QhP/SMhgAACCCCAAAIIIIAAAggggAACCCCAAALlFijJJfDlbgTlIYAAAggggAACCCCAAAIIIIAAAggggAACUQIEQKNUWIYAAggggAACCCCAAAIIIIAAAggggAACNSFAALQmDiONQAABBBBAAAEEEEAAAQQQQAABBBBAAIEogZLeAzSqwHIse/zxx81TTz1l3njjDdOsWTOz9dZbm+OOO85sscUWkcWvWrXKTJw4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BI0FKxawRgUjdum9yfPf7/nn7J1nnpnd2dmd2fJ8zuv1PDs75Zwz75md8pszMwgggAACCCCAAAKRBAiARmJiJAQQQAABBBBAAAEEEEAAAQQQQAABBBCoRgECoNW41KgzAggggAACCCCAAAIIIIAAAggggAACCEQSIAAaiYmREEAAAQQQQAABBBBAAAEEEEAAAQQQQKAaBQiAVuNSo84IIIAAAggggAACCCCAAAIIIIAAAgggEEmAAGgkJkZCAAEEEEAAAQQQQAABBBBAAAEEEEAAgWoUIABajUuNOiOAAAIIIIAAAggggAACCCCAAAIIIIBAJAECoJGYGAkBBBBAAAEEEEAAAQQQQAABBBBAAAEEqlGAAGg1LjXqjAACCCCAAAIIIIAAAggggAACCCCAAAKRBAiARmJiJAQQQAABBBBAAAEEEEAAAQQQQAABBBCoRgECoNW41KgzAggggAACCCCAAAIIIIAAAggggAACCEQSIAAaiYmREEAAAQQQQAABBBBAAAEEEEAAAQQQQKAaBQiAVuNSo84IIIAAAggggAACCCCAAAIIIIAAAgggEEmAAGgkJkZCAAEEEEAAAQQQQAABBBBAAAEEEEAAgWoUIABajUuNOiOAAAIIIIAAAggggAACCCCAAAIIIIBAJIHmkcaqopHmzJljxo8fbz777DPz3XffmR49epi+ffuaww47zHTv3j1wTlasWGEefvhh8+abb5p58+aZ/v37m0GDBpmRI0eaZs2aBU5DTwQQQAABBBBAAAEEEEAAAQQQQAABBBCofIGaCoA+//zz5tJLLzXLli2zgcuuXbuaqVOnmtdff908/vjj5qyzzjIjRoyot1Tmz59vxowZY2bNmmX7d+nSxTz99NP2b8qUKeaCCy4wLVu2rDcNXxBAAAEEEEAAAQQQQAABBBBAAAEEEECgOgRq5hb4r776Khv8HDVqlHnmmWfMI488Yj9/8Ytf2KDoZZddlg10usVz8cUX236DBw82EyZMMI899ph54IEHTL9+/cwLL7xgrrvuOjcqnwgggAACCCCAAAIIIIAAAggggAACCCBQZQI1EwB94oknbJBzjz32MMcee6xp1aqVXRT6HD16tBk+fLhZvny50XguffDBB7Z1aJs2bcwll1xiOnbsaAett9565qqrrrKtSCdOnGgWLVrkJuETAQQQQAABBBBAAAEE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AAIIIIAAAggggAACCCCAAAIIIIAAAlkBAqBZCjoQQAABBBBAAAEEEEAAAQQQQAABBBBAoNYECIDW2hJlfhBAAAEEEEAAAQQQQAABBBBAAAEEEEAgK0AANEtBBwIIIIAAAggggAACCCCAAAIIIIAAAgjUmgAB0FpboswPAggggAACCCCAAAIIIIAAAggggAACCGQFCIBmKehAAAEEEEAAAQQQQAABBBBAAAEEEEAAgVoTIABaa0uU+UEAAQQQQAABBBBAAAEEEEAAAQQQQACBrAAB0CwFHQgggAACCCCAAAIIIIAAAggggAACCCBQawLNa22G4szPihUrzMMPP2zefPNNM2/ePNO/f38zaNAgM3LkSNOsWbM4WTINAggggAACCCCAAAIIIIAAAggggAACCFSAQKMPgM6fP9+MGTPGzJo1yy6OLl26mKefftr+TZkyxVxwwQWmZcuWFbCoqAICCCCAAAIIIIAAAggggAACCCCAAAIIFCrQ6G+Bv/jii23wc/DgwWbChAnmscceMw888IDp16+feeGFF8x1111XqCnjI4AAAggggAACCCCAAAIIIIAAAggggECFCDTqAOgHH3xgXn/9ddOmTRtzySWXmI4dO9rFst5665mrrrrK3v4+ceJEs2jRogpZXFQDAQQQQAABBBBAAAEEEEAAAQQQQAABBAoRaNQB0Oeff95aDRs2zLRu3bqem26F32GHHczKlSuNgqAkBBBAAAEEEEAAAQQQQAABBBBAAAEEEKg+gUYdAH3//fftEtPt70FJAVCladOmBQ2mHwIIIIAAAggggAACCCCAAAIIIIAAAghUuECjfgnSV199ZRdPp06dAheT6+9ekBQ4Uqanbp9ftWpV4OD99tvPbL755oHD/D2bN29umjRpYjp06OAfFOt7ofmofKVCpyukcrnybtr0/8fj27Zt26BFbpQymjVrFmW0euP466M6tGrVyi6HeiMW8cVfRq6sWrRoYVSHQqbJlV/YsLD83TrQvn17U1dXFzZ53v5x12NNp6THUsiilClsnv1laD2KW39/Xvm+B9VJL10rVflB+eerk/sdtWvXzqxZsybf6AUPj1ontcp3dSmkEO9L69Zaay37ey5keo3rfgdR6+rN31tn1SVOHsWU762LtztqPdx2OK6dt0x1Ry3XO53qENfOm09Yd746qey422G3DQsrO6y/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+efmo48+skVsvvnmplevXkkW1yDvxYsXm5deesn279mzpxk0aFCDcZLu8dxzz5kVK1aYFi1amBEjRiRdXIP8p02bZr7++mvbf8cddzQdO3ZsME6SPVS26qDUv39/069fvySLa5D3ypUrzeTJk23/rl27mu23377BOEn3ePnll82iRYtsMXvvvbdp0qRJ0kXWy1+/Qf0WlbbddlvTvXt3253WP22DtC1S6tOnjxkwYEBaRVdEOVOnTjU//PCDrcvQoUPNWmutlWq9/vWvf5kPP/zQltlYt8PPP/+8Wb58uWnevLnZY489UvVXYdOnTzdfffWVLXfIkCGmU6dOqdbhm2++Me+++64ts9zb4S5dupgddtgh1flXYVOmTDELFy605e61116madN02zt8/PHHZubMmbb8bbbZxvTo0cN2p/XPe0zcu3dvs+mmm6ZVdLacp59+2nZXwjHx8OHDTevWrbN1owMBBBBAAIHGKkAAtLEueeYbAQQQQAABBBBAAAEEEEAAAQQQQACBRiCQ7iXhRgDKLCKAAAIIIIAAAggggAACCCCAAAIIIIBA5QgQAK2cZUFNEEAAAQQQQAABBBBAAAEEEEAAAQQQQKDEAgRASwxKdggggAACCCCAAAIIIIAAAggggAACCCBQOQIEQCtnWVATBBBAAAEEEEAAAQQQQAABBBBAAAEEECixQPMS50d2ZRDQm7dffPFF8+WXX5o1a9YYvQVeb8Dec889U6nNpEmTjN46q/LXWWcds+WWW5rddtvNdqdSAV8hb7/9tvmf//kfM3jwYDN69Gjf0NJ+Xbp0qfnzn/+cM9P99tvPbLTRRjnHKXbgvHnzzOOPP2705lW9fVdvgdfbd/fff3/7JuBi8w+a/r333jPPPvts0KAG/XbaaSdbnwYDStRjyZIl5oEHHrBvf/7+++/tujdw4EBzyCGHmFatWpWolNzZ6HeoN6DPmDHDvm11s802Mz/72c/M2muvnXvCmEO17p1xxhl2WY8dOzY0lxUrVpiHH37Yvplc64neijxo0CAzcuRI06xZs9Dpogx48sknzV133WV+97vfRX7LbpxpwuoSNa+ktpFRl4HeDH/fffeZTz75xCxbtszo7eRbb7210Zt5ayXprcvjx483n332mfnuu+/sW5/79u1rDjvsMNO9e/fEZ7PSjOvq6sxFF11kZs2aZX7/+98nth1wsJWyL9I28LXXXrP7oiZNmpgNN9zQHH744fa4xNW11J+VtC968803jd7+/fnnn9vta58+fcyBBx4YeftYrM3cuXPt7/Cf//yn0W9yvfXWs8eCw4YNS+xN8FG3wx999JF56KGHzL/+9S+jN6PrWHH33Xe360gx8x11O+wtI8403um93VHzSnIbGXUZVNrxuteRbgQQQAABBNIQIACahnJCZSiw8Zvf/MYo4KfUoUMH+6kg2N/+9jcbEPvTn/5k2rRpY/uX+t/q1avN2WefbU92lHf79u1t8Oell16yJ/sqW0GgNNOiRYvMJZdcYhQE69WrV+JFf/rppza4lKsgBZuSDIC+//775vzzzzc//PCD0Qln165d7XKYMmWKmThxorn++usTCQLqBO9///d/c816dpjqpIBsEmnmzJnmV7/6lT3ZU/76Haif5v+JJ54w1157baLBB/0OFeBQkE1prbXWssth+vTp5q9//au56aabbNDRDizRPxdcURnNm4dvxufPn2/GjBljgzAqukuXLvbkXCfo8rngggtMy5YtY9VKZV9xxRVG2wEZRElxpgnLN0peSW4joy4DBYPOO+88s3z5cjsr2k5qG/3oo4+afffd15x55plFB6LDjNLqrwtgl156qQ3uKqiu3/vUqVPN66+/bvdDZ511lhkxYkRi1alE4wcffNAo2KC0cuXKxObdZVzufdGqVavsvsbtEzp27GjXee2fnnrqKfsb2GOPPVx1S/pZKfuia665xjzyyCN23nThTduIDz74wO6H/+u//sv853/+Z0nn25/Zq6++ao9/FixYYAd169bNHgvoArnstb0vdYqyHVaZuginfbFSu3bt7G/irbfessHayy67zGyzzTZ2WKH/om6HvfnGmcY7vbc7al5JbiOjLINKPF73OtKNAAIIIIBAWgLhZ85p1YByYguolaOCn2phoBPsTTbZxOalq+xqefLOO+/YExKdYCeRbrnlFhv8XHfddc1JJ51k1MpPLcx0AnT33Xeb0047zbbK08lwWunKK6+0wc+0ylOLLqVtt93WtmQIKlct7pJKCxcutME/tSpTS6sjjzzSdO7c2bawOPfcc22LSAXgfvnLX5a8CmphqQB8WJo2bZp55plnbEAwqZZuOqi/8MILbfBTLX6PO+44M2DAAKOytX7q8+KLLzY33HBDWDWL7n/HHXfY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5s0zN910k9G4CqYecMABoeUmNaBU811M/TTvLvHsTifBJwIIIIAAAgggYAwBUNYCBBBAAAEEEECgEQiceuqppmvXrnZOzznnHON95qab/Xvvvdf436ruhkX9POWUU4ze5K509tln22dyBk174YUXmiVLlthBhx12WINR9BZ2PetT6dxzz7WfamXpbrFXjy222MI+E1TdF110kT7Mtttua9Zff33bnea/Us13MXX2BpGDlm8xeTMtAggggAACCCBQzQIEQKt56VF3BBBAAAEEEEAgokD79u3N+eefb8d+9913zTbbbGPU2nPq1Km2RegJJ5xgjjrqqHq5eVsU1huQ44veDn/66afbMV566SWz++67m88++yw7xdy5c80xxxxjbrzxRttv0KBB5sQTT8wO93a4VqDTpk2zvb2tP914rp8L+JXj9nfVpZTz7eat0M+2bdvaZ6NqukcffdTomagKaK9cubLQrBgfAQQQQAABBBCoKQECoDW1OJkZBBBAAAEEEEAgXOC0004zN9xwg33Dum6FV+Bxu+22M3rr+q233mpbTqplpkveFoWuX5RPtdg85JBD7KgvvviiDQ6uu+669lOtUO+88047TC08H3nkEdOqVavAbF0A1A10wU73XZ/uOaCuX7kCoCq/VPPt5qXQz2bNmpmhQ4fayfSs1/33398GoN9///1Cs2J8BBBAAAEEEECgpgQIgNbU4mRmEEAAAQQQQACB3AInnXSSbRX43//932b77bc3ahm6ww47GAVH1RpULUNd6tixo+ss6FMtER966CFz//33m759+9ppv/nmm2xL0J49e5rzzjvPvP7662bDDTcMzXvw4MHZW9ybNm1q3HNMvRN4g6K6Rd7dNu8dJ63uUs13MfWV+bBhw7KPIVBeH374YTFZMi0CCCCAAAIIIFD1Ak0yD0ivq/q5YAYQQAABBBBAAAEESiKg54C6W+H9AdG4BSxYsMBMnz7d6LN3795mwIABthVq3PyqZbpyzrdue9ejB7p37266detWLWTUEwEEEEAAAQQQSESAAGgirGSKAAIIIIAAAghUlsDDDz9sW35uvPHGRq0/3YuK/LU8/vjjzZ///Gf7LEk9r7Ndu3b+UfiOAAIIIIAAAggggEBVCTSvqtpSWQQQQAABBBBAAIFYArqF3L14qEWLFmbMmDEN8tHzOm+77Tbbf8cddyT42UCIHggggAACCCCAAALVKEAAtBqXGnVGAAEEEEAAAQQKFFBAU8/01G3ZF1xwgfnhhx/MXnvtZZ8DOn/+fDNp0iRz1llnGT0dSW9/Hzt2bIElMDoCCCCAAAIIIIAAApUpwC3wlblcqBUCCCCAAAIIIFBygaeeesq+GXzNmjXZvNUy1PtdrUOvvvpqo5clkRBAAAEEEEAAAQQQqAUB3gJfC0uReUAAAQQQQAABBCII7LvvvuaDDz4wxxxzjOnSpYudwgU/O3ToYPu/9tprBD8jWDIKAggggAACCCCAQPUI0AK0epYVNUUAAQQQQAABBEoqsGjRIvPtt9/at4R37ty5pHmTGQIIIIAAAggggAAClSJAALRSlgT1QAABBBBAAAEEEEAAAQQQQAABBBBAAIGSC3ALfMlJyRABBBBAAAEEEEAAAQQQQAABBBBAAAEEKkWAAGilLAnqgQACCCCAAAIIIIAAAggggAACCCCAAAIlFyAAWnJSMkQAAQQQQAABBBBAAAEEEEAAAQQQQACBShEgAFopS4J6IIAAAggggAACCCCAAAIIIIAAAggggEDJBQiAlpyUDBFAAAEEEEAAAQQQQAABBBBAAAEEEECgUgQIgFbKkqAeCCCAAAIIIIAAAggggAACCCCAAAIIIFByAQKgJSclQwQQQAABBBBAAAEEEEAAAQQQQAABBBCoFAECoJWyJKgHAggggAACCCCAAAIIIIAAAggggAACCJRcgABoyUnJEAEEEEAAAQQQQAABBBBAAAEEEEAAAQQqRYAAaKUsCeqBAAIIIIAAAggggAACCCCAAAIIIIAAAiUXIABaclIyRAABBBBAAAEEEEAAAQQQQAABBBBAAIFKESAAWilLgnoggAACCCCAAAIIIIAAAggggAACCCCAQMkF/h+pEwNqtHXubgAAAABJRU5ErkJggg==" width="672" /></p>
 <pre class="r"><code>nosnow_grwseason_60 %&gt;% filter(parent.pop==&quot;IH&quot;, grow_yr==1965)</code></pre>
 <pre><code>## # A tibble: 11 × 17
-## # Groups:   parent.pop, elevation.group, elev_m, grow_yr [1]
-##    parent.pop elevation.group elev_m PckSum Lat     Long  year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 IH         low               454.     NA 39.093… -120…     1964    1965    11
-##  2 IH         low               454.     NA 39.093… -120…     1964    1965    12
-##  3 IH         low               454.     NA 39.093… -120…     1965    1965     1
-##  4 IH         low               454.     NA 39.093… -120…     1965    1965     2
-##  5 IH         low               454.     NA 39.093… -120…     1965    1965     3
-##  6 IH         low               454.     NA 39.093… -120…     1965    1965     4
-##  7 IH         low               454.     NA 39.093… -120…     1965    1965     5
-##  8 IH         low               454.     NA 39.093… -120…     1965    1965     6
-##  9 IH         low               454.     NA 39.093… -120…     1965    1965     7
-## 10 IH         low               454.     NA 39.093… -120…     1965    1965     8
-## 11 IH         low               454.     NA 39.093… -120…     1965    1965     9
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long, grow_yr [1]
+##    parent.pop elevation.group elev_m Lat     Long  PckSum year_cal grow_yr month
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
+##  1 IH         low               454. 39.093… -120…     NA     1964    1965    11
+##  2 IH         low               454. 39.093… -120…     NA     1964    1965    12
+##  3 IH         low               454. 39.093… -120…     NA     1965    1965     1
+##  4 IH         low               454. 39.093… -120…     NA     1965    1965     2
+##  5 IH         low               454. 39.093… -120…     NA     1965    1965     3
+##  6 IH         low               454. 39.093… -120…     NA     1965    1965     4
+##  7 IH         low               454. 39.093… -120…     NA     1965    1965     5
+##  8 IH         low               454. 39.093… -120…     NA     1965    1965     6
+##  9 IH         low               454. 39.093… -120…     NA     1965    1965     7
+## 10 IH         low               454. 39.093… -120…     NA     1965    1965     8
+## 11 IH         low               454. 39.093… -120…     NA     1965    1965     9
 ## # ℹ 8 more variables: growmonth &lt;dbl&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;,
 ## #   cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 </div>
@@ -1135,7 +1136,7 @@ unique(snow_pops_60$parent.pop) #18 pops + garden site get some significant snow
 ## [16] &quot;YO11&quot;       &quot;YO4&quot;        &quot;YO7&quot;        &quot;YO8&quot;</code></pre>
 <pre class="r"><code>#add rest of 2023 calendar year 
 snow_pop_ids &lt;- snow_pops_60 %&gt;% select(parent.pop) %&gt;% distinct()</code></pre>
-<pre><code>## Adding missing grouping variables: `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Adding missing grouping variables: `elevation.group`, `elev_m`, `Lat`, `Long`</code></pre>
 <pre class="r"><code>snow_pops_2023_cal_year &lt;- pop_elev_climate %&gt;% 
   filter(parent.pop != &quot;UCD_Garden&quot;) %&gt;%  
   mutate(month = recode(month, 
@@ -1158,27 +1159,28 @@ snow_pop_ids &lt;- snow_pops_60 %&gt;% select(parent.pop) %&gt;% distinct()</cod
   filter(grow_yr == 2024, year_cal==2023) %&gt;%  
   right_join(snow_pop_ids) </code></pre>
 <pre><code>## Joining with `by = join_by(month)`
-## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
-<pre class="r"><code>snow_pops_60_tojoin &lt;- snow_pops_60 %&gt;% select(parent.pop:elev_m, PckSum) %&gt;% distinct()
+## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
+<pre class="r"><code>snow_pops_60_tojoin &lt;- snow_pops_60 %&gt;% select(parent.pop:Long, PckSum) %&gt;% distinct()
 snow_pops_60_years &lt;- left_join(snow_pops_60_tojoin, pop_elev_climate_60) %&gt;% 
   filter(year_cal &gt;1963) %&gt;%  #remove 1963 calendar year 
   bind_rows(snow_pops_2023_cal_year) %&gt;% #add rest of 2023 calendar year 
   arrange(parent.pop, year_cal, month)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
 <pre class="r"><code>#first month
 snow_60_first_month &lt;- snow_pops_60_years %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% #find snow pops growth season within the normal calendar year since they can end as late as December 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% #find snow pops growth season within the normal calendar year since they can end as late as December 
   filter(pck==0) %&gt;% 
   filter(tmn &gt; 0) %&gt;% 
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 snow_60_first_month_tomerge &lt;- snow_60_first_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 snow_60_first_month_col &lt;- full_join(snow_pops_60_years, snow_60_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`</code></pre>
 <pre class="r"><code>#last month 
 snow_60_last_month &lt;- snow_60_first_month_col %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&gt;4) %&gt;% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck&gt;70, pck&gt;70, 
@@ -1186,120 +1188,128 @@ snow_60_last_month &lt;- snow_60_first_month_col %&gt;%
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck &gt;70 OR pck&gt;0 &amp; tmn &lt;0 OR tmn &lt;-5
 snow_60_last_month_tomerge &lt;- snow_60_last_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 snow_60_last_month_col &lt;- full_join(snow_60_first_month_col, snow_60_last_month_tomerge) %&gt;% 
   select(firstmonth, lastmonth, year_cal:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal,
-## firstmonth)`
-## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal, firstmonth)`
+## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`,
+## `Lat`, `Long`</code></pre>
 <div id="checking-for-weird-cases-1" class="section level4">
 <h4>Checking for weird cases</h4>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(is.na(firstmonth)) #no cases where there isn&#39;t a firstmonth</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth) %&gt;% arrange(parent.pop, year_cal) #no cases where last month is first month </code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(is.na(lastmonth)) #238 cases where there isn&#39;t a lastmonth #*no snow_pack, or min temp &gt; -5 </code></pre>
-<pre><code>## # A tibble: 2,856 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [15]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 CP2        high             2244.          5        NA     1976    1976     1
-##  2 CP2        high             2244.          5        NA     1976    1976     2
-##  3 CP2        high             2244.          5        NA     1976    1976     3
-##  4 CP2        high             2244.          5        NA     1976    1976     4
-##  5 CP2        high             2244.          5        NA     1976    1976     5
-##  6 CP2        high             2244.          5        NA     1976    1976     6
-##  7 CP2        high             2244.          5        NA     1976    1976     7
-##  8 CP2        high             2244.          5        NA     1976    1976     8
-##  9 CP2        high             2244.          5        NA     1976    1977     9
-## 10 CP2        high             2244.          5        NA     1976    1977    10
+<pre><code>## # A tibble: 2,856 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [15]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  2 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  3 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  4 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  5 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  6 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  7 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  8 CP2        high             2244. 38.661… -120…          5        NA     1976
+##  9 CP2        high             2244. 38.661… -120…          5        NA     1976
+## 10 CP2        high             2244. 38.661… -120…          5        NA     1976
 ## # ℹ 2,846 more rows
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#***WHAT TO DO FOR THESE CASES? check the next calendar year to see when pck &gt; 70 and make the last month 12 (Dec) for the ones without that 
 
 snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth+1) %&gt;% arrange(parent.pop, year_cal) #0 cases </code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(lastmonth==firstmonth+2) #6 cases where there was sig snowpack in the second month after the first month of 0 snowpack </code></pre>
-<pre><code>## # A tibble: 72 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [3]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 LV1        high             2593.          8        10     1982    1982     1
-##  2 LV1        high             2593.          8        10     1982    1982     2
-##  3 LV1        high             2593.          8        10     1982    1982     3
-##  4 LV1        high             2593.          8        10     1982    1982     4
-##  5 LV1        high             2593.          8        10     1982    1982     5
-##  6 LV1        high             2593.          8        10     1982    1982     6
-##  7 LV1        high             2593.          8        10     1982    1982     7
-##  8 LV1        high             2593.          8        10     1982    1982     8
-##  9 LV1        high             2593.          8        10     1982    1983     9
-## 10 LV1        high             2593.          8        10     1982    1983    10
+<pre><code>## # A tibble: 72 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [3]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 LV1        high             2593. 40.474… -121…          8        10     1982
+##  2 LV1        high             2593. 40.474… -121…          8        10     1982
+##  3 LV1        high             2593. 40.474… -121…          8        10     1982
+##  4 LV1        high             2593. 40.474… -121…          8        10     1982
+##  5 LV1        high             2593. 40.474… -121…          8        10     1982
+##  6 LV1        high             2593. 40.474… -121…          8        10     1982
+##  7 LV1        high             2593. 40.474… -121…          8        10     1982
+##  8 LV1        high             2593. 40.474… -121…          8        10     1982
+##  9 LV1        high             2593. 40.474… -121…          8        10     1982
+## 10 LV1        high             2593. 40.474… -121…          8        10     1982
 ## # ℹ 62 more rows
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>heavysnow_60 &lt;- snow_60_last_month_col %&gt;% filter(lastmonth&lt;=firstmonth+2) %&gt;% filter(month==firstmonth)
 summary(heavysnow_60) </code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m       firstmonth 
-##  Length:6           Length:6           Min.   :2354   Min.   :8.0  
-##  Class :character   Class :character   1st Qu.:2414   1st Qu.:8.0  
-##  Mode  :character   Mode  :character   Median :2593   Median :8.5  
-##                                        Mean   :2563   Mean   :8.5  
-##                                        3rd Qu.:2704   3rd Qu.:9.0  
-##                                        Max.   :2741   Max.   :9.0  
-##    lastmonth       year_cal       grow_yr         month       growmonth   
-##  Min.   :10.0   Min.   :1982   Min.   :1982   Min.   :8.0   Min.   : 1.0  
-##  1st Qu.:10.0   1st Qu.:1982   1st Qu.:1982   1st Qu.:8.0   1st Qu.: 1.0  
-##  Median :10.5   Median :1982   Median :1983   Median :8.5   Median : 6.5  
-##  Mean   :10.5   Mean   :1982   Mean   :1983   Mean   :8.5   Mean   : 6.5  
-##  3rd Qu.:11.0   3rd Qu.:1983   3rd Qu.:1984   3rd Qu.:9.0   3rd Qu.:12.0  
-##  Max.   :11.0   Max.   :1983   Max.   :1984   Max.   :9.0   Max.   :12.0  
-##       cwd             pck         ppt             tmn              tmx       
-##  Min.   :45.70   Min.   :0   Min.   :11.06   Min.   :0.7100   Min.   :17.14  
-##  1st Qu.:55.24   1st Qu.:0   1st Qu.:11.30   1st Qu.:0.7825   1st Qu.:17.34  
-##  Median :66.81   Median :0   Median :34.41   Median :1.3600   Median :18.95  
-##  Mean   :64.21   Mean   :0   Mean   :34.40   Mean   :1.4000   Mean   :18.95  
-##  3rd Qu.:73.01   3rd Qu.:0   3rd Qu.:56.98   3rd Qu.:2.0125   3rd Qu.:20.64  
-##  Max.   :79.47   Max.   :0   Max.   :58.43   Max.   :2.1500   Max.   :20.68</code></pre>
+<pre><code>##   parent.pop        elevation.group        elev_m         Lat           
+##  Length:6           Length:6           Min.   :2354   Length:6          
+##  Class :character   Class :character   1st Qu.:2414   Class :character  
+##  Mode  :character   Mode  :character   Median :2593   Mode  :character  
+##                                        Mean   :2563                     
+##                                        3rd Qu.:2704                     
+##                                        Max.   :2741                     
+##      Long             firstmonth    lastmonth       year_cal       grow_yr    
+##  Length:6           Min.   :8.0   Min.   :10.0   Min.   :1982   Min.   :1982  
+##  Class :character   1st Qu.:8.0   1st Qu.:10.0   1st Qu.:1982   1st Qu.:1982  
+##  Mode  :character   Median :8.5   Median :10.5   Median :1982   Median :1983  
+##                     Mean   :8.5   Mean   :10.5   Mean   :1982   Mean   :1983  
+##                     3rd Qu.:9.0   3rd Qu.:11.0   3rd Qu.:1983   3rd Qu.:1984  
+##                     Max.   :9.0   Max.   :11.0   Max.   :1983   Max.   :1984  
+##      month       growmonth         cwd             pck         ppt       
+##  Min.   :8.0   Min.   : 1.0   Min.   :45.70   Min.   :0   Min.   :11.06  
+##  1st Qu.:8.0   1st Qu.: 1.0   1st Qu.:55.24   1st Qu.:0   1st Qu.:11.30  
+##  Median :8.5   Median : 6.5   Median :66.81   Median :0   Median :34.41  
+##  Mean   :8.5   Mean   : 6.5   Mean   :64.21   Mean   :0   Mean   :34.40  
+##  3rd Qu.:9.0   3rd Qu.:12.0   3rd Qu.:73.01   3rd Qu.:0   3rd Qu.:56.98  
+##  Max.   :9.0   Max.   :12.0   Max.   :79.47   Max.   :0   Max.   :58.43  
+##       tmn              tmx       
+##  Min.   :0.7100   Min.   :17.14  
+##  1st Qu.:0.7825   1st Qu.:17.34  
+##  Median :1.3600   Median :18.95  
+##  Mean   :1.4000   Mean   :18.95  
+##  3rd Qu.:2.0125   3rd Qu.:20.64  
+##  Max.   :2.1500   Max.   :20.68</code></pre>
 <pre class="r"><code>unique(heavysnow_60$parent.pop) #3 pops included (all Lassen)</code></pre>
 <pre><code>## [1] &quot;LV1&quot;   &quot;LV3&quot;   &quot;LVTR1&quot;</code></pre>
 <pre class="r"><code>#high snowpack all year except Aug-Nov, these cases are fine to leave 
 
 snow_60_last_month_col %&gt;% filter(firstmonth&lt;4) %&gt;% filter(pck&gt;70) %&gt;% filter(month&gt;firstmonth, month&lt;10) #13 cases where Jan or Feb = first month, but high snow 1 or 2 months later </code></pre>
-<pre><code>## # A tibble: 13 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [4]
-##    parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-##  1 DPR        mid              1019.          1        NA     1991    1991     3
-##  2 DPR        mid              1019.          1        NA     1999    1999     2
-##  3 DPR        mid              1019.          1        NA     2019    2019     2
-##  4 DPR        mid              1019.          1        NA     2019    2019     3
-##  5 WL1        mid              1614.          2        NA     1991    1991     3
-##  6 WL1        mid              1614.          1        12     2009    2009     2
-##  7 WL1        mid              1614.          1        NA     2018    2018     3
-##  8 WL2        high             2020.          1        12     2014    2014     2
-##  9 WR         mid              1158           1        NA     1986    1986     2
-## 10 WR         mid              1158           2        NA     1991    1991     3
-## 11 WR         mid              1158           1        11     1994    1994     2
-## 12 WR         mid              1158           1        NA     2019    2019     2
-## 13 WR         mid              1158           1        NA     2019    2019     3
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 13 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [4]
+##    parent.pop elevation.group elev_m Lat     Long  firstmonth lastmonth year_cal
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+##  1 DPR        mid              1019. 39.228… -120…          1        NA     1991
+##  2 DPR        mid              1019. 39.228… -120…          1        NA     1999
+##  3 DPR        mid              1019. 39.228… -120…          1        NA     2019
+##  4 DPR        mid              1019. 39.228… -120…          1        NA     2019
+##  5 WL1        mid              1614. 38.786… -120…          2        NA     1991
+##  6 WL1        mid              1614. 38.786… -120…          1        12     2009
+##  7 WL1        mid              1614. 38.786… -120…          1        NA     2018
+##  8 WL2        high             2020. 38.8263 -120…          1        12     2014
+##  9 WR         mid              1158  39.343… -120…          1        NA     1986
+## 10 WR         mid              1158  39.343… -120…          2        NA     1991
+## 11 WR         mid              1158  39.343… -120…          1        11     1994
+## 12 WR         mid              1158  39.343… -120…          1        NA     2019
+## 13 WR         mid              1158  39.343… -120…          1        NA     2019
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#look at the distribution of start and end months 
 snow_60_last_month_col %&gt;% 
   ggplot(aes(x=parent.pop, y=firstmonth)) +
@@ -1310,56 +1320,56 @@ snow_60_last_month_col %&gt;%
 #SQ1, SQ2, WL1, WL2 (MAR OUTLIER TOO?), WV, YO4
 snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ1&quot;, firstmonth==1) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ2&quot;, firstmonth==2) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WV&quot;, firstmonth==1) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;YO4&quot;, firstmonth&lt;3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #no cases of high snowpack soon after germ</code></pre>
-<pre><code>## # A tibble: 0 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [0]
-## # ℹ 14 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
-## #   firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;, grow_yr &lt;int&gt;,
-## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
-## #   tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 0 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [0]
+## # ℹ 16 variables: parent.pop &lt;chr&gt;, elevation.group &lt;chr&gt;, elev_m &lt;dbl&gt;,
+## #   Lat &lt;chr&gt;, Long &lt;chr&gt;, firstmonth &lt;dbl&gt;, lastmonth &lt;dbl&gt;, year_cal &lt;int&gt;,
+## #   grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;,
+## #   ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WL1&quot;, firstmonth&lt;3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #3 years with high snow pack 1 or 2 months post germ (1991, 2009, 2018)</code></pre>
-<pre><code>## # A tibble: 3 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 WL1        mid              1614.          2        NA     1991    1991     3
-## 2 WL1        mid              1614.          1        12     2009    2009     2
-## 3 WL1        mid              1614.          1        NA     2018    2018     3
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 3 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat      Long  firstmonth lastmonth year_cal
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+## 1 WL1        mid              1614. 38.78608 -120…          2        NA     1991
+## 2 WL1        mid              1614. 38.78608 -120…          1        12     2009
+## 3 WL1        mid              1614. 38.78608 -120…          1        NA     2018
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_month_col %&gt;% filter(parent.pop==&quot;WL2&quot;, firstmonth&lt;=3) %&gt;% 
   filter(pck&gt;70, month&gt;firstmonth, month&lt;10) #1 year with high snow pack 1 month post germ (2014) </code></pre>
-<pre><code>## # A tibble: 1 × 14
-## # Groups:   parent.pop, elevation.group, elev_m [1]
-##   parent.pop elevation.group elev_m firstmonth lastmonth year_cal grow_yr month
-##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;   &lt;int&gt; &lt;dbl&gt;
-## 1 WL2        high             2020.          1        12     2014    2014     2
-## # ℹ 6 more variables: growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;,
-## #   tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 1 × 16
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [1]
+##   parent.pop elevation.group elev_m Lat     Long   firstmonth lastmonth year_cal
+##   &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;    &lt;int&gt;
+## 1 WL2        high             2020. 38.8263 -120.…          1        12     2014
+## # ℹ 8 more variables: grow_yr &lt;int&gt;, month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;,
+## #   pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#Will leave these cases in </code></pre>
 </div>
 <div id="deal-with-weird-cases-1" class="section level4">
@@ -1367,7 +1377,7 @@ snow_60_last_month_col %&gt;% filter(parent.pop==&quot;SQ1&quot;, firstmonth==1)
 <pre class="r"><code>#search for the last month in the grow year rather than calendar year for the cases without a last month 
 snow_60_last_month_grwyr &lt;- snow_60_last_month_col %&gt;% 
   filter(month&lt;9) %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, grow_yr) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, grow_yr) %&gt;% 
   filter(if_else(pck&gt;70, pck&gt;70, 
                  if_else(pck&gt;0, tmn &lt; 0, tmn &lt;= -5))) %&gt;%  #-5 is moderate freeze (Pardee et al. 2017)
   arrange(growmonth) %&gt;%  
@@ -1375,30 +1385,33 @@ snow_60_last_month_grwyr &lt;- snow_60_last_month_col %&gt;%
 snow_60_last_month_grwyr_tomerge &lt;- snow_60_last_month_grwyr %&gt;% 
   ungroup() %&gt;% 
   mutate(year_cal=grow_yr-1) %&gt;% #will apply these last months to the previous cal year
-  select(parent.pop:elev_m, year_cal,lastmonth_grwyr=growmonth) %&gt;% 
+  select(parent.pop:Long, year_cal,lastmonth_grwyr=growmonth) %&gt;% 
   arrange(parent.pop, year_cal)
 snow_60_last_grw_month_col &lt;- left_join(snow_60_last_month_col, snow_60_last_month_grwyr_tomerge) %&gt;% 
   select(firstmonth, lastmonth, lastmonth_grwyr, year_cal:tmx) </code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`
-## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`
+## Adding missing grouping variables: `parent.pop`, `elevation.group`, `elev_m`,
+## `Lat`, `Long`</code></pre>
 <pre class="r"><code>snow_60_last_grw_month_col %&gt;% filter(is.na(lastmonth), is.na(lastmonth_grwyr)) #still some with no last month - use the max last month for these </code></pre>
-<pre><code>## # A tibble: 1,020 × 15
-## # Groups:   parent.pop, elevation.group, elev_m [9]
-##    parent.pop elevation.group elev_m firstmonth lastmonth lastmonth_grwyr
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;
-##  1 DPR        mid              1019.          5        NA              NA
-##  2 DPR        mid              1019.          5        NA              NA
-##  3 DPR        mid              1019.          5        NA              NA
-##  4 DPR        mid              1019.          5        NA              NA
-##  5 DPR        mid              1019.          5        NA              NA
-##  6 DPR        mid              1019.          5        NA              NA
-##  7 DPR        mid              1019.          5        NA              NA
-##  8 DPR        mid              1019.          5        NA              NA
-##  9 DPR        mid              1019.          5        NA              NA
-## 10 DPR        mid              1019.          5        NA              NA
+<pre><code>## # A tibble: 1,020 × 17
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [9]
+##    parent.pop elevation.group elev_m Lat      Long       firstmonth lastmonth
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;
+##  1 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  2 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  3 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  4 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  5 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  6 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  7 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  8 DPR        mid              1019. 39.22846 -120.81518          5        NA
+##  9 DPR        mid              1019. 39.22846 -120.81518          5        NA
+## 10 DPR        mid              1019. 39.22846 -120.81518          5        NA
 ## # ℹ 1,010 more rows
-## # ℹ 9 more variables: year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;, month &lt;dbl&gt;,
-## #   growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 10 more variables: lastmonth_grwyr &lt;dbl&gt;, year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;,
+## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
+## #   tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_60_last_grw_month_col %&gt;% group_by(parent.pop) %&gt;% summarise(maxEnd=max(lastmonth, na.rm = TRUE)) #max end for every pop = 12 </code></pre>
 <pre><code>## # A tibble: 19 × 2
 ##    parent.pop maxEnd
@@ -1427,23 +1440,24 @@ snow_60_last_grw_month_col &lt;- left_join(snow_60_last_month_col, snow_60_last_
                            lastmonth))
 
 snow_60_last_grw_month_col %&gt;% filter(is.na(lastmonth), !is.na(lastmonth_grwyr)) #use the grow year last month for these</code></pre>
-<pre><code>## # A tibble: 1,836 × 15
-## # Groups:   parent.pop, elevation.group, elev_m [15]
-##    parent.pop elevation.group elev_m firstmonth lastmonth lastmonth_grwyr
-##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;           &lt;dbl&gt;
-##  1 CP2        high             2244.          5        NA               5
-##  2 CP2        high             2244.          5        NA               5
-##  3 CP2        high             2244.          5        NA               5
-##  4 CP2        high             2244.          5        NA               5
-##  5 CP2        high             2244.          5        NA               5
-##  6 CP2        high             2244.          5        NA               5
-##  7 CP2        high             2244.          5        NA               5
-##  8 CP2        high             2244.          5        NA               5
-##  9 CP2        high             2244.          5        NA               5
-## 10 CP2        high             2244.          5        NA               5
+<pre><code>## # A tibble: 1,836 × 17
+## # Groups:   parent.pop, elevation.group, elev_m, Lat, Long [15]
+##    parent.pop elevation.group elev_m Lat      Long       firstmonth lastmonth
+##    &lt;chr&gt;      &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;
+##  1 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  2 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  3 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  4 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  5 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  6 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  7 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  8 CP2        high             2244. 38.66169 -120.13065          5        NA
+##  9 CP2        high             2244. 38.66169 -120.13065          5        NA
+## 10 CP2        high             2244. 38.66169 -120.13065          5        NA
 ## # ℹ 1,826 more rows
-## # ℹ 9 more variables: year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;, month &lt;dbl&gt;,
-## #   growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;, tmx &lt;dbl&gt;</code></pre>
+## # ℹ 10 more variables: lastmonth_grwyr &lt;dbl&gt;, year_cal &lt;dbl&gt;, grow_yr &lt;int&gt;,
+## #   month &lt;dbl&gt;, growmonth &lt;dbl&gt;, cwd &lt;dbl&gt;, pck &lt;dbl&gt;, ppt &lt;dbl&gt;, tmn &lt;dbl&gt;,
+## #   tmx &lt;dbl&gt;</code></pre>
 <pre class="r"><code>snow_no_end &lt;- snow_60first_last_month %&gt;% 
   filter(is.na(lastmonth)) %&gt;% 
   select(-lastmonth)
@@ -1472,19 +1486,19 @@ snow_no_end_nextyr &lt;- snow_no_end %&gt;%
 <pre class="r"><code>snow_no_end_last_month_fixed &lt;- snow_no_end_nextyr_lastmonth %&gt;% 
   bind_rows(snow_no_end_nextyr) %&gt;% #add rows for additional months in 
   arrange(year_cal, month) %&gt;% 
-  select(-Lat, -Long, -growmonth) %&gt;% #remove this since we lost it on the new rows 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  select(-growmonth) %&gt;% #remove this since we lost it on the new rows 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;%  
   filter(month&lt;=lastmonth) %&gt;% 
   arrange(parent.pop, year_cal, month)
 
 snow_grwseason_60 &lt;- snow_60first_last_month %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&lt;=lastmonth) %&gt;% 
   bind_rows(snow_no_end_last_month_fixed) %&gt;% 
   arrange(parent.pop, year_cal, month) %&gt;% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)
 
 xtabs(~parent.pop+month, data=snow_grwseason_60)</code></pre>
 <pre><code>##             month
@@ -1541,18 +1555,19 @@ stats</p>
 
 #first month
 WL2_2024_first_month &lt;- WL2_2024_clim %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(pck==0) %&gt;% 
   filter(tmn &gt; 0) %&gt;% 
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month for each pop and year with no snowpack for germ
 WL2_2024_first_month_tomerge &lt;- WL2_2024_first_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth=month)
 WL2_2024_first_month_col &lt;- full_join(WL2_2024_clim, WL2_2024_first_month_tomerge)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal)`</code></pre>
 <pre class="r"><code>#last month 
 WL2_2024_last_month &lt;- WL2_2024_first_month_col %&gt;%
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   #filter(month&gt;4) %&gt;% #before adding this, the min last month was 10 (except for cases with Jan germ and Feb snow)
   filter(if_else(pck&gt;70, pck&gt;70, 
@@ -1560,38 +1575,38 @@ WL2_2024_last_month &lt;- WL2_2024_first_month_col %&gt;%
   arrange(month) %&gt;% 
   filter(row_number()==1) #get first month after growstart for each pop and year with pck &gt;70 OR pck&gt;0 &amp; tmn &lt;0 OR tmn &lt;-5
 WL2_2024_last_month_tomerge &lt;- WL2_2024_last_month %&gt;% 
-  select(parent.pop:elev_m, year_cal, firstmonth,lastmonth=month)
+  select(parent.pop:Long, year_cal, firstmonth,lastmonth=month)
 WL2_2024_last_month_col &lt;- full_join(WL2_2024_first_month_col, WL2_2024_last_month_tomerge) %&gt;% 
-  select(parent.pop, elevation.group, elev_m, firstmonth, lastmonth, year_cal:tmx)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year_cal,
-## firstmonth)`</code></pre>
+  select(parent.pop, elevation.group, elev_m, Lat, Long, firstmonth, lastmonth, year_cal:tmx)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year_cal, firstmonth)`</code></pre>
 <pre class="r"><code>#first month = 5, last month = 11
 
 #filter growth season months only
 WL2_2024_grwssn &lt;- WL2_2024_last_month_col %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year_cal) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year_cal) %&gt;% 
   filter(month&gt;firstmonth) %&gt;% 
   filter(month&lt;=lastmonth) %&gt;% 
   arrange(parent.pop, year_cal, month) %&gt;% 
-  select(parent.pop:elev_m, firstmonth, lastmonth, year_cal:month, cwd:tmx)</code></pre>
+  select(parent.pop:Long, firstmonth, lastmonth, year_cal:month, cwd:tmx)</code></pre>
 </div>
 </div>
 <div id="flint-for-growing-season-months-only" class="section level2">
 <h2>Flint for growing season months only</h2>
 <p>Bind snow and no_snow pops together</p>
 <pre class="r"><code>nosnow_grwseason_60_prep &lt;- nosnow_grwseason_60 %&gt;% 
-  select(parent.pop:elev_m, year=grow_yr, #grow season months in grow year format for no snow pops
+  select(parent.pop:Long, year=grow_yr, #grow season months in grow year format for no snow pops
          month, firstmonth:tmx)
 snow_grwseason_60_prep &lt;- snow_grwseason_60 %&gt;% 
-  select(parent.pop:elev_m, year=year_cal, #grow season months in calendar year format for snow pops
+  select(parent.pop:Long, year=year_cal, #grow season months in calendar year format for snow pops
          firstmonth:lastmonth, month:tmx)
 WL2_2024_grwssn_prep &lt;- WL2_2024_grwssn %&gt;% 
-  select(parent.pop:elev_m, year=year_cal,
+  select(parent.pop:Long, year=year_cal,
          firstmonth:lastmonth, month:tmx)
 WL2_2023_July &lt;- pop_elev_climate %&gt;% 
   filter(parent.pop==&quot;WL2_Garden&quot;, month==&quot;jul&quot;, year==2023) %&gt;% #add July 2023 back in 
   mutate(month=7) %&gt;% 
-  select(parent.pop:elev_m, year, month, cwd, pck, ppt, tmn, tmx)
+  select(parent.pop:Long, year, month, cwd, pck, ppt, tmn, tmx)
 
 flint_60_grwseason &lt;- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep) %&gt;% 
   bind_rows(WL2_2024_grwssn_prep) %&gt;% 
@@ -1600,9 +1615,9 @@ flint_60_grwseason &lt;- rbind(nosnow_grwseason_60_prep, snow_grwseason_60_prep)
                                 year &gt;= 1964 &amp; year &lt; 1994 ~ &quot;historic&quot;,
                                 year &gt;= 1994 &amp; year &lt; 2024 ~ &quot;recent&quot;)) %&gt;% 
   mutate(grwssn_length = lastmonth-firstmonth) %&gt;% 
-  select(parent.pop:elev_m, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
+  select(parent.pop:Long, timeframe, year, month,grwssn_length, cwd:tmx) #organize the columns 
 summary(flint_60_grwseason)</code></pre>
-<pre><code>##   parent.pop        elevation.group        elev_m        timeframe        
+<pre><code>##   parent.pop        elevation.group        elev_m           Lat           
 ##  Length:10183       Length:10183       Min.   : 313.0   Length:10183      
 ##  Class :character   Class :character   1st Qu.: 748.9   Class :character  
 ##  Mode  :character   Mode  :character   Median :1613.8   Mode  :character  
@@ -1610,21 +1625,29 @@ summary(flint_60_grwseason)</code></pre>
 ##                                        3rd Qu.:2244.1                     
 ##                                        Max.   :2872.3                     
 ##                                                                           
-##       year          month        grwssn_length        cwd        
-##  Min.   :1964   Min.   : 1.000   Min.   : 2.00   Min.   :  0.00  
-##  1st Qu.:1980   1st Qu.: 6.000   1st Qu.: 6.00   1st Qu.: 28.06  
-##  Median :1994   Median : 8.000   Median : 8.00   Median : 56.82  
-##  Mean   :1994   Mean   : 7.962   Mean   : 7.69   Mean   : 59.18  
-##  3rd Qu.:2009   3rd Qu.:10.000   3rd Qu.: 9.00   3rd Qu.: 86.47  
-##  Max.   :2024   Max.   :15.000   Max.   :14.00   Max.   :183.92  
-##                                  NA&#39;s   :1                       
-##       pck              ppt              tmn               tmx       
-##  Min.   :  0.00   Min.   :  0.00   Min.   :-11.170   Min.   :-0.10  
-##  1st Qu.:  0.00   1st Qu.:  5.08   1st Qu.:  1.450   1st Qu.:12.88  
-##  Median :  0.00   Median : 31.51   Median :  5.280   Median :18.99  
-##  Mean   : 13.05   Mean   : 78.28   Mean   :  5.205   Mean   :18.69  
-##  3rd Qu.:  0.00   3rd Qu.:108.39   3rd Qu.:  9.280   3rd Qu.:24.04  
-##  Max.   :882.99   Max.   :894.02   Max.   : 19.740   Max.   :37.21  
+##      Long            timeframe              year          month       
+##  Length:10183       Length:10183       Min.   :1964   Min.   : 1.000  
+##  Class :character   Class :character   1st Qu.:1980   1st Qu.: 6.000  
+##  Mode  :character   Mode  :character   Median :1994   Median : 8.000  
+##                                        Mean   :1994   Mean   : 7.962  
+##                                        3rd Qu.:2009   3rd Qu.:10.000  
+##                                        Max.   :2024   Max.   :15.000  
+##                                                                       
+##  grwssn_length        cwd              pck              ppt        
+##  Min.   : 2.00   Min.   :  0.00   Min.   :  0.00   Min.   :  0.00  
+##  1st Qu.: 6.00   1st Qu.: 28.06   1st Qu.:  0.00   1st Qu.:  5.08  
+##  Median : 8.00   Median : 56.82   Median :  0.00   Median : 31.51  
+##  Mean   : 7.69   Mean   : 59.18   Mean   : 13.05   Mean   : 78.28  
+##  3rd Qu.: 9.00   3rd Qu.: 86.47   3rd Qu.:  0.00   3rd Qu.:108.39  
+##  Max.   :14.00   Max.   :183.92   Max.   :882.99   Max.   :894.02  
+##  NA&#39;s   :1                                                         
+##       tmn               tmx       
+##  Min.   :-11.170   Min.   :-0.10  
+##  1st Qu.:  1.450   1st Qu.:12.88  
+##  Median :  5.280   Median :18.99  
+##  Mean   :  5.205   Mean   :18.69  
+##  3rd Qu.:  9.280   3rd Qu.:24.04  
+##  Max.   : 19.740   Max.   :37.21  
 ## </code></pre>
 <pre class="r"><code>unique(flint_60_grwseason$parent.pop)</code></pre>
 <pre><code>##  [1] &quot;BH&quot;         &quot;CC&quot;         &quot;IH&quot;         &quot;SC&quot;         &quot;TM2&quot;       
@@ -1653,56 +1676,58 @@ bioclim_60_meantemp_prep &lt;- flint_60_grwseason %&gt;%
 
 # Bio 1, 2, 4, 7, 12, 15
 bioclim_60_calc &lt;- bioclim_60_meantemp_prep %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %&gt;% 
   summarise(ann_tmean=mean(tavg),  #Bio1 - Annual Mean Temperature
             mean_diurnal_range=mean(t_diurnal), #Bio2 - Mean Diurnal Range
             temp_seasonality=sd(tavg), #Bio4 - Temperature Seasonality
             temp_ann_range=(max(tmx))-(min(tmn)), #bio7 - temp annual range
             ann_ppt=sum(ppt), #bio12 - annual precip
             ppt_seasonality=cv(ppt+1)) #bio15 - Precipitation Seasonality (+1 to avoid strange CVs for areas where mean rainfaill is &lt; 1)</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;.
-## You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code># Calculating wettest, driest, warmest, and coldest months 
 wettest_month &lt;- bioclim_60_meantemp_prep %&gt;%  #there&#39;s one wettest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
   slice_max(ppt)
 driest_month &lt;- bioclim_60_meantemp_prep %&gt;%  #there&#39;s more than one driest month for some pops and years 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
   slice_min(ppt)
 warmest_month &lt;- bioclim_60_meantemp_prep %&gt;% #there&#39;s one warmest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,Lat, Long,  timeframe, year) %&gt;% 
   slice_max(tavg)
 coldest_month &lt;- bioclim_60_meantemp_prep %&gt;% #there&#39;s one coldest month per pop/year
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m,Lat, Long,  timeframe, year) %&gt;% 
   slice_min(tavg)
 
 # Bio 8, 9, 18, 19
 bio8_60 &lt;- wettest_month %&gt;% #bio8 = tmean_wettest_month
   dplyr::select(parent.pop, elevation.group, elev_m, year, tmean_wettest_month=tavg)</code></pre>
-<pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
+<pre><code>## Adding missing grouping variables: `Lat`, `Long`, `timeframe`</code></pre>
 <pre class="r"><code>bio9_60 &lt;- driest_month %&gt;% #bio9 = tmean_driest_month
-  group_by(parent.pop, elevation.group, elev_m, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, year) %&gt;% 
   summarise(tmean_driest_month=mean(tavg)) #taking the average b/c some years where there are multiple driest months </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;.
-## You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.</code></pre>
 <pre class="r"><code>bio18_60 &lt;- warmest_month %&gt;% #bio18 = ppt_warmest_month
   dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_warmest_month=ppt)</code></pre>
-<pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
+<pre><code>## Adding missing grouping variables: `Lat`, `Long`, `timeframe`</code></pre>
 <pre class="r"><code>bio19_60 &lt;- coldest_month %&gt;% #bio19 = ppt_coldest_month
   dplyr::select(parent.pop, elevation.group, elev_m, year, ppt_coldest_month=ppt)</code></pre>
-<pre><code>## Adding missing grouping variables: `timeframe`</code></pre>
+<pre><code>## Adding missing grouping variables: `Lat`, `Long`, `timeframe`</code></pre>
 <pre class="r"><code># Merge:
 bio8_9_60 &lt;- full_join(bio8_60, bio9_60)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`</code></pre>
+<pre><code>## Joining with `by = join_by(Lat, Long, parent.pop, elevation.group, elev_m,
+## year)`</code></pre>
 <pre class="r"><code>bio18_19_60 &lt;- full_join(bio18_60, bio19_60)</code></pre>
-<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(Lat, Long, timeframe, parent.pop, elevation.group,
+## elev_m, year)`</code></pre>
 <pre class="r"><code>all_periods_60 &lt;- full_join(bio8_9_60, bio18_19_60)</code></pre>
-<pre><code>## Joining with `by = join_by(timeframe, parent.pop, elevation.group, elev_m,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(Lat, Long, timeframe, parent.pop, elevation.group,
+## elev_m, year)`</code></pre>
 <pre class="r"><code># Merge all bioclims:
 bioclim_60_grwseason &lt;- full_join(bioclim_60_calc, all_periods_60)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, year)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## year)`</code></pre>
 </div>
 <div id="merge-water-year-and-growing-season" class="section level2">
 <h2>Merge water year and growing season</h2>
@@ -1720,7 +1745,7 @@ flint_yrly_avgs_wtr_yr &lt;- flint_all_year_wtr_yr %&gt;%
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
 
 flint_yrly_avgs_grwssn &lt;- flint_60_grwseason %&gt;% 
-  group_by(parent.pop, elevation.group, elev_m, timeframe, year) %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, timeframe, year) %&gt;% 
   summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean), na.rm = TRUE)
 
 #subset bioclim water year
@@ -1734,8 +1759,8 @@ wtr_yr_clim &lt;- left_join(flint_yrly_avgs_wtr_yr, bioclim_wtryr_to_merge) %&gt
 <pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
 ## year)`</code></pre>
 <pre class="r"><code>grwssn_clim &lt;- left_join(flint_yrly_avgs_grwssn, bioclim_60_grwseason) %&gt;% mutate(Season=&quot;Growth Season&quot;)</code></pre>
-<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, timeframe,
-## year)`</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long,
+## timeframe, year)`</code></pre>
 <pre class="r"><code>all_clim &lt;- bind_rows(wtr_yr_clim, grwssn_clim)
 write_csv(all_clim, &quot;../Processed.Data/All_Clim.csv&quot;)</code></pre>
 </div>
