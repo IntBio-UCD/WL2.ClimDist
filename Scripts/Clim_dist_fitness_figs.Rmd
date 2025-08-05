@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggpubr) #ggarrange
 
-sem <- function(x, na.rm=FALSE) {           #for caclulating standard error
+sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 ```
@@ -111,6 +111,8 @@ WYtemp_probfit <- prob_fitness_summary %>%
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
        color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 WYppt_probfit <- prob_fitness_summary %>% 
   ggplot(aes(x=AvgPPTDist_Recent_Wtr_Year, y=meanProbFit, group = pop, color=elev_m)) +
@@ -136,6 +138,8 @@ WYtemp_repsurvy2 <- wl2_surv_to_bud_y2_summary %>%
   scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
   labs(y="Survival to Budding Y2", x="Recent Water Year Temp Dist (°C)", colour = "Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/RepSurv2_TempDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 WYppt_repsurvy2 <- wl2_surv_to_bud_y2_summary %>% 
   ggplot(aes(x=PPTDist_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
@@ -171,6 +175,8 @@ probfit_gower <- prob_fitness_summary %>%
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Climate Dist", 
        color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/ProbFit_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 repsurvy2_gower <- wl2_surv_to_bud_y2_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
@@ -183,6 +189,8 @@ repsurvy2_gower <- wl2_surv_to_bud_y2_summary %>%
   scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
   labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/RepSurvY2_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower, 
                         labels = c("A)", "B)"), 
@@ -206,6 +214,8 @@ WYtemp_est <- est_summary %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Recent Water Year Temp Dist (°C)", color="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Est_TempDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 WYppt_est <- est_summary %>% 
   ggplot(aes(x=PPTDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
@@ -218,6 +228,8 @@ WYppt_est <- est_summary %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Establishment", x="Recent Water Year PPT Dist (mm)", color="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Est_PPTDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 WYtemp_y1surv <- y1surv_summary %>% 
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
@@ -230,6 +242,8 @@ WYtemp_y1surv <- y1surv_summary %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Y1 Survival", x="Recent Water Year Temp Dist (°C)", colour="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Y1Surv_TempDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 figs4_gower <- ggarrange(WYtemp_est, WYtemp_y1surv, 
                         WYppt_est, 
@@ -352,6 +366,8 @@ wintersurv_gower <- wintersurv_summary %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Winter Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 figs6_sub <- ggarrange(est_gower, y1surv_gower, 
                         wintersurv_gower, 
