@@ -342,6 +342,8 @@ est_gower <- est_summary %>%
   labs(y="Establishment", x="Recent Water Year Climate Dist", 
        color="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Est_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 y1surv_gower <- y1surv_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
@@ -354,6 +356,8 @@ y1surv_gower <- y1surv_summary %>%
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Y1 Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Y1Surv_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
 wintersurv_gower <- wintersurv_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
