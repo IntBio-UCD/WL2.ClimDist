@@ -13,18 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # This code compiles and calculates all flint and bioclim variables for each site, year, and timeframe
 
-Note: Due to changes to how bioclim is calculated for water year and how the growing season months are calculated in this script, we will have to update:
-
--   Climate data methods in the manuscript
-
--   Climate variable correlations (Figure S1)
-
--   Climate PCAs currently in the manuscript (Figure 1, S2; Table S2, S3)
-
--   Climate distance calculations (Figure S3; Table S4)
-
--   Fitness \~ climate distance regressions and figures (Figure 2-4; S4-S7; Table 1-2)
-
 ## Load libraries
 
 ```{r}
