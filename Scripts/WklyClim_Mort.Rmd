@@ -11,15 +11,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for relating weekly climate to weekly mortality (Table 3)
 
-To Do:
-
--   Update file paths
-
--   Clean up code/add annotations 
-
 ## Load Libraries
 ```{r}
 library(tidyverse)
+library(zoo) #for rollmean function
+library(tidymodels) #for model workflow 
+tidymodels_prefer()
+library(multilevelmod) #for using workflow with glmer 
+library(broom.mixed) #for using glance with glmer 
 ```
 
 ## Read in the data
@@ -29,13 +28,10 @@ wl2_surv <- read_csv("../Processed.Data/WL2_Mortality_2023.csv")
 
 ## As weeks
 ```{r}
-wl2_surv %>% filter(is.na(death.date),!is.na(survey.notes)) #no plants that seemed to disappear 
-wl2_surv %>% filter(Genotype=="YO7_4_2")
-
 wl2_surv_dates <- wl2_surv %>%  
   rename(parent.pop = pop) %>%
-  mutate(parent.pop= str_replace(parent.pop, "Y08", "YO8")) %>% 
-  mutate(parent.pop= str_replace(parent.pop, "Y04", "YO4")) %>% 
+  mutate(parent.pop= str_replace(parent.pop, "Y08", "YO8")) %>% #fix cases where 0 used instead of O in pop name 
+  mutate(parent.pop= str_replace(parent.pop, "Y04", "YO4")) %>% #fix cases where 0 used instead of O in pop name 
   filter(!is.na(parent.pop)) %>% 
   mutate(planting.date="7/19/23", #could try to make this more specific to when certain blocks were planted 
          last_fup_date=if_else(is.na(death.date), "10/27/23", death.date)) %>%  #need this to calculate survival times
@@ -44,70 +40,41 @@ wl2_surv_dates <- wl2_surv %>%
          status=if_else(is.na(death.date), 0, 1)) %>% #0=censured (alive in this case), 1=dead
   filter(os_weeks > 0) %>% #there is one case of a plant that was dead at planting, so just removed it since this is survival post- transplanting
   select(-survey.notes)
-head(wl2_surv_dates)
-unique(wl2_surv_dates$os_weeks) %>% sort()
 ```
 
 ## Location Info
 
 ```{r}
-gowersdist_WL2 <- read_csv("../output/Climate/Gowers_WL2.csv") 
-gowersdist_WL2 %>% arrange(parent.pop)
+pop_loc_WL2 <- read_csv("../Processed.Data/All_Clim_Dist.csv") %>% 
+  select(parent.pop:Long)
 
 #Merge
-wl2_surv_dates_loc <- left_join(wl2_surv_dates, gowersdist_WL2_wide)  %>%
-  mutate(elevation.group = factor(elevation.group, levels= c("Low", "Mid", "High")))
-```
-
-## population-level summary of observed mortality 
-```{r}
-wl2_obs.pop <- 
-  wl2_surv_dates_loc %>% select(parent.pop, death.date, os_weeks, status, elevation.group, ends_with("GD")) %>%
-  group_by(parent.pop) %>%
-  mutate(total=n()) %>%
-  group_by(parent.pop, os_weeks) %>%
-  summarize(n.newly.dead=sum(status),
-            across(c(total, elevation.group, ends_with("GD")), unique)) %>%
-  ungroup() %>%
-  complete(parent.pop, os_weeks, fill = list(n.newly.dead=0)) %>% # we have missing data for weeks where nobody died and we need to fill that in
-  group_by(parent.pop) %>%
-  mutate(total=unique(na.omit(total)), elevation.group=unique(na.omit(elevation.group)), # filling in the blanks from the complete() step above
-         total.dead=cumsum(n.newly.dead),
-         surviving = total - total.dead,
-         prop.surviving = surviving/total,
-         across(ends_with("GD"), \(x) unique(na.omit(x)))) %>%
-  ungroup() %>%
-#  bind_rows(week0.pop) %>%
-#  select(parent.pop, elevation.group, os_weeks, prop.surviving) %>%
-  arrange(parent.pop, os_weeks)
+wl2_surv_dates_loc <- left_join(wl2_surv_dates, pop_loc_WL2) 
 ```
 
 ## Reformat to be one row per plant per week
 
-```{r, eval=TRUE}
+```{r}
 wl2_ind <- wl2_surv_dates %>% 
-  complete(Genotype, last_fup_date) %>%
+  complete(Genotype, last_fup_date) %>% #fill in missing weeks for each plant 
   group_by(Genotype) %>%
-  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>%
-  mutate(planting.date = unique(na.omit(planting.date)),
-         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1),
-           dead = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% # 0 is alive, 1 is dead
+  mutate(across(c(-status, -last_fup_date, -os_weeks, -planting.date), 
+                \(x) ifelse(all(is.na(unique(x))), NA,unique(na.omit(x))))) %>% #add block, loc, and pop/mf info back in 
+  mutate(planting.date = unique(na.omit(planting.date)), #add planting date back in 
+         os_weeks=as.duration(planting.date %--% last_fup_date) / dweeks(1), #add weeks back in 
+           dead = ifelse((is.na(death.date) | mdy(death.date) > last_fup_date), 0, 1)) %>% #0 is alive, 1 is dead
   filter(cumsum(dead) < 2) %>% # you can't die more than once
   ungroup() %>%  
-  left_join(gowersdist_WL2_wide)
-
-wl2_ind %>% select(Genotype, last_fup_date, os_weeks, dead)
+  left_join(pop_loc_WL2) #add location info back in 
 ```
 
 ## Read in soil temp
 
 ```{r}
-temp <- read_csv("../input/WL2_Data/WL2_2022_2023_iButton_Data_Corrected.csv") %>%
+temp <- read_csv("../Raw.Data/WL2_2022_2023_iButton_Data_Corrected.csv") %>%
   select(-`...3`) %>%
   mutate(Date_Time = mdy_hm(Date_Time)) %>%
   filter(Date_Time > ymd("2023-07-06"))
-head(temp)
-skimr::skim(temp)
 ```
 
 ### Summarize
@@ -117,30 +84,26 @@ temp_summary <- temp %>%
   summarise(AvgSoilTemp=mean(SoilTemp, na.rm=TRUE)) %>% #avg across beds 
   mutate(Date=as.Date(Date_Time)) %>%
   filter(Date != min(Date), Date != max(Date)) %>% # trim ragged ends
-  group_by(Date) %>% #summmarise hourly data by date
+  group_by(Date) %>% #summarize hourly data by date
   summarize(
-    min_temp_d = min(AvgSoilTemp),
-    max_temp_d = max(AvgSoilTemp),
-    mean_temp_d = mean(AvgSoilTemp),
+    min_temp_d = min(AvgSoilTemp), #min daily 
+    max_temp_d = max(AvgSoilTemp), #max daily 
+    mean_temp_d = mean(AvgSoilTemp), #mean daily 
     diurnal_temp_d = max_temp_d - min_temp_d
   ) %>%
   mutate(
-    across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"),
-    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13"), # 13 so I can get the first survey date
-    across(ends_with("1_7"), \(x) dplyr::lag(x, 6), .names = "{.col}_13") 
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 7, align = "right", fill = NA), .names="{.col}1_7"), #summarize week prior to census 
+    across(ends_with("temp_d"), \(x) rollmean(x, k = 13, align = "right", fill = NA), .names="{.col}1_13"), #summarize 2 weeks prior to census, used 13 to get the first survey date
+    across(ends_with("1_7"), \(x) dplyr::lag(x, 6), .names = "{.col}_13") #summarize the first week of the above two weeks 
   ) %>%
   rename_with(\(x) str_replace(x, "1_7_13", "6_13"))
-
-temp_summary
 ```
 
 ## Read in soil moisture
 
 ```{r}
-moisture <- read_csv("../input/WL2_Data/WL2_2023_Bed_C_Soil_Moisture_Corrected.csv") %>%
+moisture <- read_csv("../Raw.Data/WL2_2023_Bed_C_Soil_Moisture_Corrected.csv") %>%
   mutate(Date_Time = mdy_hm(Date_Time)) 
-head(moisture)
-skimr::skim(moisture)
 ```
 
 ### Average across the ports
@@ -158,15 +121,13 @@ moisture_summary <- moisture %>%
   mutate(Date=as.Date(Date_Time)) %>%
   group_by(Date) %>%
   summarize(
-    mean_moisture_d = mean(s_moisture)
+    mean_moisture_d = mean(s_moisture) #daily mean soil moisture 
   ) %>%
   mutate(
-    s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"),
-    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = "right", fill = "extend"),
-    s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7)
+    s_moisture_1_7 = rollmean(mean_moisture_d, k = 7, align = "right", fill = "extend"), #summarize 1 week prior to census 
+    s_moisture_1_14 = rollmean(mean_moisture_d, k = 13, align = "right", fill = "extend"), #summarize 2 weeks prior to census 
+    s_moisture_7_14 = dplyr::lag(s_moisture_1_7, 7) #summarize the first week of the above two weeks  
   )
-
-moisture_summary
 ```
 
 ## Discrete intervals
@@ -174,37 +135,26 @@ moisture_summary
 Modify the input data to add some factor variables
 ```{r}
 wl2_ind <- wl2_ind %>% mutate(
-  os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), # padding so it will sort correctly
-  os_weeks_pop = factor(str_c(parent.pop,"_", os_weeks_f))
+  os_weeks_f = factor(str_pad(round(os_weeks, 1), 2, pad = "0")), #round weeks column padding so it will sort correctly
+  os_weeks_pop = factor(str_c(parent.pop,"_", os_weeks_f)) #make a column for pop_weeks
 )
-wl2_ind
 ```
 
-Split data into establishment and survival data sets
+## Remove establishment period 
 ```{r}
-wl2_ind_estab <- wl2_ind %>% filter(os_weeks <= 3) %>%
-  # compute status at week 3 for each plant
-  group_by(Genotype) %>%
-  summarize(dead=max(dead),
-            across(c(block, bed, parent.pop, mf, contains("GD")), unique))
-
 wl2_ind_surv <- wl2_ind %>% filter(os_weeks > 3) %>%
   mutate(os_weeks_f = factor(os_weeks))
-
-wl2_estab_means <- wl2_ind_estab %>% # summary for plotting
-  group_by(parent.pop) %>%
-  summarize(survivorship = 1-mean(dead))
-
-wl2_surv_means <- wl2_ind_surv %>%
-  group_by(parent.pop, os_weeks) %>%
-  summarize(survivorship = 1-mean(dead))
 ```
 
-## check basic model forms
+## Check basic model forms
 ```{r}
-# Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
+# Note: StdDev due to mf within parent.pop is essentially zero, so we omitted it
+glmer.model <- 
+  linear_reg() %>%
+  set_engine("glmer", family = binomial)
+
 surv_wflow <- workflow() %>%
-  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f)) 
+  add_variables(outcomes = dead, predictors = c(parent.pop, mf, block, os_weeks, os_weeks_f))
 
 surv_fits_1 <- tibble(wflow=list(
 
@@ -219,14 +169,21 @@ surv_fits_1 <- tibble(wflow=list(
 
   pop.weeks.quad.block ={surv_wflow %>% 
       add_model(glmer.model, formula = dead ~ os_weeks + I(os_weeks^2) + (1|parent.pop) + (1|block))}
-),
-name=names(wflow)
-) %>% 
+  ),
+  name=names(wflow)) %>% 
   select(name,wflow)
-surv_fits_1
 ```
 
-## add climate data
+```{r}
+system.time(
+  surv_fits_1 <- surv_fits_1 %>%
+  mutate(fit = map(wflow, fit, data = wl2_ind_surv))
+)
+surv_fits_1 %>% pull(fit)
+#convergence errors for pop.weeks_f.block and  pop.weeks.quad.block
+```
+
+## Add climate data
 
 ```{r}
 wl2_ind_surv_climate <- wl2_ind_surv %>% 
@@ -236,14 +193,8 @@ wl2_ind_surv_climate <- wl2_ind_surv %>%
 
 ## Temp analysis
 
-check basic model forms
 
 ```{r}
-# Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
-glmer.model <- 
-  linear_reg() %>%
-  set_engine("glmer", family = binomial)
-
 temp_wflow <- workflow() %>%
   add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, contains("temp_d")  )) 
 
@@ -292,7 +243,6 @@ temp_fits <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow)
-temp_fits
 ```
 
 ```{r}
@@ -314,7 +264,7 @@ temp_fits %>%
   select(-wflow:-fit, -sigma)
 ```
 
-get p-values
+### Get p-values
 
 ```{r}
 temp_fits %>%
@@ -328,14 +278,7 @@ temp_fits %>%
 
 ## Moisture analysis
 
-check basic model forms
-
 ```{r}
-# Note: StdDev due to mf within parent.pop is essentially zero, so I am omitting this.
-glmer.model <- 
-  linear_reg() %>%
-  set_engine("glmer", family = binomial)
-
 moisture_wflow <- workflow() %>%
   add_variables(outcomes = dead, predictors = c(parent.pop, block, os_weeks, contains("s_moisture") )) 
 
@@ -357,7 +300,6 @@ moisture_fits <- tibble(wflow=list(
 name=names(wflow)
 ) %>% 
   select(name,wflow)
-moisture_fits
 ```
 
 ```{r}
@@ -379,7 +321,7 @@ moisture_fits %>%
   select(-wflow:-fit, -sigma)
 ```
 
-get p-values
+### Get p-values
 
 ```{r}
 moisture_fits %>%
