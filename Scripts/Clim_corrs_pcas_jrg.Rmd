@@ -9,9 +9,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for Figures 1 and S1; Table S2 and S3 
+# Code for Figures 1 and S1; Table S2 and S3
+
+To Do:
+
+-   Make growth season and water year from same dataset and facet by "season"
+
+-   Make a couple of versions of the yearly variation PCA with all populations (facet/hulls by season or by time period)
+
+    -   Keep the climate vectors in the final figure
+
+    -   Show where WL2 garden fits into the yearly variation
+
+    -   Overlay WL2 yearly variation too
 
 ## Load libraries
+
 ```{r}
 library(tidyverse)
 library(ggrepel) #for repelling labels 
@@ -29,11 +42,13 @@ library(marmap)
 ```
 
 ## Load Climate Data
+
 ```{r}
 all_clim <- read_csv("../Processed.Data/All_Clim.csv")
 ```
 
 ## Map of populations (Figure 1a)
+
 ```{r}
 pops_garden_locs <- all_clim %>% 
   mutate_at(c("Lat", "Long"), as.double) %>% 
@@ -66,7 +81,8 @@ ggsave("../Figures/Pop_Map_Figure1a.png", width = 10, height = 10, units = "in")
 
 ## Climate variable correlations (Figure S1)
 
-### Calculate 30 year climate averages 
+### Calculate 30 year climate averages
+
 ```{r}
 all_clim_avgs <- all_clim %>% 
   select(-Lat, -Long) %>% 
@@ -82,6 +98,7 @@ all_clim_avgs <- all_clim %>%
 ```
 
 ### Recent Corrs - Water Year
+
 ```{r}
 recent_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="recent", Season=="Water Year") %>% 
@@ -99,6 +116,7 @@ corrplot(cor.norm_recent_wtr_yr, type="upper",
 ```
 
 ### Historical Corrs - Water year
+
 ```{r}
 historic_wtr_yr_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="historic", Season=="Water Year") %>% 
@@ -116,6 +134,7 @@ corrplot(cor.norm_historic_wtr_yr, type="upper",
 ```
 
 ### Recent Corrs - Growth Season
+
 ```{r}
 recent_grwssn_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="recent", Season=="Growth Season") %>% 
@@ -133,6 +152,7 @@ corrplot(cor.norm_recent_grwssn, type="upper",
 ```
 
 ### Historical Corrs - Growth Season
+
 ```{r}
 historic_grwssn_avgs_normalized <- all_clim_avgs %>% 
   filter(timeframe=="historic", Season=="Growth Season") %>% 
@@ -152,6 +172,7 @@ corrplot(cor.norm_historic_grwssn, type="upper",
 ## Climate Change PCAs (Figure 1b-c; Table S2, S3)
 
 ### Water Year PCA
+
 ```{r}
 wtr_yr_avgs_normalized <- all_clim_avgs %>% 
   filter(Season=="Water Year") %>% 
@@ -186,7 +207,8 @@ wtr_yr_avgs_loadings = data.frame(varnames=rownames(wtr_yr_avgs.pc$rotation), wt
 wtr_yr_avgs_loadings
 ```
 
-#### Permanova 
+#### Permanova
+
 ```{r}
 wtr_yr_avgs_locs.pc_dist <- wtr_yr_avgs_locs.pc %>% ungroup() %>% select(PC1:PC8)
 dist_matrix_wtr_year <- dist(wtr_yr_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
@@ -218,6 +240,7 @@ lmer_results_wtr_year %>% select(-data, -glm) %>% unnest(anova) %>% filter(PC=="
 ```
 
 #### Plot climate change PCA
+
 ```{r}
 #prep the pc for making a plot with arrows distinguishing recent vs. historical time 
 wtr_yr_avgs_locs.pc_avg <- wtr_yr_avgs_locs.pc %>%
@@ -346,8 +369,8 @@ home_sites_pca_wtryr +
 ggsave("../Figures/Wtr_Year_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
-
 ### Growth Season PCA
+
 ```{r}
 grwssn_avgs_normalized <- all_clim_avgs %>% 
   filter(Season=="Growth Season") %>% 
@@ -380,7 +403,8 @@ grwssn_avgs_loadings = data.frame(varnames=rownames(grwssn_avgs.pc$rotation), gr
 grwssn_avgs_loadings
 ```
 
-#### Permanova 
+#### Permanova
+
 ```{r}
 grwssn_avgs_locs.pc_dist <- grwssn_avgs_locs.pc %>% ungroup() %>% select(PC1:PC11)
 dist_matrix_grwssn <- dist(grwssn_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
@@ -414,6 +438,7 @@ lmer_results_grwssn %>% select(-data, -glm) %>% unnest(anova) %>% filter(PC=="PC
 ```
 
 #### Plot climate change PCA
+
 ```{r}
 #prep the pc for making a plot with arrows distinguishing recent vs. historical time 
 grwssn_avgs_locs.pc_avg <- grwssn_avgs_locs.pc %>%
@@ -525,10 +550,10 @@ home_sites_pca_grwssn +
 ggsave("../Figures/Growth_Season_PC1-PC2_PlusGarden.png", width = 7.4, height = 6, units = "in")
 ```
 
-
 ## WL2 Yearly Variation PCAs (Figure S2)
 
-### Water Year 
+### Water Year
+
 ```{r}
 wl2_wtryr_var <- all_clim %>% 
   filter(parent.pop=="WL2", Season=="Water Year") %>% 
@@ -561,6 +586,7 @@ wl2_wtryr_var_loadings
 ```
 
 #### Plot the PCA
+
 ```{r}
 autoplot(wl2_wtryr_var.pc, data = wl2_wtryr_var,
          colour='year', alpha=0.6,
@@ -634,7 +660,8 @@ wl2_yrl_var_pca_wtryr +
 ggsave("../Figures/Wtr_Year_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, units = "in")
 ```
 
-### Growth Season 
+### Growth Season
+
 ```{r}
 wl2_grwssn_var <- all_clim %>% 
   filter(parent.pop=="WL2", Season=="Growth Season") %>% 
@@ -666,6 +693,7 @@ wl2_grwssn_var_loadings
 ```
 
 #### Plot the PCA
+
 ```{r}
 autoplot(wl2_grwssn_var.pc, data = wl2_grwssn_var,
          colour='year', alpha=0.6,
@@ -744,7 +772,8 @@ ggsave("../Figures/Growth_Ssn_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, uni
 #wl2_grwssn_var %>% select(pck)
 ```
 
-#### All climate PCA (water year, growing season, historic and recent)  ####
+#### All climate PCA (water year, growing season, historic and recent)
+
 ```{r}
 all_clim = all_clim %>%
   #remove data before historic (which should be just WL2_Garden)
@@ -790,7 +819,8 @@ allclim_loadings = data.frame(varnames=rownames(allclim.pc$rotation), allclim.pc
 allclim_loadings
 ```
 
-#### plot PCA with all climate ####
+#### plot PCA with all climate
+
 ```{r}
 
 ##plot everything, color by elevation
