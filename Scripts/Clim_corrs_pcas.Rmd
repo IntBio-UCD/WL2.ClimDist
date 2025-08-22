@@ -151,6 +151,41 @@ corrplot(cor.norm_historic_grwssn, type="upper",
 
 ## Climate Change PCAs (Figure 1b-c; Table S2, S3)
 
+```{r}
+wtr_yr_avgs_normalized <- all_clim_avgs %>% 
+  filter(Season=="Water Year") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_wtr_yr = cor(wtr_yr_avgs_normalized) #test correlations among the traits
+cor.sig_wtr_yr <- cor.mtest(wtr_yr_avgs_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_wtr_yr
+cor.sig_wtr_yr$p
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
+#tmn, tmx, tmean_wettest_month, tmean_driest_month and ann_tmean all highly correlated (97-99%) - only keep ann_tmean 
+#ppt warmest month highly neg correlated with tmn, ann_tmean, tmean_driest - take it out 
+#temp ann range and mean diurnal range highly corr - keep temp_ann_range
+
+wtr_yr_avgs <- all_clim_avgs %>% 
+  filter(Season=="Water Year") %>% 
+  ungroup()
+wtr_yr_avgs.pc = prcomp(wtr_yr_avgs[c(8:9, 13, 15:16, 19:20, 22)], scale = TRUE, center = TRUE)
+summary(wtr_yr_avgs.pc)
+tibble(PC=str_c("PC",str_pad(1:8,2,pad="0")),
+       percent_var=wtr_yr_avgs.pc$sdev[1:8]^2/sum(wtr_yr_avgs.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+wtr_yr_avgs.pc.dat = data.frame(wtr_yr_avgs.pc$x)
+wtr_yr_avgs_locs.pc = cbind(wtr_yr_avgs, wtr_yr_avgs.pc.dat)
+wtr_yr_avgs_loadings = data.frame(varnames=rownames(wtr_yr_avgs.pc$rotation), wtr_yr_avgs.pc$rotation)
+wtr_yr_avgs_loadings
+```
+
+
 ### Water Year PCA
 ```{r}
 wtr_yr_avgs_normalized <- all_clim_avgs %>% 
@@ -742,4 +777,144 @@ ggsave("../Figures/Growth_Ssn_WL2ONLY_PC1-PC2.png", width = 7.4, height = 6, uni
 #WL2GRDN_grwssn_pc_prep_2023_var %>% select(pck)
 #WL2GRDN_grwssn_pc_prep_2024_var %>% select(pck)
 #wl2_grwssn_var %>% select(pck)
+```
+
+## All climate PCA (all years, water year, growing season, historic and recent)
+
+```{r}
+all_clim = all_clim %>%
+  #remove data before historic (which should be just WL2_Garden)
+  filter(year >= 1964) %>%
+  #create time frames for WL2 garden site
+  mutate(timeframe = if_else(parent.pop == "WL2_Garden" & year < 1994, "historic", timeframe)) %>%
+  mutate(timeframe = if_else(parent.pop == "WL2_Garden" & year >= 1994 & year != 2024, "recent", timeframe)) %>%
+   mutate(timeframe = if_else(parent.pop == "WL2_Garden" & year == 2024, "2024Garden", timeframe))%>%
+   mutate(timeframe = if_else(parent.pop == "WL2_Garden" & year == 2023, "2023Garden", timeframe)) %>%
+  mutate(timeframe = as.factor(timeframe), Season = as.factor(Season), parent.pop = as.factor(parent.pop), elevation.group = as.factor(elevation.group)) %>%
+    #combine season and timeframe 
+  mutate(seasontime = as.factor(paste(Season, timeframe, sep = "_")))
+                    
+summary(all_clim)
+
+allclim_normalized <- all_clim %>% 
+ # filter(Season=="Water Year") %>% 
+  ungroup() %>% 
+  select(cwd:ppt_coldest_month) %>% 
+  scale() #center and scale the data 
+
+cor.norm_all = cor(allclim_normalized) #test correlations among the traits
+cor.sig_all <- cor.mtest(allclim_normalized, method = "pearson") #get pearson's test p-values 
+cor.norm_all
+cor.sig_all$p
+#ann_ppt and ppt 100% correlated (ppt = avg across monts, ann_ppt = avg of the total ppt in a year) - only keep ann_ppt 
+#JRG: ann_ppt is usually what is used - e.g., MAP
+#JRG: keep all for comparisons between water year, etc.  
+
+allclim.pc = prcomp(allclim_normalized, scale = TRUE, center = TRUE) #use all the data
+
+summary(allclim.pc)
+tibble(PC=str_c("PC",str_pad(1:8,2,pad="0")),
+       percent_var=allclim.pc$sdev[1:8]^2/sum(allclim.pc$sdev^2)*100) %>%
+  ggplot(aes(x=PC, y=percent_var)) +
+  geom_col() +
+  ggtitle("Percent Variance Explained")
+
+#combine pcs with metadata
+allclim.pc.dat = data.frame(allclim.pc$x)
+allclim_locs.pc = cbind(all_clim, allclim.pc.dat)
+allclim_loadings = data.frame(varnames=rownames(allclim.pc$rotation), allclim.pc$rotation)
+allclim_loadings
+```
+
+#### plot PCA with all climate
+
+```{r}
+
+##plot everything, color by elevation
+pca_all12 = autoplot(allclim.pc, data = all_clim,
+         x=1, y=2,
+         colour='elev_m', alpha=0.5,
+         label=FALSE, label.label="parent.pop",
+         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
+         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
+         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+pca_all12
+
+allclim_locs.pc_nogarden = allclim_locs.pc %>%
+                          filter(parent.pop != "WL2_Garden")
+
+allclim_locs.pc_garden = allclim_locs.pc %>%
+                          filter(parent.pop == "WL2_Garden")
+
+pca_all_novect12 =  ggplot(allclim_locs.pc_nogarden, aes(x = PC1, y = PC2, colour= elev_m, shape = timeframe)) +
+         geom_point(aes(colour = elev_m), size = 3, alpha=0.5) +
+   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  theme_classic()
+pca_all_novect12
+#pca_all_novect12 + geom_convexhull(aes(linetype = timeframe), alpha = 0.5)
+
+pca_hull_recentvhistoric_12 <- 
+  allclim_locs.pc_nogarden %>% 
+  group_by(timeframe) %>% 
+  slice(chull(PC1, PC2))
+
+pca_chull_recvhist = pca_all_novect12 +  
+                geom_polygon(data = pca_hull_recentvhistoric_12,
+               aes(x = PC1, y = PC2, group = timeframe, linetype = timeframe, fill = timeframe), color = "black",
+               alpha = 0.3,
+               show.legend = T) + scale_fill_manual(values = c("gray72", "gray22"))
+pca_chull_recvhist
+
+#add back in WL2 garden values
+allclim_locs.pc_garden$category_reversed <- factor(allclim_locs.pc_garden$timeframe, levels = rev(levels(allclim_locs.pc_garden$timeframe)))#should reverse scale so garden points are biggest
+
+pca_chull_recvhist_wgarden = pca_chull_recvhist + geom_point(data = allclim_locs.pc_garden, aes(size = category_reversed, shape = Season), color = "gray20") +
+     scale_size_discrete(name = "WL2 garden timeframe") 
+pca_chull_recvhist_wgarden
+
+
+##do this for water year vs growth season
+pca_hull_season_12 <- 
+  allclim_locs.pc_nogarden %>% 
+  group_by(Season) %>% 
+  slice(chull(PC1, PC2))
+
+pca_chull_season = pca_all_novect12 +  
+                geom_polygon(data = pca_hull_season_12,
+               aes(x = PC1, y = PC2, group = Season, linetype = Season, fill = Season), color = "black",
+               alpha = 0.3,
+               show.legend = T) + scale_fill_manual(values = c("gray72", "gray22"))
+pca_chull_season
+
+#add back in WL2 garden values
+allclim_locs.pc_garden$category_reversed <- factor(allclim_locs.pc_garden$Season, levels = rev(levels(allclim_locs.pc_garden$Season)))#should reverse scale so garden points are biggest
+
+pca_chull_season_wgarden = pca_chull_season + geom_point(data = allclim_locs.pc_garden, aes(size = category_reversed, shape = timeframe), color = "gray20") +
+     scale_size_discrete(name = "WL2 garden season") 
+pca_chull_season_wgarden
+
+# combine season and time frame 
+pca_hull_seasontime_12 <- 
+  allclim_locs.pc_nogarden %>% 
+  group_by(seasontime) %>% 
+  slice(chull(PC1, PC2))
+
+pca_chull_seasontime12 = pca_all_novect12 +  
+                geom_polygon(data = pca_hull_seasontime_12,
+               aes(x = PC1, y = PC2, group = seasontime, linetype = seasontime, fill = seasontime), color = "black",
+               alpha = 0.3,
+               show.legend = T) + scale_fill_manual(values = c("gray72", "gray52", "gray32", "gray22"))
+pca_chull_seasontime12
+
+#add back in WL2 garden values
+allclim_locs.pc_garden$category_reversed <- factor(allclim_locs.pc_garden$seasontime, levels = rev(levels(allclim_locs.pc_garden$seasontime)))#should reverse scale so garden points are biggest
+
+pca_chull_seasontime12_wgarden = pca_chull_seasontime12 + geom_point(data = allclim_locs.pc_garden, aes(size = category_reversed, shape = timeframe), color = "gray20") +
+     scale_size_discrete(name = "WL2 garden season and timeframe") 
+pca_chull_seasontime12_wgarden
+
 ```
