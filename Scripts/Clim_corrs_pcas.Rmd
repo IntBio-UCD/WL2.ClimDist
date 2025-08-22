@@ -151,6 +151,8 @@ corrplot(cor.norm_historic_grwssn, type="upper",
 
 ## Climate Change PCAs (Figure 1b-c; Table S2, S3)
 
+### Water Year + Growth Season PCA
+
 ```{r}
 all_clim_avgs_normalized <- all_clim_avgs %>% 
   ungroup() %>% 
@@ -176,13 +178,46 @@ tibble(PC=str_c("PC",str_pad(1:13,2,pad="0")),
 #combine pcs with metadata
 all_clim_avgs.pc.dat = data.frame(all_clim_avgs.pc$x)
 all_clim_avgs_locs.pc = cbind(all_clim_avgs, all_clim_avgs.pc.dat) %>% 
-  select(parent.pop, elev_m, timeframe, Season, PC1:PC13)
+  select(parent.pop, elev_m, , Lat, timeframe, Season, PC1:PC13)
 all_clim_avgs_loadings = data.frame(varnames=rownames(all_clim_avgs.pc$rotation), all_clim_avgs.pc$rotation)
 all_clim_avgs_loadings
 
 #PC1 pos ann_tmean loading
 #PC2 pos for ann_ppt
 ```
+
+#### Permanova 
+```{r}
+all_clim_avgs_locs.pc_dist <- all_clim_avgs_locs.pc %>% ungroup() %>% select(PC1:PC13)
+dist_matrix_allclim <- dist(all_clim_avgs_locs.pc_dist, method = "euclidian") #use a distance function to calculate euclidian distance in PCA space
+permanova_results_allclim <- adonis2(dist_matrix_allclim ~ Season*timeframe*elev_m*Lat, data = all_clim_avgs_locs.pc) #use adonis2 to run the permanova
+permanova_results_allclim #look at output 
+#get stats per term in the model:
+permanova_results_allclim_terms <- adonis2(dist_matrix_allclim ~ Season*timeframe*elev_m*Lat, data = all_clim_avgs_locs.pc, by = "terms")
+permanova_results_allclim_terms
+
+#LM on PCs (follow up on permanova)
+lmer_results_allclim <- all_clim_avgs_locs.pc %>%
+  ungroup() %>% 
+  pivot_longer(starts_with("PC", ignore.case = FALSE), 
+               names_to = "PC", values_to = "value") %>% 
+  group_by(PC) %>% 
+  nest(data=c(Season, timeframe, parent.pop, elev_m, Lat, value)) %>% 
+  mutate(glm=map(data, ~ glm(value ~ Season*timeframe*elev_m*Lat,
+                               data=.x)),
+         anova = map(glm, ~ broom.mixed::tidy(anova(.x))))
+
+PC_anova_all_clim <- lmer_results_allclim %>% select(-data, -glm) %>% unnest(anova) %>%
+  select(PC, term, p.value) %>%
+  filter(p.value < 0.05) %>%
+  arrange(PC, p.value)
+PC_anova_all_clim #PC1 and PC2 have significant timeframe effects 
+#PC1 has sig timeframe*elev_m effect too
+
+lmer_results_allclim %>% select(-data, -glm) %>% unnest(anova) %>% filter(PC=="PC1" | PC=="PC2" |PC=="PC3" | PC=="PC4") 
+```
+
+#### Plot climate change PCA
 
 ```{r}
 autoplot(all_clim_avgs.pc, data = all_clim_avgs,
@@ -239,6 +274,7 @@ home_sites_pca_allclim$data <- rbind(home_sites_pca_allclim$data,
   data.frame(
     parent.pop = "WL2_Garden",
     elev_m = 2020,
+    Lat = NA,
     timeframe = c("2023", "2023", "2024", "2024"),
     Season = c("Growth Season", "Water Year", "Growth Season", "Water Year"),
     PC1 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC1"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC1"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC1"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC1"] ),
