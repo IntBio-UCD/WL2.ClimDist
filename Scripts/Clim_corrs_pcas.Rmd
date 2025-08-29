@@ -13,10 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 
--   Might need to edit outside of R and have thin lines pointing to the labels (add circles around WL2 arrows)
-
--   Check the loadings: Are things are really shifting to be wetter? Is it more about seasonality? Nuance in the labels?
-
 -   Add loadings labels to hulls PCA
 
 ## Load libraries
@@ -248,8 +244,8 @@ home_sites_pca_allclim <- all_clim_avgs_locs.pc %>%
   labs(x="PC1 (36.47%)", y="PC2 (25.94%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .9) +
-  annotate("text", x = -6.4, y = -5, label = "Cold", size=7) +
-  annotate("text", x = 3.68, y = -5, label = "Warm", size=7) +
+  annotate("text", x = -5.8, y = -5, label = "Cold/Snow", size=6) +
+  annotate("text", x = 3, y = -5, label = "Warm/No Snow", size=6) +
   coord_cartesian(ylim = c(-4.9, 7), xlim = c(-6.8,4.5), clip = "off") +
   theme_classic() +
   theme(text=element_text(size=28)) +
@@ -303,10 +299,14 @@ home_sites_pca_allclim$data <- rbind(home_sites_pca_allclim$data,
 )
 
 Y_label <- data.frame(
-  label = c("Dry", "Wet"),
-  Season = c("Growth Season", "Growth Season"),
-  x     = c(-6.7, -6.7),
-  y     = c(-3.75, 6.2),
+  label = c("Dry", "Wet",
+            "Low Temp Range", "High Temp Range"),
+  Season = c("Growth Season", "Growth Season",
+             "Growth Season", "Growth Season"),
+  x     = c(-6.9, -6.9,
+            -5.2, -5.2),
+  y     = c(-2.5, 6.4,
+            -3.5, 5.4),
   timeframe = NA   
 )
 WL2_label <- data.frame(
@@ -332,7 +332,7 @@ home_sites_pca_allclim +
   geom_text(data = Y_label,
   mapping = aes(x = x, y = y, label = label),
   colour = "black",
-  size=7
+  size=6
 ) +
   geom_path(data=filter(home_sites_pca_allclim$data, parent.pop == "WL2"),
             aes(group=group),arrow = arrow(length=unit(5, "points"), type="closed"), linewidth = 1.9) 
