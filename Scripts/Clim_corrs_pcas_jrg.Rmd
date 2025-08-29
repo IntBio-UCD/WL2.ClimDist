@@ -11,18 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for Figures 1 and S1; Table S2 and S3
 
-To Do:
-
--   Make growth season and water year from same dataset and facet by "season"
-
--   Make a couple of versions of the yearly variation PCA with all populations (facet/hulls by season or by time period)
-
-    -   Keep the climate vectors in the final figure
-
-    -   Show where WL2 garden fits into the yearly variation
-
-    -   Overlay WL2 yearly variation too
-
 ## Load libraries
 
 ```{r}
