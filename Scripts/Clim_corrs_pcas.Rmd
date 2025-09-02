@@ -418,8 +418,6 @@ pca_all_novect12 =  ggplot(allclim_locs.pc_nogarden, aes(x = PC1, y = PC2, colou
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   labs(x="PC1 (29.74%)", y="PC2 (20.11%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  annotate("text", x = -3, y = -6.4, label = "Warm/No Snow", size=5) +
-  annotate("text", x = 7.4, y = -6.4, label = "Cold/Snow", size=5) +
   theme_classic() +
   theme(text=element_text(size=28))
 pca_all_novect12
@@ -448,36 +446,9 @@ allclim_locs.pc_garden_3 <- allclim_locs.pc_garden %>%
 allclim_locs.pc_garden_4 <- bind_rows(allclim_locs.pc_garden_2, allclim_locs.pc_garden_3) %>% 
   mutate(seasontime = str_remove(seasontime, "Garden"))
 
-#labels for y axis
-Y_label <- data.frame(
-  label = c("Low Temp Range", "High Temp Range",
-            "High PPT in", "Low PPT in",
-            "Warmest Month", "Warmest Month"),
-  timeframe = c("Historic", "Historic",
-             "Historic", "Historic",
-             "Historic", "Historic"),
-  x     = c(-3.3, -3.3,
-            -4.1, -4.1,
-            -3.5, -3.5),
-  y     = c(-3.7, 4.5,
-            -4.7, 3.5,
-            -5.2, 3)
-)
-
 pca_chull_season_wgarden = pca_chull_season + 
   geom_point(data = allclim_locs.pc_garden_4, aes(shape=seasontime),
               size=6, color = "purple")  +
-  scale_shape_manual(values=c(15, 16, 17, 18), name = "WL2 Garden") +
-  geom_text(data = Y_label,
-  mapping = aes(x = x, y = y, label = label),
-  colour = "black",
-  size=5
-)
-
-#for adding all loading arrows:
-  #geom_segment(data = allclim_loadings, aes(x=0, y=0, xend = PC1*5, yend = PC2*5), #0.8 just scales loading arrows to fit graph, autoplot does this automatically when plotting loading = T
-               #      arrow = arrow(length = unit(0.2, "cm"), type= "closed"),  size = 0.75, color = "black")  +
-   #     geom_text(data = allclim_loadings, mapping = aes(label = varnames, x = PC1*5.4, y=PC2*5.4), color = "black")  #multiply by 5.4 to move a little away from arrow
-pca_chull_season_wgarden
+  scale_shape_manual(values=c(15, 16, 17, 18), name = "WL2 Garden") 
 ggsave("../Figures/AllClim_YrlyVar_SeasonHulls.png", width = 14.8, height = 6, units = "in")
 ```
