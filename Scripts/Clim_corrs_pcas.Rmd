@@ -13,7 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 To Do:
 
--   Add loadings labels to hulls PCA
+-   Move the axis loadings labels to the outside of the axes using annotation_custom() for the climate change PCA (+ rotate the y axis labels)
+
+-   Make the lines purple instead of black on the climate change PCA
+
+-   Save a full PCA with loadings for the hulls PCA (will be a third panel in FigS2)
 
 ## Load libraries
 ```{r}
@@ -237,6 +241,12 @@ autoplot(all_clim_avgs.pc, data = all_clim_avgs,
 ```
 
 ```{r}
+#define annotations to axis labels 
+text_x_low = textGrob("Cold/Snow", gp=gpar(fontsize = 14,col="gray35"))
+text_x_high = textGrob("Warm/No Snow", gp=gpar(fontsize = 14,col="gray35"))
+text_y_low = textGrob("Dry \n Low Temp Range", gp=gpar(fontsize = 14,col="gray35"), rot=90)
+text_y_high = textGrob("Wet \n High Temp Range", gp=gpar(fontsize = 14,col="gray35"), rot=90)
+
 home_sites_pca_allclim <- all_clim_avgs_locs.pc %>%  
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
@@ -244,11 +254,13 @@ home_sites_pca_allclim <- all_clim_avgs_locs.pc %>%
   labs(x="PC1 (36.47%)", y="PC2 (25.94%)", color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .9) +
-  annotate("text", x = -5.8, y = -5, label = "Cold/Snow", size=6) +
-  annotate("text", x = 3, y = -5, label = "Warm/No Snow", size=6) +
-  coord_cartesian(ylim = c(-4.9, 7), xlim = c(-6.8,4.5), clip = "off") +
   theme_classic() +
   theme(text=element_text(size=28)) +
+  annotation_custom(text_x_high, xmin= 3, xmax=3.5,ymin=-6.4,ymax=-6.4) + 
+  annotation_custom(text_x_low, xmin= -5.8, xmax=-5,ymin=-6.4,ymax=-6.4) +
+  annotation_custom(text_y_high, xmin= -8, xmax=-8,ymin=5.7,ymax=6.8) +
+  annotation_custom(text_y_low, xmin= -8, xmax=-8,ymin=-5.7,ymax=-2) +
+  coord_cartesian(clip = "off") +
   facet_wrap(~Season)
 
 ## add WL2 garden 2023 and 2024
@@ -298,17 +310,6 @@ home_sites_pca_allclim$data <- rbind(home_sites_pca_allclim$data,
   )
 )
 
-Y_label <- data.frame(
-  label = c("Dry", "Wet",
-            "Low Temp Range", "High Temp Range"),
-  Season = c("Growth Season", "Growth Season",
-             "Growth Season", "Growth Season"),
-  x     = c(-6.9, -6.9,
-            -5.2, -5.2),
-  y     = c(-2.5, 6.4,
-            -3.5, 5.4),
-  timeframe = NA   
-)
 WL2_label <- data.frame(
   label = c("WL2 \n 2023", "WL2 \n 2024",
             "WL2 \n 2023", "WL2 \n 2024"),
@@ -329,15 +330,12 @@ home_sites_pca_allclim +
   colour = "#8959c9",
   size=7
 ) +
-  geom_text(data = Y_label,
-  mapping = aes(x = x, y = y, label = label),
-  colour = "black",
-  size=6
-) +
   geom_path(data=filter(home_sites_pca_allclim$data, parent.pop == "WL2"),
-            aes(group=group),arrow = arrow(length=unit(5, "points"), type="closed"), linewidth = 1.9) 
+            aes(group=group),arrow = arrow(length=unit(5, "points"), 
+                                           type="closed"), linewidth = 1.9) 
 ggsave("../Figures/AllClim_PC1-PC2_PlusGarden.png", width = 14.8, height = 6, units = "in")
 ```
+
 ## All climate PCA (all years, water year, growing season, historic and recent) - Fig S2
 
 ```{r}
