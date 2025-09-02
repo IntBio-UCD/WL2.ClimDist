@@ -383,9 +383,11 @@ autoplot(allclim.pc, data = all_clim,
          loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
          loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
    scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  theme_classic()
-ggsave("../Figures/AllClim_YrlyVar.png", width = 7.4, height = 6, units = "in")
+  theme_classic() +
+  theme(text=element_text(size=28))
+ggsave("../Figures/AllClim_YrlyVar.png", width = 9.5, height = 6, units = "in")
 
 #facet by seasonal summmary 
 autoplot(allclim.pc, data = all_clim,
@@ -399,20 +401,6 @@ autoplot(allclim.pc, data = all_clim,
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
   theme_classic() +
   facet_wrap(~Season)
-
-#facet by timeperiod 
-autoplot(allclim.pc, data = all_clim,
-         x=1, y=2,
-         colour='elev_m', alpha=0.5,
-         label=FALSE, label.label="parent.pop",
-         loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
-         loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
-         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
-   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
-  theme_classic() +
-  facet_wrap(~timeframe)
-#this one isn't pretty because of the garden 
 ```
 
 ### Hulls prep
