@@ -11,6 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for calculating climate distance (Figure S3; Table S4)
 
+To Do:
+
+-   Fix ordering of populations on x axis of figures 
+
 ## Load Libraries
 ```{r}
 library(tidyverse)
