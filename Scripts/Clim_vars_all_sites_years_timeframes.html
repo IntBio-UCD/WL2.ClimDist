@@ -727,12 +727,25 @@ pop_elev_climate_60 &lt;- pop_elev_climate %&gt;%
   select(parent.pop:Long, year_cal=year, grow_yr, month, growmonth, cwd, pck, ppt, tmn, tmx) %&gt;% 
   arrange(parent.pop, year_cal, month)</code></pre>
 <pre><code>## Joining with `by = join_by(month)`</code></pre>
-<pre class="r"><code>pop_elev_climate_60_avgs &lt;- pop_elev_climate_60 %&gt;% 
+<pre class="r"><code>pck_sum_60_pop_avgs &lt;- flint_all_year_wtr_yr %&gt;% #based on water year 
+  filter(parent.pop!=&quot;UCD_Garden&quot;) %&gt;% #remove Davis garden 
+  filter(timeframe==&quot;historic&quot; | timeframe==&quot;recent&quot;) %&gt;% #past 60 years 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, wtr_yr) %&gt;% 
+  summarise(pck_sum = sum(pck, na.rm = TRUE)) %&gt;% #sum for each water year
+  ungroup() %&gt;% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %&gt;% 
+  summarise(PckSum=mean(pck_sum, na.rm=TRUE)) #avg annual pck sum </code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.
+## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>cwd_60_avgs &lt;- pop_elev_climate_60 %&gt;% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %&gt;% 
-  summarise_at(c(&quot;cwd&quot;, &quot;pck&quot;, &quot;ppt&quot;, &quot;tmn&quot;, &quot;tmx&quot;), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
-names(pop_elev_climate_60_avgs) &lt;- gsub(&quot;fn2&quot;, &quot;sem&quot;, colnames(pop_elev_climate_60_avgs))
-names(pop_elev_climate_60_avgs) &lt;-gsub(&quot;fn1&quot;, &quot;mean&quot;, colnames(pop_elev_climate_60_avgs))
-pop_elev_climate_60_avgs &lt;- pop_elev_climate_60_avgs %&gt;% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year </code></pre>
+  summarise(cwd_avg=mean(cwd, na.rm=TRUE)) #60 year averages per month for each pop</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;parent.pop&#39;, &#39;elevation.group&#39;, &#39;elev_m&#39;,
+## &#39;Lat&#39;, &#39;Long&#39;. You can override using the `.groups` argument.</code></pre>
+<pre class="r"><code>pop_elev_climate_60_sums_avgs &lt;- left_join(cwd_60_avgs, pck_sum_60_pop_avgs)</code></pre>
+<pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
 </div>
 <div id="populations-that-get-less-than-70-mm-bc-thats-the-avg-height-in-oct-at-wl2-garden-of-snow-pack-in-a-year-on-average" class="section level3">
 <h3>Populations that get less than 70 mm (b/c that’s the avg height in
@@ -752,7 +765,7 @@ pops</p>
 <li>Remember this month is included in the final “growth season”</li>
 </ul></li>
 </ul>
-<pre class="r"><code>nosnow_pops_60 &lt;- pop_elev_climate_60_avgs %&gt;% filter(PckSum &lt; 70)
+<pre class="r"><code>nosnow_pops_60 &lt;- pop_elev_climate_60_sums_avgs %&gt;% filter(PckSum &lt; 70)
 unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH </code></pre>
 <pre><code>## [1] &quot;BH&quot;  &quot;CC&quot;  &quot;IH&quot;  &quot;SC&quot;  &quot;TM2&quot;</code></pre>
 <pre class="r"><code>summary(nosnow_pops_60) #3rd quartile of CWD = 85.15</code></pre>
@@ -763,34 +776,13 @@ unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH </code></pre>
 ##                                        Mean   :415.8                     
 ##                                        3rd Qu.:454.1                     
 ##                                        Max.   :511.4                     
-##      Long               month          cwd_mean         pck_mean     
-##  Length:60          Min.   : 1.00   Min.   : 12.60   Min.   :0.0000  
-##  Class :character   1st Qu.: 3.75   1st Qu.: 30.12   1st Qu.:0.0000  
-##  Mode  :character   Median : 6.50   Median : 56.57   Median :0.0000  
-##                     Mean   : 6.50   Mean   : 62.21   Mean   :0.2264  
-##                     3rd Qu.: 9.25   3rd Qu.: 85.15   3rd Qu.:0.0000  
-##                     Max.   :12.00   Max.   :165.57   Max.   :4.8048  
-##     ppt_mean          tmn_mean         tmx_mean        cwd_sem      
-##  Min.   :  1.187   Min.   : 1.908   Min.   :12.29   Min.   :0.1267  
-##  1st Qu.: 12.895   1st Qu.: 4.387   1st Qu.:15.99   1st Qu.:0.4431  
-##  Median : 59.540   Median : 8.216   Median :22.38   Median :1.1976  
-##  Mean   : 75.540   Mean   : 8.674   Mean   :22.75   Mean   :1.7809  
-##  3rd Qu.:134.436   3rd Qu.:13.258   3rd Qu.:30.46   3rd Qu.:3.1102  
-##  Max.   :208.515   Max.   :17.019   Max.   :34.94   Max.   :7.2511  
-##     pck_sem          ppt_sem           tmn_sem          tmx_sem      
-##  Min.   :0.0000   Min.   : 0.5377   Min.   :0.1526   Min.   :0.1682  
-##  1st Qu.:0.0000   1st Qu.: 2.1691   1st Qu.:0.1783   1st Qu.:0.2054  
-##  Median :0.0000   Median : 7.0161   Median :0.1858   Median :0.2393  
-##  Mean   :0.1455   Mean   : 7.7627   Mean   :0.1880   Mean   :0.2426  
-##  3rd Qu.:0.0000   3rd Qu.:12.1532   3rd Qu.:0.1990   3rd Qu.:0.2769  
-##  Max.   :2.5238   Max.   :18.8062   Max.   :0.2163   Max.   :0.3145  
-##      PckSum      
-##  Min.   :0.1170  
-##  1st Qu.:0.4248  
-##  Median :0.4755  
-##  Mean   :2.7170  
-##  3rd Qu.:2.7337  
-##  Max.   :9.8342</code></pre>
+##      Long               month          cwd_avg           PckSum      
+##  Length:60          Min.   : 1.00   Min.   : 12.60   Min.   :0.1170  
+##  Class :character   1st Qu.: 3.75   1st Qu.: 30.12   1st Qu.:0.4248  
+##  Mode  :character   Median : 6.50   Median : 56.57   Median :0.4755  
+##                     Mean   : 6.50   Mean   : 62.21   Mean   :2.7170  
+##                     3rd Qu.: 9.25   3rd Qu.: 85.15   3rd Qu.:2.7337  
+##                     Max.   :12.00   Max.   :165.57   Max.   :9.8342</code></pre>
 <pre class="r"><code>nosnow_pops_60_tojoin &lt;- nosnow_pops_60 %&gt;% select(parent.pop:Long, PckSum) %&gt;% distinct() #pull out PckSum
 nosnow_pops_60_years &lt;- left_join(nosnow_pops_60_tojoin, pop_elev_climate_60) #add PckSum to full 60 year data frame </code></pre>
 <pre><code>## Joining with `by = join_by(parent.pop, elevation.group, elev_m, Lat, Long)`</code></pre>
@@ -1116,7 +1108,7 @@ relates to the first day of the next month (that is, station
 observations on April 1st correlate with the snowpack file for March).”
 But this makes sense, a survey on April 1 gives a sense for the total
 snowpack in March.</p>
-<pre class="r"><code>snow_pops_60 &lt;- pop_elev_climate_60_avgs %&gt;% filter(PckSum &gt;= 70)
+<pre class="r"><code>snow_pops_60 &lt;- pop_elev_climate_60_sums_avgs %&gt;% filter(PckSum &gt;= 70)
 unique(snow_pops_60$parent.pop) #18 pops + garden site get some significant snowpack per year </code></pre>
 <pre><code>##  [1] &quot;CP2&quot;        &quot;CP3&quot;        &quot;DPR&quot;        &quot;FR&quot;         &quot;LV1&quot;       
 ##  [6] &quot;LV3&quot;        &quot;LVTR1&quot;      &quot;SQ1&quot;        &quot;SQ2&quot;        &quot;SQ3&quot;       

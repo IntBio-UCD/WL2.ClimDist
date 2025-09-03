@@ -263,12 +263,20 @@ pop_elev_climate_60 <- pop_elev_climate %>%
   select(parent.pop:Long, year_cal=year, grow_yr, month, growmonth, cwd, pck, ppt, tmn, tmx) %>% 
   arrange(parent.pop, year_cal, month)
 
-pop_elev_climate_60_avgs <- pop_elev_climate_60 %>% 
+pck_sum_60_pop_avgs <- flint_all_year_wtr_yr %>% #based on water year 
+  filter(parent.pop!="UCD_Garden") %>% #remove Davis garden 
+  filter(timeframe=="historic" | timeframe=="recent") %>% #past 60 years 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long, wtr_yr) %>% 
+  summarise(pck_sum = sum(pck, na.rm = TRUE)) %>% #sum for each water year
+  ungroup() %>% 
+  group_by(parent.pop, elevation.group, elev_m, Lat, Long) %>% 
+  summarise(PckSum=mean(pck_sum, na.rm=TRUE)) #avg annual pck sum 
+
+cwd_60_avgs <- pop_elev_climate_60 %>% 
   group_by(parent.pop, elevation.group, elev_m, Lat, Long, month) %>% 
-  summarise_at(c("cwd", "pck", "ppt", "tmn", "tmx"), c(mean, sem), na.rm = TRUE) #60 year averages per month for each pop
-names(pop_elev_climate_60_avgs) <- gsub("fn2", "sem", colnames(pop_elev_climate_60_avgs))
-names(pop_elev_climate_60_avgs) <-gsub("fn1", "mean", colnames(pop_elev_climate_60_avgs))
-pop_elev_climate_60_avgs <- pop_elev_climate_60_avgs %>% mutate(PckSum=sum(pck_mean)) #estimate of average total snowpack in a year 
+  summarise(cwd_avg=mean(cwd, na.rm=TRUE)) #60 year averages per month for each pop
+
+pop_elev_climate_60_sums_avgs <- left_join(cwd_60_avgs, pck_sum_60_pop_avgs)
 ```
 
 ### Populations that get less than 70 mm (b/c that's the avg height in Oct at WL2 garden) of snow pack in a year (on average)
@@ -284,7 +292,7 @@ pop_elev_climate_60_avgs <- pop_elev_climate_60_avgs %>% mutate(PckSum=sum(pck_m
     -   Remember this month is included in the final "growth season"
 
 ```{r}
-nosnow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum < 70)
+nosnow_pops_60 <- pop_elev_climate_60_sums_avgs %>% filter(PckSum < 70)
 unique(nosnow_pops_60$parent.pop) #BH, CC, TM2, SC, IH 
 summary(nosnow_pops_60) #3rd quartile of CWD = 85.15
 
@@ -404,7 +412,7 @@ nosnow_grwseason_60 %>% filter(parent.pop=="IH", grow_yr==1965)
 Note: “The month name of the snowpack file (that is, pckmar.asc) relates to the first day of the next month (that is, station observations on April 1st correlate with the snowpack file for March)." But this makes sense, a survey on April 1 gives a sense for the total snowpack in March.
 
 ```{r}
-snow_pops_60 <- pop_elev_climate_60_avgs %>% filter(PckSum >= 70)
+snow_pops_60 <- pop_elev_climate_60_sums_avgs %>% filter(PckSum >= 70)
 unique(snow_pops_60$parent.pop) #18 pops + garden site get some significant snowpack per year 
 
 #add rest of 2023 calendar year 
