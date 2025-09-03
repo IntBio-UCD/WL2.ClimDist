@@ -11,10 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for Figures 1 and S1; Table S2 and S3 
 
-To Do:
-
--   Save a full PCA with loadings for the hulls PCA (will be a third panel in FigS2)
-
 ## Load libraries
 ```{r}
 library(tidyverse)
