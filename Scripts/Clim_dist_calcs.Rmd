@@ -26,7 +26,7 @@ library(lmerTest) #for mixed effect models
 
 ## Load Climate Data
 ```{r}
-all_clim <- read_csv("../Processed.Data/Climate/All_Clim.csv")
+all_clim <- read_csv("../Processed.Data/All_Clim.csv")
 ```
 
 ## WL2 Garden Climate
@@ -323,7 +323,7 @@ wl2_gowers_avg <- all_gowers %>%
 # 2023 water year
 boot_gowers_recent_wtryr_pops_2023 %>% 
   bind_rows(boot_gowers_historic_wtryr_pops_2023) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
@@ -338,7 +338,7 @@ ggsave("../Figures/wtryear_2023Gowers_fromWL2.png", width = 24, height = 8, unit
 # 2023 growth season
 boot_gowers_recent_grwssn_pops_2023 %>% 
   bind_rows(boot_gowers_historic_grwssn_pops_2023) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
@@ -353,7 +353,7 @@ ggsave("../Figures/growthseason_2023Gowers_fromWL2.png", width = 24, height = 8,
 # 2024 water year 
 boot_gowers_recent_wtryr_pops_2024 %>% 
   bind_rows(boot_gowers_historic_wtryr_pops_2024) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
@@ -368,7 +368,7 @@ ggsave("../Figures/wtryear_2024Gowers_fromWL2.png", width = 24, height = 8, unit
 # 2024 growth season
 boot_gowers_recent_grwssn_pops_2024 %>% 
   bind_rows(boot_gowers_historic_grwssn_pops_2024) %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Gowers_Dist), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Gowers_Dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   geom_errorbar(aes(ymin=conf.low, ymax=conf.high),
                 width=.1, position = position_dodge(0.75)) +
@@ -383,7 +383,7 @@ ggsave("../Figures/growthseason_2024Gowers_fromWL2.png", width = 24, height = 8,
 # average water year 
 wl2_gowers_avg %>% 
   filter(Season=="Water Year") %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Avg_Gowers), y=Avg_Gowers, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Avg_Gowers, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -396,7 +396,7 @@ ggsave("../Figures/wtryear_AvgGowers_fromWL2.png", width = 24, height = 8, units
 # average growth season 
 wl2_gowers_avg %>% 
   filter(Season=="Growth Season") %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, Avg_Gowers), y=Avg_Gowers, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=Avg_Gowers, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -442,7 +442,7 @@ sub_dist_avg <- sub_dist %>%
 ```{r}
 #2023
 sub_dist_2023 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=cwd_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -452,7 +452,7 @@ sub_dist_2023 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2023 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=pck_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -462,7 +462,7 @@ sub_dist_2023 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2023 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -472,7 +472,7 @@ sub_dist_2023 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2023 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -483,7 +483,7 @@ sub_dist_2023 %>%
 
 #2024
 sub_dist_2024 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist), y=cwd_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=cwd_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -493,7 +493,7 @@ sub_dist_2024 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2024 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, pck_dist), y=pck_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=pck_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -503,7 +503,7 @@ sub_dist_2024 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2024 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_tmean_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -513,7 +513,7 @@ sub_dist_2024 %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_2024 %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_ppt_dist, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -524,7 +524,7 @@ sub_dist_2024 %>%
 
 #average 
 sub_dist_avg %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, cwd_dist_AVG), y=cwd_dist_AVG, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=cwd_dist_AVG, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -534,7 +534,7 @@ sub_dist_avg %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_avg %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, pck_dist_AVG), y=pck_dist_AVG, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=pck_dist_AVG, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -544,7 +544,7 @@ sub_dist_avg %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_avg %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_tmean_dist_AVG), y=ann_tmean_dist_AVG, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_tmean_dist_AVG, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
@@ -554,7 +554,7 @@ sub_dist_avg %>%
   facet_wrap(~timeframe+Season)
 
 sub_dist_avg %>% 
-  ggplot(aes(x=fct_reorder(parent.pop, ann_ppt_dist_AVG), y=ann_ppt_dist_AVG, group=parent.pop, fill=elev_m)) +
+  ggplot(aes(x=fct_reorder(parent.pop, elev_m), y=ann_ppt_dist_AVG, group=parent.pop, fill=elev_m)) +
   geom_col(width = 0.7,position = position_dodge(0.75)) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_fill_gradient(low = "#F5A540", high = "#0043F0") +
