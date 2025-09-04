@@ -233,6 +233,8 @@ autoplot(all_clim_avgs.pc, data = all_clim_avgs,
 ```
 
 ```{r}
+season_facet_labels <- as_labeller(c('Growth Season' = 'A) Growth Season', 'Water Year' = 'B) Water Year'))
+
 home_sites_pca_allclim <- all_clim_avgs_locs.pc %>%  
   mutate(group=str_c(parent.pop,elev_m))  %>%
   ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
@@ -243,7 +245,7 @@ home_sites_pca_allclim <- all_clim_avgs_locs.pc %>%
   theme_classic() +
   theme(text=element_text(size=28)) +
   coord_cartesian(clip = "off") +
-  facet_wrap(~Season)
+  facet_wrap(~Season, labeller = season_facet_labels)
 
 ## add WL2 garden 2023 and 2024
 WL2GRDN_allclim_pc_prep_2023_grwssn <- all_clim %>% 
