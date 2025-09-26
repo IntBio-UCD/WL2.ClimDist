@@ -9,11 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for calculating climate distance (Figure S3; Table S4)
+# Code for calculating climate distance (Figure S3)
 
-To Do:
-
--   Fix ordering of populations on x axis of figures 
 
 ## Load Libraries
 ```{r}
@@ -611,19 +608,4 @@ clim_geo_dist <- all_gowers_prep %>%
          Elev_Dist=elev_m-WL2_Elev) %>% #Add Elevation and Geographic Distance 
   select(parent.pop:AvgPPTDist_Recent_Wtr_Year, Geographic_Dist, Elev_Dist)
 write_csv(clim_geo_dist, "../Processed.Data/All_Clim_Dist.csv")
-```
-
-## Compare Growth Season and Water Year 
-```{r}
-all_clim_scaled <- all_clim %>% 
-  filter(parent.pop!="WL2_Garden") %>% 
-  mutate_at(c("ann_tmean","ann_ppt","cwd","pck", "elev_m"),scale)
-temp_mod <- lmer(ann_tmean ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
-summary(temp_mod)
-ppt_mod <- lmer(ann_ppt ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
-summary(ppt_mod)
-pck_mod <- lmer(pck ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
-summary(pck_mod)
-cwd_mod <- lmer(cwd ~ elev_m*timeframe*Season + (1|parent.pop), data=all_clim_scaled)
-summary(cwd_mod)
 ```

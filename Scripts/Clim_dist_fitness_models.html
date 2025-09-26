@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-08-04" />
+<meta name="date" content="2025-09-26" />
 
 <title>Clim_dist_fitness_models</title>
 
@@ -352,14 +352,14 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_models</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-08-04</h4>
+<h4 class="date">2025-09-26</h4>
 
 </div>
 
 
-<div id="code-for-models-relating-climate-distance-to-fitness-table-1-2" class="section level1">
+<div id="code-for-models-relating-climate-distance-to-fitness-table-2-3" class="section level1">
 <h1>Code for models relating climate distance to fitness (Table
-1-2)</h1>
+2-3)</h1>
 <div id="libraries" class="section level2">
 <h2>Libraries</h2>
 <pre class="r"><code>library(tidyverse)</code></pre>
@@ -413,7 +413,7 @@ library(tidymodels) #model workflows </code></pre>
 ## ✖ recipes::step()   masks lmerTest::step(), stats::step()
 ## ✖ Matrix::unpack()  masks tidyr::unpack()
 ## ✖ recipes::update() masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org</code></pre>
+## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
 <pre class="r"><code>library(multilevelmod)</code></pre>
 </div>
 <div id="read-in-data" class="section level2">
@@ -1645,7 +1645,7 @@ rep_output_SUB_models_log_CD_GD &lt;- tribble(
   #Troubleshoot weird GrwSsn-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
   &quot;3b_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)&quot;, 
   &quot;3c_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)&quot;, 
-  &quot;3d_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)&quot;, 
+  &quot;3d_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)&quot;,
   
   #water year models:
   &quot;4_WY_Recent&quot;,      &quot;logTotalFitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist +(1|pop) + (1|block)&quot;,

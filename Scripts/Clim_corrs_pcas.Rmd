@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for Figures 1 and S1; Table S2 and S3 
+# Code for Figures 1, 3, S1, S2; Table S2 and S3 
 
 ## Load libraries
 ```{r}
@@ -33,7 +33,7 @@ library(marmap)
 all_clim <- read_csv("../Processed.Data/All_Clim.csv")
 ```
 
-## Map of populations (Figure 1a)
+## Map of populations (Figure 1b)
 ```{r}
 pops_garden_locs <- all_clim %>% 
   mutate_at(c("Lat", "Long"), as.double) %>% 
@@ -61,7 +61,7 @@ ggplot() +
   labs(color="Elevation (m)") +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   theme_void()
-#ggsave("../Figures/Pop_Map_Figure1a.png", width = 10, height = 10, units = "in")
+#ggsave("../Figures/Pop_Map_Figure1b.png", width = 10, height = 10, units = "in")
 ```
 
 ## Climate variable correlations (Figure S1)
@@ -149,7 +149,7 @@ corrplot(cor.norm_historic_grwssn, type="upper",
 #800 x 734
 ```
 
-## Climate Change PCAs (Figure 1b-c; Table S2, S3)
+## Climate Change PCAs (Figure 3; Table S2, S3)
 
 ### Water Year + Growth Season PCA
 
@@ -320,7 +320,7 @@ home_sites_pca_allclim +
 ggsave("../Figures/AllClim_PC1-PC2_PlusGarden.png", width = 14.8, height = 6, units = "in")
 ```
 
-## All climate PCA (all years, water year, growing season, historic and recent) - Fig S2
+## All climate PCA (all years, water year, growing season, historic and recent) - Fig 1a, S2
 
 ```{r}
 all_clim = all_clim %>%

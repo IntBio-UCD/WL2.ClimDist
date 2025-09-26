@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for relating weekly climate to weekly mortality (Table 3)
+# Code for relating weekly climate to weekly mortality (Table 4)
 
 ## Load Libraries
 ```{r}

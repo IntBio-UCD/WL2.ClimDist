@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for models relating climate distance to fitness (Table 1-2)
+# Code for models relating climate distance to fitness (Table 2-3)
 
 ## Libraries
 ```{r}

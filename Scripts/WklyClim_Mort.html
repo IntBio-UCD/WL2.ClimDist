@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-08-18" />
+<meta name="date" content="2025-09-26" />
 
 <title>WklyClim_Mort</title>
 
@@ -352,13 +352,13 @@ display: none;
 
 <h1 class="title toc-ignore">WklyClim_Mort</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-08-18</h4>
+<h4 class="date">2025-09-26</h4>
 
 </div>
 
 
-<div id="code-for-relating-weekly-climate-to-weekly-mortality-table-3" class="section level1">
-<h1>Code for relating weekly climate to weekly mortality (Table 3)</h1>
+<div id="code-for-relating-weekly-climate-to-weekly-mortality-table-4" class="section level1">
+<h1>Code for relating weekly climate to weekly mortality (Table 4)</h1>
 <div id="load-libraries" class="section level2">
 <h2>Load Libraries</h2>
 <pre class="r"><code>library(tidyverse)</code></pre>
@@ -394,7 +394,7 @@ display: none;
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ✖ yardstick::spec() masks readr::spec()
 ## ✖ recipes::step()   masks stats::step()
-## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
 <pre class="r"><code>tidymodels_prefer()
 library(multilevelmod) #for using workflow with glmer 
 library(broom.mixed) #for using glance with glmer </code></pre>
@@ -578,7 +578,7 @@ surv_fits_1 &lt;- tibble(wflow=list(
 ## ! Model failed to converge with max|grad| = 0.00629448 (tol = 0.002, component 1)
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.</code></pre>
 <pre><code>##    user  system elapsed 
-##   6.444   0.220   6.676</code></pre>
+##   6.517   0.189   6.743</code></pre>
 <pre class="r"><code>surv_fits_1 %&gt;% pull(fit)</code></pre>
 <pre><code>## $pop.block
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -755,13 +755,13 @@ name=names(wflow)
   temp_fits &lt;- temp_fits %&gt;%
   mutate(fit = map(wflow, fit, data = drop_na(wl2_ind_surv_climate, contains(&quot;temp_d&quot;)), .progress = TRUE))
 )</code></pre>
-<pre><code>## ■■■■■■■■ 23% | ETA: 4s ■■■■■■■■■■ 31% | ETA: 4s ■■■■■■■■■■■■■ 38% | ETA: 4s
-## ■■■■■■■■■■■■■■■ 46% | ETA: 3s ■■■■■■■■■■■■■■■■■ 54% | ETA: 3s
+<pre><code>## ■■■■■■■■ 23% | ETA: 5s ■■■■■■■■■■ 31% | ETA: 4s ■■■■■■■■■■■■■ 38% | ETA: 4s
+## ■■■■■■■■■■■■■■■ 46% | ETA: 4s ■■■■■■■■■■■■■■■■■ 54% | ETA: 3s
 ## ■■■■■■■■■■■■■■■■■■■ 62% | ETA: 3s ■■■■■■■■■■■■■■■■■■■■■■ 69% | ETA: 2s
 ## ■■■■■■■■■■■■■■■■■■■■■■■■ 77% | ETA: 2s ■■■■■■■■■■■■■■■■■■■■■■■■■■ 85% | ETA: 1s
 ## ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 92% | ETA: 1s</code></pre>
 <pre><code>##    user  system elapsed 
-##   6.766   0.138   6.909</code></pre>
+##   6.908   0.160   7.072</code></pre>
 <pre class="r"><code>temp_fits %&gt;% pull(fit)</code></pre>
 <pre><code>## $pop.weeks.block
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════
@@ -1178,7 +1178,7 @@ name=names(wflow)
 )</code></pre>
 <pre><code>## ■■■■■■■■■■■■■■■■ 50% | ETA: 1s</code></pre>
 <pre><code>##    user  system elapsed 
-##   2.253   0.037   2.291</code></pre>
+##   2.284   0.061   2.348</code></pre>
 <pre class="r"><code>moisture_fits %&gt;% pull(fit)</code></pre>
 <pre><code>## $pop.weeks.block
 ## ══ Workflow [trained] ══════════════════════════════════════════════════════════

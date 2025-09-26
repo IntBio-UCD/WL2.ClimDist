@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for figures relating climate distance to fitness (Figure 2-4; S4-S8)
+# Code for figures relating climate distance to fitness (Figure 4-5; S4-S8)
 
 ## Load libraries
 ```{r}
@@ -101,7 +101,7 @@ wlt_tot_fitness_summary <- wlt_tot_fitness %>%
   summarise(meanTotFruit=mean(Total_Fitness, na.rm=TRUE), semTotFruit=sem(Total_Fitness, na.rm=TRUE))
 ```
 
-## Figure 2: Temp and PPT recent water climate distance
+## Figure 4: Temp and PPT recent water climate distance
 ```{r}
 WYtemp_probfit <- prob_fitness_summary %>% 
   ggplot(aes(x=AvgTempDist_Recent_Wtr_Year, y=meanProbFit, group = pop, color=elev_m)) +
@@ -162,10 +162,10 @@ fig2_sub <- ggarrange(WYtemp_probfit, WYtemp_repsurvy2,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/Figure2_TmpPPT.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/Figure4_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure 3: Gower's recent water year climate distance
+## Figure 5: Gower's recent water year climate distance
 ```{r}
 probfit_gower <- prob_fitness_summary %>% 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanProbFit, group = pop, color=elev_m)) +
@@ -200,7 +200,7 @@ fig3_gower <- ggarrange(probfit_gower, repsurvy2_gower,
                         labels = c("A)", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
-ggsave("../Figures/Figure3_WtrYrGowers.png", width = 26, height = 9, units = "in")
+ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 9, units = "in")
 
 prob_fitness_summary %>% filter(pop=="WL2")
 ```
