@@ -1,0 +1,105 @@
+---
+title: "Total_Fecundity"
+author: "Brandie QC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Code for Analyzing Total Fecundity 
+
+Equation: p(Establishment)*p(Surv to Rep - y1)*Fruits(y1) + p(Winter Surv)*p(Surv to Rep - y2)*Fruits(y2)
+
+Calculated at the individual level 
+
+## Libraries
+```{r}
+library(tidyverse)
+```
+
+## Read in Data
+```{r}
+## year 1 components 
+wl2_establishment <- read_csv("../Processed.Data/WL2_Establishment.csv")
+wl2_surv_to_rep_y1 <- read_csv("../Processed.Data/WL2_SurvtoRep_y1.csv")
+wl2_fruits_y1 <- read_csv("../Processed.Data/WL2_Fruits_Y1.csv")
+
+## year 2 components 
+winter_surv <- read_csv("../Processed.Data/WL2_WinterSurv.csv")
+wl2_surv_to_rep_y2 <- read_csv("../Processed.Data/WL2_Surv_to_Rep_Y2.csv")
+wl2_fruits_y2 <- read_csv("../Processed.Data/WL2_Fruits_Y2.csv")
+```
+
+## Calculate Total Fecundity 
+```{r}
+wl2_total_fecundity <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>% 
+  left_join(wl2_fruits_y1) %>% 
+  select(-death.date, -bud.date) %>% #remove y1 death and bud dates 
+  mutate(mf=as.numeric(mf), rep=as.numeric(rep)) %>% #convert these cols to numeric for merging 
+  left_join(winter_surv) %>% 
+  select(-death.date) %>% 
+  left_join(wl2_surv_to_rep_y2) %>% 
+  left_join(wl2_fruits_y2) %>% 
+  select(-death.date) %>% 
+  mutate(SurvtoRep_Y1=if_else(is.na(SurvtoRep_Y1), 0, SurvtoRep_Y1),
+         y1_fruits=if_else(is.na(y1_fruits), 0, y1_fruits),
+         y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
+         WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
+         SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
+  mutate(Total_Fecundity=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
+
+wl2_total_fecundity %>% 
+  filter(Total_Fecundity>0) %>% 
+  group_by(pop) %>% 
+  summarise(n=n()) %>% 
+  arrange(n) #SQ1 and WR only have 1 indiv 
+```
+
+## Check Distribution
+```{r}
+wl2_total_fecundity %>% 
+  ggplot(aes(x=Total_Fecundity)) +
+  geom_histogram()
+```
+
+## Try transformations
+```{r}
+wl2_total_fecundity_transformations <-
+  wl2_total_fecundity %>% 
+  mutate(logTotalFecundity=log(Total_Fecundity+1),
+         log10TotalFecundity=log10(Total_Fecundity+1))
+
+wl2_total_fecundity_transformations %>% 
+  ggplot(aes(x=logTotalFecundity)) +
+  geom_histogram()
+
+wl2_total_fecundity_transformations %>% 
+  ggplot(aes(x=log10TotalFecundity)) +
+  geom_histogram()
+
+## didn't help 
+```
+
+## Scale predictors
+```{r}
+wl2_total_fecundity_scaled <- wl2_total_fecundity %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
+         AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
+         AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
+         AvgGD_Historic_GrwSsn=`AvgGD_Historic_Growth Season`) %>% 
+  mutate_at(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
+              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
+              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
+              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
+              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
+              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
+              "Geographic_Dist"), scale)
+```
+
+## Try models with alternative distributions 
+Poisson, negative binomial, log-normal, beta 
+
