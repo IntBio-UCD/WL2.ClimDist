@@ -101,6 +101,17 @@ wl2_total_fecundity_scaled <- wl2_total_fecundity %>%
               "Geographic_Dist"), scale)
 ```
 
+## Plot group means and variances to facilitate choosing the right error distribution
+```{r}
+wl2_total_fecundity %>% 
+  group_by(pop) %>% 
+  summarise(GroupMeans=mean(Total_Fecundity), GroupVars=var(Total_Fecundity)) %>% 
+  ggplot(aes(x=GroupMeans, y=GroupVars)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope=1, colour="blue")
+```
+Based on this website, quasipoisson might work. https://r.qcbs.ca/workshop07/book-en/choose-an-error-distribution.html 
+
 ## Try models with alternative distributions 
 Poisson, negative binomial, log-normal, beta 
 ```{r}
@@ -111,5 +122,10 @@ summary(total_fecund_poisson)
 
 plot(total_fecund_poisson, which = 1) #residuals plot 
 #doesn't look great
+
+total_fecund_quasipoisson <- glmer(Total_Fecundity ~ (1|pop/mf) + (1|block), 
+                              family = quasipoisson,
+                              data=wl2_total_fecundity_scaled)
+#Error: "quasi" families cannot be used in glmer
 ```
 
