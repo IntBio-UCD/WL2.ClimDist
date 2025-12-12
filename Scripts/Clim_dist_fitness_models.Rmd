@@ -717,7 +717,6 @@ prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "Dist") | term=="height.cm") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)
-prob_fitness_SUB_fits_wl2 %>% pull(fit) #convergence issues with GS_Historical model 
 
 prob_fitness_SUB_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>% 
   mutate(rsq=map(extracted_fit, r2)) %>% 
