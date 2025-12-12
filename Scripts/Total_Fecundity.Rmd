@@ -22,6 +22,8 @@ Calculated at the individual level
 library(tidyverse)
 library(lmerTest) #mixed models
 library(broom.mixed) #tidy model
+library(emmeans) #for pairwise tests
+library(performance) #for calculating rsq 
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
@@ -169,7 +171,7 @@ printCoefmat(quasi_table(total_fecund_poisson),digits=2)
 total_fecund_models_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "Total_Fecundity ~  (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm +(1|pop/mf) + (1|block)",
+  "2_WY_Recent",      "Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "3_WY_Historical",  "Total_Fecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "4_GS_Recent",      "Total_Fecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
   "5_GS_Historical",  "Total_Fecundity ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
@@ -178,8 +180,7 @@ total_fecund_models_CD_GD <- tribble(
 total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
-                            data = wl2_total_fecundity_scaled)), #run the models 
-         glance = map(glmer, glance)) #glance at the model results
+                            data = wl2_total_fecundity_scaled)))
 
 #show results:
 total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
@@ -187,7 +188,7 @@ total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value)
 
-#poisson correction:
+#quasi-poisson correction:
 phi_function <- function(model) {
     phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
     return(phi)
@@ -205,10 +206,27 @@ total_fecund_models_CD_GD %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value) #after correction, no clim dist sig
 
-total_fecund_models_CD_GD %>% mutate(rsq=map(lmer, r2)) %>% 
+total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
   unnest(rsq) %>% 
   unnest(rsq) %>% 
-  select(-f:-glance)
+  select(-f:-glmer)
+
+#pairwise test between WL2 and BH (the pop with the highest total fecundity):
+wtr_yr_recent_mod <- glmer(Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), family = poisson, data = wl2_total_fecundity_scaled)
+#get min and max GD
+min(wl2_total_fecundity_scaled$AvgGD_Recent_Wtr_Year) 
+max(wl2_total_fecundity_scaled$AvgGD_Recent_Wtr_Year)
+minmaxGD = list(AvgGD_Recent_Wtr_Year = c(-1.358033, 2.153113))
+
+# Calculate EMMs at the min and max GD
+emm_results <- emmeans(wtr_yr_recent_mod, ~ AvgGD_Recent_Wtr_Year, at = minmaxGD)
+# View the results
+summary(emm_results)
+
+# Perform pairwise comparison
+pairs(emm_results) 
+#P=0.0099
+#but this is based off the poisson model, not the quasi-poisson...
 ```
 
 ### Temp/ppt dist
@@ -226,8 +244,7 @@ total_fecund_SUB_models_CD_GD <- tribble(
 total_fecund_SUB_models_CD_GD <- total_fecund_SUB_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
-                            data = wl2_total_fecundity_scaled)), #run the models 
-         glance = map(glmer, glance)) #glance at the model results
+                            data = wl2_total_fecundity_scaled)))
 #convergence warning for water year recent model 
 
 #show results:
@@ -236,7 +253,7 @@ total_fecund_SUB_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy)
   filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value)
 
-#poisson correction:
+#quasi-poisson correction:
 total_fecund_SUB_models_CD_GD %>% 
   mutate(phi=map(glmer, phi_function)) %>% 
   mutate(tidy=map(glmer, tidy)) %>% 
@@ -249,10 +266,10 @@ total_fecund_SUB_models_CD_GD %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value) 
 
-total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(lmer, r2)) %>% 
+total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
   unnest(rsq) %>% 
   unnest(rsq) %>% 
-  select(-f:-glance)
+  select(-f:-glmer)
 
 #investigate water year recent model:
 mod_test <- glmer(Total_Fecundity ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block), 

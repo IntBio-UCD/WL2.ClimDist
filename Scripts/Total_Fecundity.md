@@ -1,7 +1,7 @@
 ---
 title: "Total_Fecundity"
 author: "Brandie QC"
-date: "2025-12-05"
+date: "2025-12-12"
 output: 
   html_document: 
     keep_md: true
@@ -62,13 +62,24 @@ library(lmerTest) #mixed models
 
 ``` r
 library(broom.mixed) #tidy model
+library(emmeans) #for pairwise tests
+```
+
+```
+## Welcome to emmeans.
+## Caution: You lose important information if you filter this package's results.
+## See '? untidy'
+```
+
+``` r
+library(performance) #for calculating rsq 
 
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
 ```
 
-## Read in Data
+## Read in Fitness Data
 
 ``` r
 ## year 1 components 
@@ -164,6 +175,59 @@ wl2_fruits_y2 <- read_csv("../Processed.Data/WL2_Fruits_Y2.csv")
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
+## Read in Size Pre-Transplant 
+
+``` r
+wl2_pretrans_size1 <- read_csv("../Raw.Data/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+```
+
+```
+## Rows: 1427 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (2): Pop, Notes
+## dbl (5): mf, rep, DNA, height (cm), longest leaf (cm)
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_pretrans_size2 <- read_csv("../Raw.Data/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
+  filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+```
+
+```
+## Rows: 152 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## chr (2): Pop, Notes
+## dbl (5): mf, rep, DNA, height (cm), longest leaf (cm)
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+``` r
+wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
+  rename(pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  select(-DNA)
+head(wl2_pretrans_size_all)
+```
+
+```
+## # A tibble: 6 × 7
+##   Genotype pop      mf   rep height.cm long.leaf.cm Notes
+##   <chr>    <chr> <dbl> <dbl>     <dbl>        <dbl> <chr>
+## 1 CP2_1_1  CP2       1     1       0.5          1.6 KN   
+## 2 CP2_1_2  CP2       1     2       0.7          1.8 KN   
+## 3 CP2_1_3  CP2       1     3       1.1          1.8 KN   
+## 4 CP2_1_4  CP2       1     4       0.8          1.6 KN   
+## 5 CP2_1_5  CP2       1     5       0.9          1.8 KN   
+## 6 CP2_1_6  CP2       1     6       1            1.9 KN
+```
+
 ## Calculate Total Fecundity 
 
 ``` r
@@ -181,7 +245,8 @@ wl2_total_fecundity <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>%
          y2_fruits=if_else(is.na(y2_fruits), 0, y2_fruits),
          WinterSurv=if_else(is.na(WinterSurv), 0, WinterSurv),
          SurvtoRep_y2=if_else(is.na(SurvtoRep_y2), 0, SurvtoRep_y2)) %>% 
-  mutate(Total_Fecundity=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits))
+  mutate(Total_Fecundity=(Establishment*SurvtoRep_Y1*y1_fruits) + (WinterSurv*SurvtoRep_y2*y2_fruits)) %>% 
+  left_join(wl2_pretrans_size_all)
 ```
 
 ```
@@ -280,6 +345,7 @@ wl2_total_fecundity <- left_join(wl2_establishment, wl2_surv_to_rep_y1) %>%
 ## AvgPPTDist_Historic_GrwSsn, AvgPPTDist_Historic_Wtr_Year,
 ## AvgPPTDist_Recent_GrwSsn, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist,
 ## Elev_Dist)`
+## Joining with `by = join_by(Genotype, pop, mf, rep)`
 ```
 
 ``` r
@@ -317,7 +383,7 @@ wl2_total_fecundity %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 ## Try transformations
 
@@ -336,7 +402,7 @@ wl2_total_fecundity_transformations %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 wl2_total_fecundity_transformations %>% 
@@ -348,7 +414,7 @@ wl2_total_fecundity_transformations %>%
 ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 ## didn't help 
@@ -383,11 +449,10 @@ wl2_total_fecundity %>%
   geom_abline(intercept = 0, slope=1, colour="blue")
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 Based on this website, quasipoisson might work. https://r.qcbs.ca/workshop07/book-en/choose-an-error-distribution.html 
 
-## Try models with alternative distributions 
-Poisson, negative binomial, log-normal, beta 
+## Try models with poisson and quasi-poisson 
 
 ### Basic model - Poisson and Quasi-Poisson 
 
@@ -430,7 +495,7 @@ summary(total_fecund_poisson)
 plot(total_fecund_poisson, which = 1) #residuals plot 
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 #doesn't look great
@@ -475,41 +540,44 @@ printCoefmat(quasi_table(total_fecund_poisson),digits=2)
 total_fecund_models_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "Total_Fecundity ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "Total_Fecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "Total_Fecundity ~  AvgGD_Historic_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "4_WY_Recent",      "Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "Total_Fecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "2_WY_Recent",      "Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "Total_Fecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "Total_Fecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "Total_Fecundity ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 #run the models 
 total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
-                            data = wl2_total_fecundity_scaled)), #run the models 
-         glance = map(glmer, glance)) #glance at the model results
+                            data = wl2_total_fecundity_scaled)))
 
 #show results:
 total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value)
 ```
 
 ```
-## # A tibble: 8 × 6
-##   name            term                    estimate std.error statistic p.value
-##   <chr>           <chr>                      <dbl>     <dbl>     <dbl>   <dbl>
-## 1 2_GS_Recent     AvgGD_Recent_GrwSsn        0.126      1.37    0.0924 0.926  
-## 2 2_GS_Recent     Geographic_Dist           -0.553      1.43   -0.387  0.698  
-## 3 3_GS_Historical AvgGD_Historic_GrwSsn     -0.604      1.46   -0.414  0.679  
-## 4 3_GS_Historical Geographic_Dist           -0.368      1.28   -0.288  0.773  
-## 5 4_WY_Recent     AvgGD_Recent_Wtr_Year      3.91       1.49    2.63   0.00866
-## 6 4_WY_Recent     Geographic_Dist           -2.13       1.67   -1.27   0.203  
-## 7 5_WY_Historical AvgGD_Historic_Wtr_Year    3.70       2.07    1.79   0.0738 
-## 8 5_WY_Historical Geographic_Dist           -2.52       1.88   -1.34   0.180
+## # A tibble: 12 × 6
+##    name            term                    estimate std.error statistic p.value
+##    <chr>           <chr>                      <dbl>     <dbl>     <dbl>   <dbl>
+##  1 2_WY_Recent     AvgGD_Recent_Wtr_Year      3.82     1.48      2.58   0.00994
+##  2 2_WY_Recent     Geographic_Dist           -2.10     1.66     -1.26   0.207  
+##  3 2_WY_Recent     height.cm                  0.135    0.0430    3.15   0.00165
+##  4 3_WY_Historical AvgGD_Historic_Wtr_Year    3.60     2.03      1.78   0.0757 
+##  5 3_WY_Historical Geographic_Dist           -2.47     1.85     -1.33   0.182  
+##  6 3_WY_Historical height.cm                  0.136    0.0431    3.16   0.00158
+##  7 4_GS_Recent     AvgGD_Recent_GrwSsn        0.107    1.36      0.0788 0.937  
+##  8 4_GS_Recent     Geographic_Dist           -0.541    1.42     -0.380  0.704  
+##  9 4_GS_Recent     height.cm                  0.136    0.0431    3.16   0.00160
+## 10 5_GS_Historical AvgGD_Historic_GrwSsn     -0.618    1.46     -0.424  0.671  
+## 11 5_GS_Historical Geographic_Dist           -0.359    1.28     -0.280  0.779  
+## 12 5_GS_Historical height.cm                  0.136    0.0431    3.16   0.00159
 ```
 
 ``` r
-#poisson correction:
+#quasi-poisson correction:
 phi_function <- function(model) {
     phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
     return(phi)
@@ -524,22 +592,105 @@ total_fecund_models_CD_GD %>%
                 std.error = std.error * sqrt(phi),
                 statistic = estimate/std.error,
                 p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value) #after correction, no clim dist sig
 ```
 
 ```
-## # A tibble: 8 × 5
-##   term                    estimate std.error statistic p.value
-##   <chr>                      <dbl>     <dbl>     <dbl>   <dbl>
-## 1 AvgGD_Recent_GrwSsn        0.126      3.12    0.0404   0.968
-## 2 Geographic_Dist           -0.553      3.26   -0.170    0.865
-## 3 AvgGD_Historic_GrwSsn     -0.604      3.33   -0.181    0.856
-## 4 Geographic_Dist           -0.368      2.92   -0.126    0.900
-## 5 AvgGD_Recent_Wtr_Year      3.91       3.41    1.15     0.251
-## 6 Geographic_Dist           -2.13       3.82   -0.558    0.577
-## 7 AvgGD_Historic_Wtr_Year    3.70       4.73    0.782    0.434
-## 8 Geographic_Dist           -2.52       4.29   -0.587    0.557
+## # A tibble: 12 × 5
+##    term                    estimate std.error statistic p.value
+##    <chr>                      <dbl>     <dbl>     <dbl>   <dbl>
+##  1 AvgGD_Recent_Wtr_Year      3.82     3.41      1.12     0.263
+##  2 Geographic_Dist           -2.10     3.83     -0.548    0.584
+##  3 height.cm                  0.135    0.0992    1.36     0.172
+##  4 AvgGD_Historic_Wtr_Year    3.60     4.68      0.771    0.441
+##  5 Geographic_Dist           -2.47     4.28     -0.579    0.563
+##  6 height.cm                  0.136    0.0993    1.37     0.171
+##  7 AvgGD_Recent_GrwSsn        0.107    3.13      0.0342   0.973
+##  8 Geographic_Dist           -0.541    3.28     -0.165    0.869
+##  9 height.cm                  0.136    0.0993    1.37     0.171
+## 10 AvgGD_Historic_GrwSsn     -0.618    3.36     -0.184    0.854
+## 11 Geographic_Dist           -0.359    2.95     -0.121    0.903
+## 12 height.cm                  0.136    0.0993    1.37     0.171
+```
+
+``` r
+total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
+  unnest(rsq) %>% 
+  unnest(rsq) %>% 
+  select(-f:-glmer)
+```
+
+```
+## # A tibble: 10 × 2
+##    name                rsq
+##    <chr>             <dbl>
+##  1 1_pop.block     1      
+##  2 1_pop.block     0      
+##  3 2_WY_Recent     1      
+##  4 2_WY_Recent     0.361  
+##  5 3_WY_Historical 1      
+##  6 3_WY_Historical 0.257  
+##  7 4_GS_Recent     1      
+##  8 4_GS_Recent     0.00350
+##  9 5_GS_Historical 1      
+## 10 5_GS_Historical 0.00849
+```
+
+``` r
+#pairwise test between WL2 and BH (the pop with the highest total fecundity):
+wtr_yr_recent_mod <- glmer(Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), family = poisson, data = wl2_total_fecundity_scaled)
+#get min and max GD
+min(wl2_total_fecundity_scaled$AvgGD_Recent_Wtr_Year) 
+```
+
+```
+## [1] -1.358033
+```
+
+``` r
+max(wl2_total_fecundity_scaled$AvgGD_Recent_Wtr_Year)
+```
+
+```
+## [1] 2.153113
+```
+
+``` r
+minmaxGD = list(AvgGD_Recent_Wtr_Year = c(-1.358033, 2.153113))
+
+# Calculate EMMs at the min and max GD
+emm_results <- emmeans(wtr_yr_recent_mod, ~ AvgGD_Recent_Wtr_Year, at = minmaxGD)
+# View the results
+summary(emm_results)
+```
+
+```
+##  AvgGD_Recent_Wtr_Year  emmean   SE  df asymp.LCL asymp.UCL
+##                  -1.36 -12.847 3.21 Inf    -19.13     -6.56
+##                   2.15   0.552 3.17 Inf     -5.66      6.77
+## 
+## Results are given on the log (not the response) scale. 
+## Confidence level used: 0.95
+```
+
+``` r
+# Perform pairwise comparison
+pairs(emm_results) 
+```
+
+```
+##  contrast                                                         estimate  SE
+##  (AvgGD_Recent_Wtr_Year-1.358033) - AvgGD_Recent_Wtr_Year2.153113    -13.4 5.2
+##   df z.ratio p.value
+##  Inf  -2.578  0.0099
+## 
+## Results are given on the log (not the response) scale.
+```
+
+``` r
+#P=0.0099
+#but this is based off the poisson model, not the quasi-poisson...
 ```
 
 ### Temp/ppt dist
@@ -548,29 +699,27 @@ total_fecund_models_CD_GD %>%
 total_fecund_SUB_models_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "Total_Fecundity ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "Total_Fecundity ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block)",
-  #water year models:
-  "4_WY_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "Total_Fecundity ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "2_WY_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "Total_Fecundity ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "Total_Fecundity ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 
 #run the models 
 total_fecund_SUB_models_CD_GD <- total_fecund_SUB_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
-                            data = wl2_total_fecundity_scaled)), #run the models 
-         glance = map(glmer, glance)) #glance at the model results
+                            data = wl2_total_fecundity_scaled)))
 ```
 
 ```
-## Warning: There were 2 warnings in `mutate()`.
+## Warning: There were 4 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `glmer = map(f, ~glmer(as.formula(.), family = poisson, data =
 ##   wl2_total_fecundity_scaled))`.
 ## Caused by warning in `checkConv()`:
-## ! Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.
+## ! Model failed to converge with max|grad| = 0.122604 (tol = 0.002, component 1)
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.
 ```
 
 ``` r
@@ -579,22 +728,26 @@ total_fecund_SUB_models_CD_GD <- total_fecund_SUB_models_CD_GD %>%
 #show results:
 total_fecund_SUB_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value)
 ```
 
 ```
-## # A tibble: 4 × 6
+## # A tibble: 8 × 6
 ##   name            term            estimate std.error statistic p.value
 ##   <chr>           <chr>              <dbl>     <dbl>     <dbl>   <dbl>
-## 1 2_GS_Recent     Geographic_Dist   -0.341  1.23        -0.278   0.781
-## 2 3_GS_Historical Geographic_Dist   -0.371  1.20        -0.309   0.757
-## 3 4_WY_Recent     Geographic_Dist   -1.12   0.000582 -1925.      0    
-## 4 5_WY_Historical Geographic_Dist   -1.06   1.32        -0.803   0.422
+## 1 2_WY_Recent     Geographic_Dist   -1.24   0.000581 -2140.    0      
+## 2 2_WY_Recent     height.cm          0.135  0.000581   232.    0      
+## 3 3_WY_Historical Geographic_Dist   -1.04   0.000600 -1736.    0      
+## 4 3_WY_Historical height.cm          0.138  0.000600   230.    0      
+## 5 4_GS_Recent     Geographic_Dist   -0.341  1.22        -0.279 0.780  
+## 6 4_GS_Recent     height.cm          0.136  0.0431       3.15  0.00162
+## 7 5_GS_Historical Geographic_Dist   -0.366  1.20        -0.305 0.761  
+## 8 5_GS_Historical height.cm          0.135  0.0431       3.15  0.00166
 ```
 
 ``` r
-#poisson correction:
+#quasi-poisson correction:
 total_fecund_SUB_models_CD_GD %>% 
   mutate(phi=map(glmer, phi_function)) %>% 
   mutate(tidy=map(glmer, tidy)) %>% 
@@ -604,18 +757,45 @@ total_fecund_SUB_models_CD_GD %>%
                 std.error = std.error * sqrt(phi),
                 statistic = estimate/std.error,
                 p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
   drop_na(p.value) 
 ```
 
 ```
-## # A tibble: 4 × 5
+## # A tibble: 8 × 5
 ##   term            estimate std.error statistic p.value
 ##   <chr>              <dbl>     <dbl>     <dbl>   <dbl>
-## 1 Geographic_Dist   -0.341   2.80       -0.122   0.903
-## 2 Geographic_Dist   -0.371   2.74       -0.135   0.892
-## 3 Geographic_Dist   -1.12    0.00133  -842.      0    
-## 4 Geographic_Dist   -1.06    3.02       -0.351   0.725
+## 1 Geographic_Dist   -1.24    0.00134  -928.      0    
+## 2 height.cm          0.135   0.00134   101.      0    
+## 3 Geographic_Dist   -1.04    0.00139  -753.      0    
+## 4 height.cm          0.138   0.00138    99.9     0    
+## 5 Geographic_Dist   -0.341   2.82       -0.121   0.904
+## 6 height.cm          0.136   0.0993      1.37    0.172
+## 7 Geographic_Dist   -0.366   2.77       -0.132   0.895
+## 8 height.cm          0.135   0.0993      1.36    0.173
+```
+
+``` r
+total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
+  unnest(rsq) %>% 
+  unnest(rsq) %>% 
+  select(-f:-glmer)
+```
+
+```
+## # A tibble: 10 × 2
+##    name              rsq
+##    <chr>           <dbl>
+##  1 1_pop.block     1    
+##  2 1_pop.block     0    
+##  3 2_WY_Recent     1    
+##  4 2_WY_Recent     0.560
+##  5 3_WY_Historical 1    
+##  6 3_WY_Historical 0.555
+##  7 4_GS_Recent     1    
+##  8 4_GS_Recent     0.132
+##  9 5_GS_Historical 1    
+## 10 5_GS_Historical 0.174
 ```
 
 ``` r
@@ -703,6 +883,28 @@ total_fecund_summary <- wl2_total_fecundity %>%
 ```
 
 ``` r
+total_fecund_summary %>% arrange(meanTotalFecund) #BH had the highest total fecundity 
+```
+
+```
+## # A tibble: 21 × 5
+## # Groups:   pop, elev_m [21]
+##    pop   elev_m AvgGD_Recent_Water_Yr meanTotalFecund semEst
+##    <chr>  <dbl>                 <dbl>           <dbl>  <dbl>
+##  1 CP2    2244.                 0.269               0      0
+##  2 CP3    2266.                 0.270               0      0
+##  3 DPR    1019.                 0.421               0      0
+##  4 FR      787                  0.475               0      0
+##  5 LV1    2593.                 0.371               0      0
+##  6 LV3    2354.                 0.372               0      0
+##  7 LVTR1  2741.                 0.387               0      0
+##  8 SQ2    1934.                 0.300               0      0
+##  9 SQ3    2373.                 0.301               0      0
+## 10 WL1    1614.                 0.310               0      0
+## # ℹ 11 more rows
+```
+
+``` r
 total_fecund_summary %>% 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanTotalFecund, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
@@ -711,7 +913,15 @@ total_fecund_summary %>%
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fecundity", x="Recent Water Year Climate Dist", 
-       color="Elevation (m)")
+       color="Elevation (m)") +
+  annotate("text", x = 0.2532683, y= 2.4, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme(text=element_text(size=30))
 ```
 
-![](Total_Fecundity_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](Total_Fecundity_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+ggsave("../Figures/Indiv_Fit_Comps/TotalFecund_GD_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
+```
