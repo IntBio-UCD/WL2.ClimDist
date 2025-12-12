@@ -299,6 +299,6 @@ total_fecund_summary %>%
   annotate("text", x = 0.2532683, y= 2.4, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/TotalFecund_GD_Recent_WtrYr.png",
+ggsave("../Figures/Indiv_Fit_Comps/TotalFitness_GD_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 ```
