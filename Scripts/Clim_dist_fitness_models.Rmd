@@ -2,7 +2,9 @@
 title: "Clim_dist_fitness_models"
 author: "Brandie QC"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -312,7 +314,7 @@ surv_GD_fits_wl2_sub %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
 
 #Add in Geo and Gowers clim dist
 surv_GD_wflow <- workflow() %>%
-  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm, block, contains("GD"), Geographic_Dist)) 
 surv_GD_fits <- tibble(wflow=list(
   pop.block = {surv_GD_wflow %>% 
       add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm + (1|pop/mf) + (1|block))},
@@ -352,7 +354,7 @@ surv_GD_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
 ```{r}
 #basic model workflow 
 surv_wflow <- workflow() %>% 
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block))
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block,  height.cm,))
 surv_fits <- tibble(wflow=list(
   pop.block = {surv_wflow %>% 
       add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop) + (1|block))},
