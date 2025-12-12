@@ -413,7 +413,7 @@ library(tidymodels) #model workflows </code></pre>
 ## ✖ recipes::step()   masks lmerTest::step(), stats::step()
 ## ✖ Matrix::unpack()  masks tidyr::unpack()
 ## ✖ recipes::update() masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
+## • Learn how to get started at https://www.tidymodels.org/start/</code></pre>
 <pre class="r"><code>library(multilevelmod)
 library(performance) #for calculating rsq for glmmerMod objects</code></pre>
 <pre><code>## 
@@ -485,7 +485,7 @@ library(performance) #for calculating rsq for glmmerMod objects</code></pre>
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>wlt_tot_fitness &lt;- read_csv(&quot;../Processed.Data/WL2_TotalRepOutput.csv&quot;) %&gt;% 
+<pre class="r"><code>wlt_tot_fecundity &lt;- read_csv(&quot;../Processed.Data/WL2_TotalRepOutput.csv&quot;) %&gt;% 
   rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
          AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
          AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
@@ -612,9 +612,9 @@ size</h2>
               &quot;AvgPPTDist_Recent_GrwSsn&quot;, &quot;AvgPPTDist_Recent_Wtr_Year&quot;,
               &quot;Geographic_Dist&quot;), scale)</code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
-<pre class="r"><code>wl2_rep_output_scaled &lt;- wlt_tot_fitness %&gt;% 
+<pre class="r"><code>wl2_rep_output_scaled &lt;- wlt_tot_fecundity %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
-  mutate(logTotalFitness=log(Total_Fitness)) %&gt;% 
+  mutate(logTotalFecundity=log(Total_Fecundity)) %&gt;% 
   filter(pop!=&quot;SQ1&quot;, pop!=&quot;WR&quot;) %&gt;% 
   mutate_at(c(&quot;AvgGD_Historic_GrwSsn&quot;, &quot;AvgGD_Historic_Wtr_Year&quot;,
               &quot;AvgGD_Recent_GrwSsn&quot;, &quot;AvgGD_Recent_Wtr_Year&quot;,
@@ -1960,8 +1960,8 @@ prob_fitness_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) 
 <pre class="r"><code>#base models:
 rep_output_modelslog &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,        &quot;logTotalFitness ~ (1|pop) + (1|block)&quot;, 
-  &quot;2_pop.mf.block&quot;,     &quot;logTotalFitness ~  (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,        &quot;logTotalFecundity ~ (1|pop) + (1|block)&quot;, 
+  &quot;2_pop.mf.block&quot;,     &quot;logTotalFecundity ~  (1|pop/mf) + (1|block)&quot;
 )
 #run the models 
 rep_output_modelslog &lt;- rep_output_modelslog %&gt;%
@@ -1984,15 +1984,15 @@ rep_output_modelslog &lt;- rep_output_modelslog %&gt;%
 <pre class="r"><code>#Add in Geo and temp/ppt dist
 rep_output_SUB_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logTotalFitness ~  height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logTotalFitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logTotalFitness ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5a_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;5a_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
   #Troubleshoot weird GrwSsn-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
-  &quot;5b_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5c_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5d_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
+  &quot;5b_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;5c_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;5d_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
 )
 #run the models 
 rep_output_SUB_models_log_CD_GD &lt;- rep_output_SUB_models_log_CD_GD %&gt;%
@@ -2080,11 +2080,11 @@ rep_output_SUB_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnes
 #Add in Geo and Gowers clim dist
 rep_output_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logTotalFitness ~  height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logTotalFitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logTotalFitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logTotalFitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logTotalFitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
 )
 #run the models 
 rep_output_models_log_CD_GD &lt;- rep_output_models_log_CD_GD %&gt;%

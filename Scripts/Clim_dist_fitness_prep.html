@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-09-26" />
+<meta name="date" content="2025-12-12" />
 
 <title>Clim_dist_fitness_prep</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_prep</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-09-26</h4>
+<h4 class="date">2025-12-12</h4>
 
 </div>
 
@@ -813,7 +813,7 @@ write_csv(wl2_prob_fitness, &quot;../Processed.Data/WL2_ProbFit.csv&quot;)</code
 <h2>Total Fruit Number</h2>
 <pre class="r"><code>wl2_rep_output &lt;- wl2_total_fitness %&gt;% 
   filter(Total_Fitness &gt; 0) %&gt;% 
-  select(block:Elev_Dist, Total_Fitness)
+  select(block:Elev_Dist, Total_Fecundity=Total_Fitness)
 
 write_csv(wl2_rep_output, &quot;../Processed.Data/WL2_TotalRepOutput.csv&quot;)</code></pre>
 </div>
