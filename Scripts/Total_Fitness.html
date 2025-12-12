@@ -402,6 +402,11 @@ library(emmeans) #for pairwise tests</code></pre>
 ## See &#39;? untidy&#39;</code></pre>
 <pre class="r"><code>library(performance) #for calculating rsq 
 
+phi_function &lt;- function(model) {
+    phi &lt;- sum(residuals(model, type=&quot;pearson&quot;)^2)/df.residual(model) 
+    return(phi)
+} #function for calculating the overdispersion paramter (for quasi-poisson)
+
 sem &lt;- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } </code></pre>
@@ -748,6 +753,149 @@ printCoefmat(quasi_table(total_fecund_poisson),digits=2)</code></pre>
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>#As specified, the estimates are identical; the standard errors and p-values have been appropriately inflated, the z-values have been appropriately deflated.</code></pre>
 </div>
+<div id="tempppt-dist" class="section level3">
+<h3>Temp/ppt dist</h3>
+<pre class="r"><code>total_fecund_SUB_models_CD_GD &lt;- tribble(
+  ~name,          ~f,
+  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
+)
+
+#run the models 
+total_fecund_SUB_models_CD_GD &lt;- total_fecund_SUB_models_CD_GD %&gt;%
+  mutate(glmer = map(f, ~ glmer(as.formula(.), 
+                            family = poisson,
+                            data = wl2_total_fitness_scaled)))</code></pre>
+<pre><code>## Warning: There were 4 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `glmer = map(f, ~glmer(as.formula(.), family = poisson, data =
+##   wl2_total_fitness_scaled))`.
+## Caused by warning in `checkConv()`:
+## ! Model failed to converge with max|grad| = 0.122604 (tol = 0.002, component 1)
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
+<pre class="r"><code>#convergence warning for water year recent model 
+
+#show results:
+total_fecund_SUB_models_CD_GD %&gt;% mutate(tidy=map(glmer, tidy)) %&gt;% unnest(tidy) %&gt;%
+  select(name, term:p.value) %&gt;% 
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  drop_na(p.value)</code></pre>
+<pre><code>## # A tibble: 9 × 6
+##   name            term            estimate std.error statistic p.value
+##   &lt;chr&gt;           &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 1_pop.block     height.cm          0.136  0.0431       3.16  0.00160
+## 2 2_WY_Recent     Geographic_Dist   -1.24   0.000581 -2140.    0      
+## 3 2_WY_Recent     height.cm          0.135  0.000581   232.    0      
+## 4 3_WY_Historical Geographic_Dist   -1.04   0.000600 -1736.    0      
+## 5 3_WY_Historical height.cm          0.138  0.000600   230.    0      
+## 6 4_GS_Recent     Geographic_Dist   -0.341  1.22        -0.279 0.780  
+## 7 4_GS_Recent     height.cm          0.136  0.0431       3.15  0.00162
+## 8 5_GS_Historical Geographic_Dist   -0.366  1.20        -0.305 0.761  
+## 9 5_GS_Historical height.cm          0.135  0.0431       3.15  0.00166</code></pre>
+<pre class="r"><code>#quasi-poisson correction:
+total_fecund_SUB_models_CD_GD %&gt;% 
+  mutate(phi=map(glmer, phi_function)) %&gt;% 
+  mutate(tidy=map(glmer, tidy)) %&gt;% 
+  unnest(tidy) %&gt;% 
+  unnest(phi) %&gt;% 
+  transmute(term = term, estimate = estimate,
+                std.error = std.error * sqrt(phi),
+                statistic = estimate/std.error,
+                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %&gt;% 
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  drop_na(p.value) </code></pre>
+<pre><code>## # A tibble: 17 × 5
+##    term                          estimate std.error statistic p.value
+##    &lt;chr&gt;                            &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 height.cm                        0.136   0.0992      1.37    0.171
+##  2 AvgTempDist_Recent_Wtr_Year      2.81    0.00134  2100.      0    
+##  3 AvgPPTDist_Recent_Wtr_Year      -2.56    0.00134 -1914.      0    
+##  4 Geographic_Dist                 -1.24    0.00134  -928.      0    
+##  5 height.cm                        0.135   0.00134   101.      0    
+##  6 AvgTempDist_Historic_Wtr_Year    2.69    0.00139  1944.      0    
+##  7 AvgPPTDist_Historic_Wtr_Year    -2.56    0.00138 -1850.      0    
+##  8 Geographic_Dist                 -1.04    0.00139  -753.      0    
+##  9 height.cm                        0.138   0.00138    99.9     0    
+## 10 AvgTempDist_Recent_GrwSsn        1.03    5.47        0.189   0.850
+## 11 AvgPPTDist_Recent_GrwSsn         1.61    6.00        0.269   0.788
+## 12 Geographic_Dist                 -0.341   2.82       -0.121   0.904
+## 13 height.cm                        0.136   0.0993      1.37    0.172
+## 14 AvgTempDist_Historic_GrwSsn      0.659   4.69        0.141   0.888
+## 15 AvgPPTDist_Historic_GrwSsn       2.38    5.19        0.458   0.647
+## 16 Geographic_Dist                 -0.366   2.77       -0.132   0.895
+## 17 height.cm                        0.135   0.0993      1.36    0.173</code></pre>
+<pre class="r"><code>total_fecund_SUB_models_CD_GD %&gt;% mutate(rsq=map(glmer, r2)) %&gt;% 
+  unnest(rsq) %&gt;% 
+  unnest(rsq) %&gt;% 
+  select(-f:-glmer)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    name                 rsq
+##    &lt;chr&gt;              &lt;dbl&gt;
+##  1 1_pop.block     1       
+##  2 1_pop.block     0.000195
+##  3 2_WY_Recent     1       
+##  4 2_WY_Recent     0.560   
+##  5 3_WY_Historical 1       
+##  6 3_WY_Historical 0.555   
+##  7 4_GS_Recent     1       
+##  8 4_GS_Recent     0.132   
+##  9 5_GS_Historical 1       
+## 10 5_GS_Historical 0.174</code></pre>
+<pre class="r"><code>#investigate water year recent model:
+mod_test &lt;- glmer(Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block), 
+                              family = poisson,
+                              data=wl2_total_fitness_scaled)</code></pre>
+<pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, :
+## Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)</code></pre>
+<pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?</code></pre>
+<pre class="r"><code>summary(mod_test)</code></pre>
+<pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: poisson  ( log )
+## Formula: 
+## Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year +  
+##     Geographic_Dist + (1 | pop/mf) + (1 | block)
+##    Data: wl2_total_fitness_scaled
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   5060.5   5097.8  -2523.3   5046.5     1522 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -5.7237 -0.4918 -0.0159 -0.0045 24.7762 
+## 
+## Random effects:
+##  Groups Name        Variance Std.Dev.
+##  mf:pop (Intercept)  2.706   1.645   
+##  pop    (Intercept) 16.357   4.044   
+##  block  (Intercept)  1.239   1.113   
+## Number of obs: 1529, groups:  mf:pop, 139; pop, 21; block, 13
+## 
+## Fixed effects:
+##                               Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)                 -7.7856637  0.0005817  -13383   &lt;2e-16 ***
+## AvgTempDist_Recent_Wtr_Year  2.9488529  0.0005817    5069   &lt;2e-16 ***
+## AvgPPTDist_Recent_Wtr_Year  -2.5777208  0.0005817   -4431   &lt;2e-16 ***
+## Geographic_Dist             -1.1195574  0.0005817   -1925   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) ATD_R_ APPTD_
+## AvgTD_R_W_Y 0.000               
+## APPTD_R_W_Y 0.000  0.000        
+## Gegrphc_Dst 0.000  0.000  0.000 
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)
+## Model is nearly unidentifiable: very large eigenvalue
+##  - Rescale variables?</code></pre>
+<pre class="r"><code>#Warning: Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
+ #- Rescale variables?</code></pre>
+</div>
 <div id="add-in-gowers-climate-distance" class="section level3">
 <h3>Add in Gowers climate distance</h3>
 <pre class="r"><code>total_fecund_models_CD_GD &lt;- tribble(
@@ -786,11 +934,6 @@ total_fecund_models_CD_GD %&gt;% mutate(tidy=map(glmer, tidy)) %&gt;% unnest(tid
 ## 12 5_GS_Historical Geographic_Dist           -0.359    1.28     -0.280  0.779  
 ## 13 5_GS_Historical height.cm                  0.136    0.0431    3.16   0.00159</code></pre>
 <pre class="r"><code>#quasi-poisson correction:
-phi_function &lt;- function(model) {
-    phi &lt;- sum(residuals(model, type=&quot;pearson&quot;)^2)/df.residual(model) 
-    return(phi)
-} #function for calculating the overdispersion paramter
-
 total_fecund_models_CD_GD %&gt;% 
   mutate(phi=map(glmer, phi_function)) %&gt;% 
   mutate(tidy=map(glmer, tidy)) %&gt;% 
@@ -864,141 +1007,6 @@ pairs(emm_results) </code></pre>
 ## Results are given on the log (not the response) scale.</code></pre>
 <pre class="r"><code>#P=0.0099
 #but this is based off the poisson model, not the quasi-poisson...</code></pre>
-</div>
-<div id="tempppt-dist" class="section level3">
-<h3>Temp/ppt dist</h3>
-<pre class="r"><code>total_fecund_SUB_models_CD_GD &lt;- tribble(
-  ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
-)
-
-#run the models 
-total_fecund_SUB_models_CD_GD &lt;- total_fecund_SUB_models_CD_GD %&gt;%
-  mutate(glmer = map(f, ~ glmer(as.formula(.), 
-                            family = poisson,
-                            data = wl2_total_fitness_scaled)))</code></pre>
-<pre><code>## Warning: There were 4 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `glmer = map(f, ~glmer(as.formula(.), family = poisson, data =
-##   wl2_total_fitness_scaled))`.
-## Caused by warning in `checkConv()`:
-## ! Model failed to converge with max|grad| = 0.122604 (tol = 0.002, component 1)
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
-<pre class="r"><code>#convergence warning for water year recent model 
-
-#show results:
-total_fecund_SUB_models_CD_GD %&gt;% mutate(tidy=map(glmer, tidy)) %&gt;% unnest(tidy) %&gt;%
-  select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
-  drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 9 × 6
-##   name            term            estimate std.error statistic p.value
-##   &lt;chr&gt;           &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 1_pop.block     height.cm          0.136  0.0431       3.16  0.00160
-## 2 2_WY_Recent     Geographic_Dist   -1.24   0.000581 -2140.    0      
-## 3 2_WY_Recent     height.cm          0.135  0.000581   232.    0      
-## 4 3_WY_Historical Geographic_Dist   -1.04   0.000600 -1736.    0      
-## 5 3_WY_Historical height.cm          0.138  0.000600   230.    0      
-## 6 4_GS_Recent     Geographic_Dist   -0.341  1.22        -0.279 0.780  
-## 7 4_GS_Recent     height.cm          0.136  0.0431       3.15  0.00162
-## 8 5_GS_Historical Geographic_Dist   -0.366  1.20        -0.305 0.761  
-## 9 5_GS_Historical height.cm          0.135  0.0431       3.15  0.00166</code></pre>
-<pre class="r"><code>#quasi-poisson correction:
-total_fecund_SUB_models_CD_GD %&gt;% 
-  mutate(phi=map(glmer, phi_function)) %&gt;% 
-  mutate(tidy=map(glmer, tidy)) %&gt;% 
-  unnest(tidy) %&gt;% 
-  unnest(phi) %&gt;% 
-  transmute(term = term, estimate = estimate,
-                std.error = std.error * sqrt(phi),
-                statistic = estimate/std.error,
-                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
-  drop_na(p.value) </code></pre>
-<pre><code>## # A tibble: 9 × 5
-##   term            estimate std.error statistic p.value
-##   &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 height.cm          0.136   0.0992      1.37    0.171
-## 2 Geographic_Dist   -1.24    0.00134  -928.      0    
-## 3 height.cm          0.135   0.00134   101.      0    
-## 4 Geographic_Dist   -1.04    0.00139  -753.      0    
-## 5 height.cm          0.138   0.00138    99.9     0    
-## 6 Geographic_Dist   -0.341   2.82       -0.121   0.904
-## 7 height.cm          0.136   0.0993      1.37    0.172
-## 8 Geographic_Dist   -0.366   2.77       -0.132   0.895
-## 9 height.cm          0.135   0.0993      1.36    0.173</code></pre>
-<pre class="r"><code>total_fecund_SUB_models_CD_GD %&gt;% mutate(rsq=map(glmer, r2)) %&gt;% 
-  unnest(rsq) %&gt;% 
-  unnest(rsq) %&gt;% 
-  select(-f:-glmer)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name                 rsq
-##    &lt;chr&gt;              &lt;dbl&gt;
-##  1 1_pop.block     1       
-##  2 1_pop.block     0.000195
-##  3 2_WY_Recent     1       
-##  4 2_WY_Recent     0.560   
-##  5 3_WY_Historical 1       
-##  6 3_WY_Historical 0.555   
-##  7 4_GS_Recent     1       
-##  8 4_GS_Recent     0.132   
-##  9 5_GS_Historical 1       
-## 10 5_GS_Historical 0.174</code></pre>
-<pre class="r"><code>#investigate water year recent model:
-mod_test &lt;- glmer(Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block), 
-                              family = poisson,
-                              data=wl2_total_fitness_scaled)</code></pre>
-<pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, :
-## Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)</code></pre>
-<pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
-##  - Rescale variables?</code></pre>
-<pre class="r"><code>summary(mod_test)</code></pre>
-<pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace
-##   Approximation) [glmerMod]
-##  Family: poisson  ( log )
-## Formula: 
-## Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year +  
-##     Geographic_Dist + (1 | pop/mf) + (1 | block)
-##    Data: wl2_total_fitness_scaled
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##   5060.5   5097.8  -2523.3   5046.5     1522 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -5.7237 -0.4918 -0.0159 -0.0045 24.7762 
-## 
-## Random effects:
-##  Groups Name        Variance Std.Dev.
-##  mf:pop (Intercept)  2.706   1.645   
-##  pop    (Intercept) 16.357   4.044   
-##  block  (Intercept)  1.239   1.113   
-## Number of obs: 1529, groups:  mf:pop, 139; pop, 21; block, 13
-## 
-## Fixed effects:
-##                               Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)                 -7.7856637  0.0005817  -13383   &lt;2e-16 ***
-## AvgTempDist_Recent_Wtr_Year  2.9488529  0.0005817    5069   &lt;2e-16 ***
-## AvgPPTDist_Recent_Wtr_Year  -2.5777208  0.0005817   -4431   &lt;2e-16 ***
-## Geographic_Dist             -1.1195574  0.0005817   -1925   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) ATD_R_ APPTD_
-## AvgTD_R_W_Y 0.000               
-## APPTD_R_W_Y 0.000  0.000        
-## Gegrphc_Dst 0.000  0.000  0.000 
-## optimizer (Nelder_Mead) convergence code: 0 (OK)
-## Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)
-## Model is nearly unidentifiable: very large eigenvalue
-##  - Rescale variables?</code></pre>
-<pre class="r"><code>#Warning: Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
- #- Rescale variables?</code></pre>
 </div>
 </div>
 <div id="figures" class="section level2">

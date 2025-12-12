@@ -23,6 +23,11 @@ library(broom.mixed) #tidy model
 library(emmeans) #for pairwise tests
 library(performance) #for calculating rsq 
 
+phi_function <- function(model) {
+    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
+    return(phi)
+} #function for calculating the overdispersion paramter (for quasi-poisson)
+
 sem <- function(x, na.rm=FALSE) {           #for calculating standard error
   sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
 } 
@@ -164,69 +169,6 @@ printCoefmat(quasi_table(total_fecund_poisson),digits=2)
 #As specified, the estimates are identical; the standard errors and p-values have been appropriately inflated, the z-values have been appropriately deflated.
 ```
 
-### Add in Gowers climate distance
-```{r}
-total_fecund_models_CD_GD <- tribble(
-  ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  height.cm + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
-)
-#run the models 
-total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
-  mutate(glmer = map(f, ~ glmer(as.formula(.), 
-                            family = poisson,
-                            data = wl2_total_fitness_scaled)))
-
-#show results:
-total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
-  select(name, term:p.value) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
-  drop_na(p.value)
-
-#quasi-poisson correction:
-phi_function <- function(model) {
-    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
-    return(phi)
-} #function for calculating the overdispersion paramter
-
-total_fecund_models_CD_GD %>% 
-  mutate(phi=map(glmer, phi_function)) %>% 
-  mutate(tidy=map(glmer, tidy)) %>% 
-  unnest(tidy) %>% 
-  unnest(phi) %>% 
-  transmute(term = term, estimate = estimate, 
-                std.error = std.error * sqrt(phi),
-                statistic = estimate/std.error,
-                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
-  drop_na(p.value) #after correction, no clim dist sig
-
-total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
-  unnest(rsq) %>% 
-  unnest(rsq) %>% 
-  select(-f:-glmer)
-
-#pairwise test between WL2 and BH (the pop with the highest total fitness):
-wtr_yr_recent_mod <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), family = poisson, data = wl2_total_fitness_scaled)
-#get min and max GD
-min(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year) 
-max(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year)
-minmaxGD = list(AvgGD_Recent_Wtr_Year = c(-1.358033, 2.153113))
-
-# Calculate EMMs at the min and max GD
-emm_results <- emmeans(wtr_yr_recent_mod, ~ AvgGD_Recent_Wtr_Year, at = minmaxGD)
-# View the results
-summary(emm_results)
-
-# Perform pairwise comparison
-pairs(emm_results) 
-#P=0.0099
-#but this is based off the poisson model, not the quasi-poisson...
-```
-
 ### Temp/ppt dist
 ```{r}
 total_fecund_SUB_models_CD_GD <- tribble(
@@ -261,7 +203,7 @@ total_fecund_SUB_models_CD_GD %>%
                 std.error = std.error * sqrt(phi),
                 statistic = estimate/std.error,
                 p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
+  filter(str_detect(term, "Dist") | term=="height.cm") %>%
   drop_na(p.value) 
 
 total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
@@ -276,6 +218,64 @@ mod_test <- glmer(Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recen
 summary(mod_test)
 #Warning: Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
  #- Rescale variables?
+```
+
+### Add in Gowers climate distance
+```{r}
+total_fecund_models_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "Total_Fitness ~  height.cm + (1|pop/mf) + (1|block)", 
+  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
+)
+#run the models 
+total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
+  mutate(glmer = map(f, ~ glmer(as.formula(.), 
+                            family = poisson,
+                            data = wl2_total_fitness_scaled)))
+
+#show results:
+total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
+  drop_na(p.value)
+
+#quasi-poisson correction:
+total_fecund_models_CD_GD %>% 
+  mutate(phi=map(glmer, phi_function)) %>% 
+  mutate(tidy=map(glmer, tidy)) %>% 
+  unnest(tidy) %>% 
+  unnest(phi) %>% 
+  transmute(term = term, estimate = estimate, 
+                std.error = std.error * sqrt(phi),
+                statistic = estimate/std.error,
+                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
+  drop_na(p.value) #after correction, no clim dist sig
+
+total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
+  unnest(rsq) %>% 
+  unnest(rsq) %>% 
+  select(-f:-glmer)
+
+#pairwise test between WL2 and BH (the pop with the highest total fitness):
+wtr_yr_recent_mod <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), family = poisson, data = wl2_total_fitness_scaled)
+#get min and max GD
+min(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year) 
+max(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year)
+minmaxGD = list(AvgGD_Recent_Wtr_Year = c(-1.358033, 2.153113))
+
+# Calculate EMMs at the min and max GD
+emm_results <- emmeans(wtr_yr_recent_mod, ~ AvgGD_Recent_Wtr_Year, at = minmaxGD)
+# View the results
+summary(emm_results)
+
+# Perform pairwise comparison
+pairs(emm_results) 
+#P=0.0099
+#but this is based off the poisson model, not the quasi-poisson...
 ```
 
 ## Figures
