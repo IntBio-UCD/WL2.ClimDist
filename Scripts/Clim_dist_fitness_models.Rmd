@@ -18,9 +18,10 @@ library(lmerTest) #mixed models
 library(broom.mixed) #tidy mixed model results 
 library(tidymodels) #model workflows 
 library(multilevelmod)
+library(performance) #for calculating rsq for glmmerMod objects
 ```
 
-## Read in Data
+## Read in Fitness Data
 ```{r}
 wl2_establishment <- read_csv("../Processed.Data/WL2_Establishment.csv")
 first_yr_surv <- read_csv("../Processed.Data/WL2_Y1Surv.csv")
@@ -42,9 +43,24 @@ wlt_tot_fitness <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv") %>%
 
 ```
 
-## Scale Predictors and Data Transformations
+## Read in Size Pre-Transplant 
+```{r}
+wl2_pretrans_size1 <- read_csv("../Raw.Data/WL2_DNA_Collection_Size_survey_combined20230703_corrected.csv")
+
+wl2_pretrans_size2 <- read_csv("../Raw.Data/WL2_Extras_DNA_collection_size_survey_combined20230706_corrected.csv") %>% 
+  filter(!is.na(`height (cm)`)) #to get rid of genotypes that were measured on the other data sheet (NAs on this sheet)
+
+wl2_pretrans_size_all <- bind_rows(wl2_pretrans_size1, wl2_pretrans_size2) %>%
+  rename(pop=Pop, height.cm = `height (cm)`, long.leaf.cm=`longest leaf (cm)`) %>% 
+  unite(Genotype, pop:rep, sep="_", remove = FALSE) %>% 
+  select(-DNA)
+head(wl2_pretrans_size_all)
+```
+
+## Scale Predictors, Data Transformations, and Add Pre-transplant size 
 ```{r}
 wl2_establishment_scaled <- wl2_establishment %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   mutate_at(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
               "GD_Recent_GrwSsn_2023", "GD_Historic_GrwSsn_2023",
               "TempDist_Historic_GrwSsn_2023", "TempDist_Historic_Wtr_Year_2023",
@@ -54,6 +70,7 @@ wl2_establishment_scaled <- wl2_establishment %>%
               "Geographic_Dist"), scale)
 
 wl2_y1_surv_scaled <- first_yr_surv %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   mutate_at(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
               "GD_Recent_GrwSsn_2023", "GD_Historic_GrwSsn_2023",
               "TempDist_Historic_GrwSsn_2023", "TempDist_Historic_Wtr_Year_2023",
@@ -63,6 +80,7 @@ wl2_y1_surv_scaled <- first_yr_surv %>%
               "Geographic_Dist"), scale)
 
 wl2_winter_surv_scaled <- winter_surv %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="WR") %>% #remove pops with too low sample size 
   mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "TempDist_Historic_Wtr_Year_2024","TempDist_Recent_Wtr_Year_2024",
@@ -70,6 +88,7 @@ wl2_winter_surv_scaled <- winter_surv %>%
               "Geographic_Dist"), scale)
 
 wl2_surv_to_rep_y2_scaled <- wl2_surv_to_bud_y2 %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% #remove pops with too low sample size 
   mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "GD_Recent_GrwSsn_2024", "GD_Historic_GrwSsn_2024",
@@ -80,6 +99,7 @@ wl2_surv_to_rep_y2_scaled <- wl2_surv_to_bud_y2 %>%
               "Geographic_Dist"), scale)
 
 wl2_fruits_y2_scaled <- wl2_fruits_y2 %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% #remove pops with too low sample size 
   mutate(logFruits=log(y2_fruits)) %>%  #transform fruit number with a log transformation 
   mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
@@ -91,6 +111,7 @@ wl2_fruits_y2_scaled <- wl2_fruits_y2 %>%
               "Geographic_Dist"), scale)
   
 wl2_FrFlN_y2_scaled <- wl2_fruits_y2 %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% #remove pops with too low sample size 
   drop_na(FrFlN_y2) %>% 
   mutate(logFrFLs=log(FrFlN_y2)) %>% #transform fruit number with a log transformation 
@@ -103,6 +124,7 @@ wl2_FrFlN_y2_scaled <- wl2_fruits_y2 %>%
               "Geographic_Dist"), scale)
 
 wl2_prob_fitness_scaled <- wl2_prob_rep %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   mutate_at(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
               "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
               "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
@@ -112,6 +134,7 @@ wl2_prob_fitness_scaled <- wl2_prob_rep %>%
               "Geographic_Dist"), scale)
 
 wl2_rep_output_scaled <- wlt_tot_fitness %>% 
+  left_join(wl2_pretrans_size_all) %>% 
   mutate(logTotalFitness=log(Total_Fitness)) %>% 
   filter(pop!="SQ1", pop!="WR") %>% 
   mutate_at(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
@@ -151,22 +174,22 @@ surv_fits_wl2 %>% filter(name=="pop.mf.block") %>% pull(fit) #mf explains very l
 
 #Add in Geo and tmp/ppt dist
 surv_GD_wflow_sub <- workflow() %>%
-  add_variables(outcomes = Establishment, predictors = c(pop, mf, block, contains("Dist"))) 
+  add_variables(outcomes = Establishment, predictors = c(pop, block, height.cm, contains("Dist"))) 
 surv_GD_fits_sub <- tibble(wflow=list(
   pop.block = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ height.cm + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -176,28 +199,28 @@ surv_GD_fits_wl2_sub <- surv_GD_fits_sub %>%
   mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
 #show results:
 surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
-  filter(str_detect(term, "Dist")) %>%
+  #filter(str_detect(term, "Dist")) %>%
   drop_na(p.value) %>%
   select(-wflow:-group)
 
 #Add in Geo and Gowers clim dist
 surv_GD_wflow <- workflow() %>%
-  add_variables(outcomes = Establishment, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = Establishment, predictors = c(pop, height.cm, block, contains("GD"), Geographic_Dist)) 
 surv_GD_fits <- tibble(wflow=list(
   pop.block = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ height.cm + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -205,11 +228,26 @@ name=names(wflow)
   select(name,wflow) 
 surv_GD_fits_wl2 <- surv_GD_fits %>%
   mutate(fit = map(wflow, fit, data = wl2_establishment_scaled))
+
 #show results:
 surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
-  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  #filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)
+
+#surv_GD_fits_wl2 %>% mutate(glance=map(fit, glance)) %>% unnest(glance) %>% 
+ # select(-wflow:-sigma)
+
+surv_GD_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>% 
+  mutate(rsq=map(extracted_fit, r2)) %>% 
+  unnest(rsq) %>% 
+  unnest(rsq) %>% 
+  select(-wflow:-extracted_fit)
+#conditional rsq = first row per model - based on fixed and random effects 
+#and marginal rsq is the second row per model - based only on fixed effects
+
+mod_test <- glmer(Establishment ~ height.cm + (1|pop) + (1|block), data=wl2_establishment_scaled, family=binomial)
+r2(mod_test) #verify the rsq values returned above are correct
 ```
 
 ## First Year Surv Models
@@ -233,22 +271,22 @@ surv_fits_wl2 %>% filter(name=="pop.mf.block") %>% pull(fit) #no issues with mf
 
 #Add in Geo and tmp/ppt dist
 surv_GD_wflow_sub <- workflow() %>%
-  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, block, contains("Dist"))) 
+  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm, block, contains("Dist"))) 
 surv_GD_fits_sub <- tibble(wflow=list(
   pop.block = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm + (1|pop/mf) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_sub %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -266,19 +304,19 @@ surv_GD_wflow <- workflow() %>%
   add_variables(outcomes = Y1Survival, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
 surv_GD_fits <- tibble(wflow=list(
   pop.block = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm + (1|pop/mf) + (1|block))},
   
   GS_Recent = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   GS_Historical = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow %>% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -299,10 +337,10 @@ surv_wflow <- workflow() %>%
   add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block))
 surv_fits <- tibble(wflow=list(
   pop.block = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop) + (1|block))},
   
   pop.mf.block = {surv_wflow %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -313,16 +351,16 @@ surv_fits_wl2 %>% filter(name=="pop.mf.block") %>% pull(fit) #nothing wrong with
 
 #Add in Geo and tmp/ppt dist
 surv_GD_wflow_wl2_sub <- workflow() %>%
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains("Dist"))) 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf,  height.cm, block, contains("Dist"))) 
 surv_GD_fits_wl2_sub <- tibble(wflow=list(
   pop.mf.block = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -336,16 +374,16 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 #Add in Geo and Gowers clim dist
 surv_GD_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, height.cm,  block, contains("GD"), Geographic_Dist)) 
 surv_GD_fits_wl2 <- tibble(wflow=list(
   pop.mf.block = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -380,22 +418,22 @@ surv_fits_wl2 %>% filter(name=="pop.mf.block") %>% pull(fit)
 
 #Add in Geo and tmp/ppt dist
 surv_GD_wflow_wl2_sub <- workflow() %>%
-  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("Dist"))) 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm,  block, contains("Dist"))) 
 surv_GD_fits_wl2_sub <- tibble(wflow=list(
   pop.block = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -409,22 +447,22 @@ surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
 
 #Add in Geo and Gowers clim dist
 surv_GD_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm,  block, contains("GD"), Geographic_Dist)) 
 surv_GD_fits_wl2 <- tibble(wflow=list(
   pop.block = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
   
 ),
 name=names(wflow)
@@ -458,11 +496,11 @@ fruits_modelslog %>% mutate(tidy=map(lmer, tidy, effects = "ran_pars", scales = 
 #Add in Geo and tmp/ppt dist
 fruits_models_log_CD_GD_sub <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "logFruits ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "logFruits ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "4_WY_Recent",      "logFruits ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "logFruits ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFruits ~  height.cm + (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist +height.cm + (1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 #run the models 
 fruits_models_log_CD_GD_sub <- fruits_models_log_CD_GD_sub %>%
@@ -479,11 +517,11 @@ fruits_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>
 #Add in Geo and Gowers clim dist
 fruits_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFruits ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "logFruits ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "logFruits ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "4_WY_Recent",      "logFruits ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "logFruits ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFruits ~  height.cm + (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFruits ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFruits ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFruits ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist +height.cm + (1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFruits ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 #run the models 
 fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
@@ -516,11 +554,11 @@ FrFlN_modelslog %>% mutate(tidy=map(lmer, tidy, effects = "ran_pars", scales = "
 #Add in Geo and tmp/ppt dist
 FrFlN_models_log_CD_GD_sub <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFrFLs ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "logFrFLs ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "logFrFLs ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "4_WY_Recent",      "logFrFLs ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "logFrFLs ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFrFLs ~  height.cm + (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFrFLs ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFrFLs ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFrFLs ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist +height.cm + (1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFrFLs ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 #run the models 
 FrFlN_models_log_CD_GD_sub <- FrFlN_models_log_CD_GD_sub %>%
@@ -537,11 +575,11 @@ FrFlN_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
 #Add in Geo and Gowers clim dist
 FrFlN_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFrFLs ~  (1|pop/mf) + (1|block)", 
-  "2_GS_Recent",      "logFrFLs ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "3_GS_Historical",  "logFrFLs ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + (1|pop/mf) + (1|block)", 
-  "4_WY_Recent",      "logFrFLs ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist +(1|pop/mf) + (1|block)",
-  "5_WY_Historical",  "logFrFLs ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFrFLs ~  height.cm + (1|pop/mf) + (1|block)", 
+  "2_GS_Recent",      "logFrFLs ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "3_GS_Historical",  "logFrFLs ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
+  "4_WY_Recent",      "logFrFLs ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist +height.cm + (1|pop/mf) + (1|block)",
+  "5_WY_Historical",  "logFrFLs ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)"
 )
 #run the models 
 FrFlN_models_log_CD_GD <- FrFlN_models_log_CD_GD %>%
@@ -578,22 +616,22 @@ prob_fitness_fits %>% pull(fit)
 
 #Add in geo and temp/ppt distance
 prob_fitness_SUB_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, block, contains("Dist"))) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm,  block, contains("Dist"))) 
 prob_fitness_SUB_fits_wl2 <- tibble(wflow=list(
   pop.block = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm + (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn+ Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn+ Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -609,22 +647,22 @@ prob_fitness_SUB_fits_wl2 %>% pull(fit) #convergence issues with GS_Historical m
 
 #Add in geo and Gowers clim distance
 prob_fitness_GD_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, block, contains("GD"), Geographic_Dist)) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm,  block, contains("GD"), Geographic_Dist)) 
 prob_fitness_GD_fits_wl2 <- tibble(wflow=list(
   pop.block = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm + (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   GS_Historical = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -657,17 +695,17 @@ rep_output_modelslog %>% mutate(tidy=map(lmer, tidy, effects = "ran_pars", scale
 #Add in Geo and temp/ppt dist
 rep_output_SUB_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "logTotalFitness ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "3a_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
+  "1_pop.block",      "logTotalFitness ~  height.cm + (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
+  "3a_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
   #Troubleshoot weird GrwSsn-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
-  "3b_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "3c_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "3d_GS_Historical",  "logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)",
+  "3b_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
+  "3c_GS_Historical",  "logTotalFitness ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
+  "3d_GS_Historical",  "logTotalFitness ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)",
   
   #water year models:
-  "4_WY_Recent",      "logTotalFitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "logTotalFitness ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + (1|pop) + (1|block)"
+  "4_WY_Recent",      "logTotalFitness ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist +height.cm + (1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)"
 )
 #run the models 
 rep_output_SUB_models_log_CD_GD <- rep_output_SUB_models_log_CD_GD %>%
@@ -685,11 +723,11 @@ rep_output_SUB_models_log_CD_GD %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy
 #Add in Geo and Gowers clim dist
 rep_output_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logTotalFitness ~  (1|pop) + (1|block)", 
-  "2_GS_Recent",      "logTotalFitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "3_GS_Historical",  "logTotalFitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
-  "4_WY_Recent",      "logTotalFitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist +(1|pop) + (1|block)",
-  "5_WY_Historical",  "logTotalFitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + (1|pop) + (1|block)"
+  "1_pop.block",      "logTotalFitness ~  height.cm + (1|pop) + (1|block)", 
+  "2_GS_Recent",      "logTotalFitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
+  "3_GS_Historical",  "logTotalFitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)", 
+  "4_WY_Recent",      "logTotalFitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist +height.cm + (1|pop) + (1|block)",
+  "5_WY_Historical",  "logTotalFitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)"
 )
 #run the models 
 rep_output_models_log_CD_GD <- rep_output_models_log_CD_GD %>%
