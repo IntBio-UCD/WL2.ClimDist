@@ -168,7 +168,7 @@ printCoefmat(quasi_table(total_fecund_poisson),digits=2)
 ```{r}
 total_fecund_models_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fecundity ~  (1|pop/mf) + (1|block)", 
+  "1_pop.block",      "Total_Fecundity ~  height.cm + (1|pop/mf) + (1|block)", 
   "2_WY_Recent",      "Total_Fecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "3_WY_Historical",  "Total_Fecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "4_GS_Recent",      "Total_Fecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
@@ -231,7 +231,7 @@ pairs(emm_results)
 ```{r}
 total_fecund_SUB_models_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fecundity ~  (1|pop/mf) + (1|block)", 
+  "1_pop.block",      "Total_Fecundity ~  height.cm + (1|pop/mf) + (1|block)", 
   "2_WY_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "3_WY_Historical",  "Total_Fecundity ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)",
   "4_GS_Recent",      "Total_Fecundity ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)", 
