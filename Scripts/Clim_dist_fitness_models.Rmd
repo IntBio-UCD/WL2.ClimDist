@@ -35,7 +35,7 @@ wl2_prob_rep <- read_csv("../Processed.Data/WL2_ProbFit.csv") %>%
          AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
          AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
          AvgGD_Historic_GrwSsn=`AvgGD_Historic_Growth Season`)
-wlt_tot_fecundity <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv") %>% 
+wl2_tot_fecundity <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv") %>% 
   rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
          AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
          AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
@@ -133,7 +133,7 @@ wl2_prob_fitness_scaled <- wl2_prob_rep %>%
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
               "Geographic_Dist"), scale)
 
-wl2_rep_output_scaled <- wlt_tot_fecundity %>% 
+wl2_rep_output_scaled <- wl2_tot_fecundity %>% 
   left_join(wl2_pretrans_size_all) %>% 
   mutate(logTotalFecundity=log(Total_Fecundity)) %>% 
   filter(pop!="SQ1", pop!="WR") %>% 
