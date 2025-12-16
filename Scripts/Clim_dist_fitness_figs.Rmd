@@ -38,6 +38,13 @@ wl2_prob_rep <- read_csv("../Processed.Data/WL2_ProbFit.csv") %>% rename(AvgGD_R
 wl2_tot_fecundity <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv")
 ```
 
+## Read in the predictions from the models in "Clim_dist_fitness_models.Rmd"
+```{r}
+prob_rep_sub_preds <- read_csv("../Processed.Data/ProbRep_SubPreds.csv") %>% mutate(pop=NA)
+prob_rep_GD_preds <- read_csv("../Processed.Data/ProbRep_GDPreds.csv")
+```
+
+
 ## Data Summaries
 
 ### Maternal family sample sizes upon transplant (Table S1)
@@ -112,6 +119,7 @@ WYtemp_probfit <- prob_fitness_summary %>%
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.3,linewidth = 2) +
   annotate("text", x = 0.6194583, y= 0.095, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
+  geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
