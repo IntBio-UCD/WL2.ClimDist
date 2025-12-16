@@ -776,25 +776,33 @@ total_fecund_SUB_models_CD_GD &lt;- total_fecund_SUB_models_CD_GD %&gt;%
 ## Caused by warning in `checkConv()`:
 ## ! Model failed to converge with max|grad| = 0.122604 (tol = 0.002, component 1)
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
-<pre class="r"><code>#convergence warning for water year recent model 
+<pre class="r"><code>#convergence warning for water year models 
 
 #show results:
 total_fecund_SUB_models_CD_GD %&gt;% mutate(tidy=map(glmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 9 × 6
-##   name            term            estimate std.error statistic p.value
-##   &lt;chr&gt;           &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 1_pop.block     height.cm          0.136  0.0431       3.16  0.00160
-## 2 2_WY_Recent     Geographic_Dist   -1.24   0.000581 -2140.    0      
-## 3 2_WY_Recent     height.cm          0.135  0.000581   232.    0      
-## 4 3_WY_Historical Geographic_Dist   -1.04   0.000600 -1736.    0      
-## 5 3_WY_Historical height.cm          0.138  0.000600   230.    0      
-## 6 4_GS_Recent     Geographic_Dist   -0.341  1.22        -0.279 0.780  
-## 7 4_GS_Recent     height.cm          0.136  0.0431       3.15  0.00162
-## 8 5_GS_Historical Geographic_Dist   -0.366  1.20        -0.305 0.761  
-## 9 5_GS_Historical height.cm          0.135  0.0431       3.15  0.00166</code></pre>
+<pre><code>## # A tibble: 17 × 6
+##    name            term                     estimate std.error statistic p.value
+##    &lt;chr&gt;           &lt;chr&gt;                       &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 1_pop.block     height.cm                   0.136  0.0431       3.16  0.00160
+##  2 2_WY_Recent     AvgTempDist_Recent_Wtr_…    2.81   0.000581  4844.    0      
+##  3 2_WY_Recent     AvgPPTDist_Recent_Wtr_Y…   -2.56   0.000581 -4414.    0      
+##  4 2_WY_Recent     Geographic_Dist            -1.24   0.000581 -2140.    0      
+##  5 2_WY_Recent     height.cm                   0.135  0.000581   232.    0      
+##  6 3_WY_Historical AvgTempDist_Historic_Wt…    2.69   0.000600  4483.    0      
+##  7 3_WY_Historical AvgPPTDist_Historic_Wtr…   -2.56   0.000600 -4267.    0      
+##  8 3_WY_Historical Geographic_Dist            -1.04   0.000600 -1736.    0      
+##  9 3_WY_Historical height.cm                   0.138  0.000600   230.    0      
+## 10 4_GS_Recent     AvgTempDist_Recent_GrwS…    1.03   2.37         0.435 0.664  
+## 11 4_GS_Recent     AvgPPTDist_Recent_GrwSsn    1.61   2.60         0.620 0.535  
+## 12 4_GS_Recent     Geographic_Dist            -0.341  1.22        -0.279 0.780  
+## 13 4_GS_Recent     height.cm                   0.136  0.0431       3.15  0.00162
+## 14 5_GS_Historical AvgTempDist_Historic_Gr…    0.659  2.03         0.324 0.746  
+## 15 5_GS_Historical AvgPPTDist_Historic_Grw…    2.38   2.25         1.06  0.291  
+## 16 5_GS_Historical Geographic_Dist            -0.366  1.20        -0.305 0.761  
+## 17 5_GS_Historical height.cm                   0.135  0.0431       3.15  0.00166</code></pre>
 <pre class="r"><code>#quasi-poisson correction:
 total_fecund_SUB_models_CD_GD %&gt;% 
   mutate(phi=map(glmer, phi_function)) %&gt;% 
