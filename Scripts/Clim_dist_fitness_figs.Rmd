@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for figures relating climate distance to fitness (Figure 4-5; S4-S8)
 
+To Do: Add lines for model predictions 
+
 ## Load libraries
 ```{r}
 library(tidyverse)
@@ -33,7 +35,7 @@ wl2_surv_to_bud_y2 <- read_csv("../Processed.Data/WL2_Surv_to_Rep_Y2.csv")
 wl2_fruits_y2 <- read_csv("../Processed.Data/WL2_Fruits_Y2.csv")
 
 wl2_prob_rep <- read_csv("../Processed.Data/WL2_ProbFit.csv") %>% rename(AvgGD_Recent_Water_Yr=`AvgGD_Recent_Water Year`)
-wlt_tot_fitness <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv")
+wl2_tot_fecundity <- read_csv("../Processed.Data/WL2_TotalRepOutput.csv")
 ```
 
 ## Data Summaries
@@ -94,11 +96,11 @@ prob_fitness_summary <- wl2_prob_rep %>%
 prob_fitness_summary$RepYear <- factor(prob_fitness_summary$RepYear,
                                                levels = c('None','Year 2 Only', 'Both Years'))
 
-wlt_tot_fitness_summary <- wlt_tot_fitness %>% 
+wl2_tot_fecundity_summary <- wl2_tot_fecundity %>% 
   filter(pop!="SQ1", pop!="WR") %>% 
   group_by(pop, elev_m, AvgTempDist_Recent_GrwSsn, AvgPPTDist_Recent_GrwSsn,
            `AvgGD_Recent_Growth Season`) %>% 
-  summarise(meanTotFruit=mean(Total_Fitness, na.rm=TRUE), semTotFruit=sem(Total_Fitness, na.rm=TRUE))
+  summarise(meanTotFruit=mean(Total_Fecundity, na.rm=TRUE), semTotFruit=sem(Total_Fecundity, na.rm=TRUE))
 ```
 
 ## Figure 4: Temp and PPT recent water climate distance
@@ -272,7 +274,7 @@ est_temp <- est_summary %>%
        color="Elevation (m)") +
   theme(text=element_text(size=30))
 
-totrep_temp <- wlt_tot_fitness_summary %>% 
+totrep_temp <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=AvgTempDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
@@ -284,7 +286,7 @@ totrep_temp <- wlt_tot_fitness_summary %>%
   labs(y="Total Fruit Number", x="Recent Growth Season Temp Dist (°C)", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
-totrep_ppt <- wlt_tot_fitness_summary %>% 
+totrep_ppt <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=AvgPPTDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
@@ -396,7 +398,7 @@ repsurvy2_gowers <- wl2_surv_to_bud_y2_summary %>%
   labs(y="Survival to Budding Y2", x="Recent Growth Season Climate Dist", colour = "Elevation (m)") +
   theme(text=element_text(size=30))
 
-totrep_gowers <- wlt_tot_fitness_summary %>% 
+totrep_gowers <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=`AvgGD_Recent_Growth Season`, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
