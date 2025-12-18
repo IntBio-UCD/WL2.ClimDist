@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for Figures 1, 3, S1, S2; Table S2 and S3 
 
+To Do: check if snowy 2023 actually resulted in a shorter growing season 
+
 ## Load libraries
 ```{r}
 library(tidyverse)
@@ -379,7 +381,8 @@ autoplot(allclim.pc, data = all_clim,
          label=FALSE, label.label="parent.pop",
          loadings=TRUE, loadings.colour='black', loadings.linewidth = 0.7,
          loadings.label = TRUE, loadings.label.size=6, loadings.label.colour="black", 
-         loadings.label.vjust = -0.2, loadings.label.repel=TRUE) +
+         loadings.label.hjust = 0,
+         loadings.label.vjust = 1.3, loadings.label.repel=TRUE) +
    scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   labs(color="Elevation (m)") +
   geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
