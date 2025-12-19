@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for calculating climate distance (Figure S3)
 
-
 ## Load Libraries
 ```{r}
 library(tidyverse)
@@ -424,6 +423,36 @@ sub_dist <- all_clim %>%
 
 sub_dist_2023 <- sub_dist %>% filter(WL2_year==2023) %>% select(parent.pop:Season, WL2_year, cwd_dist:ann_ppt_dist)
 sub_dist_2024 <- sub_dist %>% filter(WL2_year==2024) %>% select(parent.pop:Season, WL2_year, cwd_dist:ann_ppt_dist)
+```
+
+### Check how much warmer 2024 was compared to previous years and how that temp diff reflects the expected diff b/t low elev pops and the garden 
+```{r}
+#compare WL2 2024 temp to avg WL2 garden temp
+all_clim %>% filter(parent.pop=="WL2_Garden", year==2024, Season=="Water Year") #ann_tmean = 8.952917	
+all_clim %>% filter(parent.pop=="WL2_Garden", year>1993, Season=="Water Year") %>% 
+  summarise(AvgTemp=mean(ann_tmean)) #avg = 8.492419	
+#temp diff = 0.460498
+all_clim %>% filter(parent.pop=="WL2_Garden", year>1963, Season=="Water Year") %>% 
+  summarise(AvgTemp=mean(ann_tmean)) #avg = 7.934085		
+#temp diff = 1.018832
+
+#calculate average temp diff b/t WL2 garden and low elevation pops in reecent clim
+wl2_garden_clim_recent <- all_clim %>% 
+  filter(parent.pop=="WL2_Garden", year>1993) %>%
+  rename_with(.cols = c(8:22), ~paste0(.x, '_WL2')) %>% 
+  select(Season, WL2_year=year, cwd_WL2:ppt_coldest_month_WL2)
+sub_dist_recent <- all_clim %>% 
+  filter(parent.pop!="WL2_Garden") %>% 
+  group_by(parent.pop, elevation.group, elev_m, timeframe, Season) %>% 
+  summarise_at(c("cwd", "pck", "ann_tmean", "ann_ppt"),
+               c(mean), na.rm = TRUE) %>% #get 30 year averages
+  left_join(wl2_garden_clim_recent) %>% 
+  mutate(ann_tmean_dist=ann_tmean - ann_tmean_WL2) 
+sub_dist_recent %>% filter(timeframe=="recent") %>% 
+  filter(Season=="Water Year", elevation.group=="low") %>% 
+  ungroup() %>% 
+  summarise(meanTempDist=mean(ann_tmean_dist)) #7.5
+
 ```
 
 ### Average subtraction distance
