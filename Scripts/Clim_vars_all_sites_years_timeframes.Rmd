@@ -586,6 +586,18 @@ snow_grwseason_60 %>% ggplot(aes(x=month)) + geom_histogram() +
   facet_wrap(~parent.pop)
 ```
 
+## Check if snowy 2023 --> shorter growing season
+```{r}
+snow_grwseason_60 %>% filter(parent.pop=="WL2_Garden") %>% filter(year_cal=="2023") %>%
+  mutate(ssnlength=lastmonth-firstmonth)
+snow_grwseason_60 %>% filter(parent.pop=="WL2_Garden") %>% select(parent.pop:year_cal) %>% 
+  distinct() %>% 
+  mutate(ssnlength=lastmonth-firstmonth) %>% 
+  ungroup() %>% 
+  summarise(meanLength=mean(ssnlength))
+#average is 6.5, in 2023 it was 5
+```
+
 ### WL2 Garden 2024 Growth Season Climate
 Calculate this separately so it's not included in the 60 year summary stats 
 ```{r}
