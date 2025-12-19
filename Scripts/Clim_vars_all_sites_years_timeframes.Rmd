@@ -596,6 +596,12 @@ snow_grwseason_60 %>% filter(parent.pop=="WL2_Garden") %>% select(parent.pop:yea
   ungroup() %>% 
   summarise(meanLength=mean(ssnlength))
 #average is 6.5, in 2023 it was 5
+snow_grwseason_60 %>% filter(parent.pop=="WL2_Garden") %>% 
+  select(parent.pop:year_cal) %>% 
+  distinct() %>% 
+  mutate(ssnlength=lastmonth-firstmonth) %>% 
+  ungroup() %>% 
+  filter(ssnlength <= 5) #season length has been 5 months 13 times in the last 60 years --> natural occurence
 ```
 
 ### WL2 Garden 2024 Growth Season Climate
