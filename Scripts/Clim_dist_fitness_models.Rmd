@@ -727,10 +727,21 @@ prob_fitness_SUB_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)
 ##predictions for figures:
 prob_fitness_sub_preds <- prob_fitness_SUB_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
   filter(name=="WY_Recent") %>% 
-  mutate(predictions=map(extracted_fit, predict, new_data=wl2_prob_fitness_scaled)) %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=wl2_prob_fitness_scaled)) %>% 
   unnest(predictions) %>% 
   bind_cols(wl2_prob_fitness_scaled) %>% 
   select(name, .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist) 
+#double check that above gives predictions for fixed effects only:
+WY_Recent_sub_mod <- glmer(ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled +
+                             AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + 
+                             height.cm + (1|pop/mf) + (1|block),
+                           family="binomial", data=wl2_prob_fitness_scaled)
+prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, newdata=wl2_prob_fitness_scaled, 
+                                               re.form= NA, type="response")) %>% 
+  bind_cols(wl2_prob_fitness_scaled) %>% 
+  select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist)
+all.equal(prob_fitness_sub_preds$.pred == prob_fitness_sub_preds_check$.pred)
 write_csv(prob_fitness_sub_preds, "../Processed.Data/ProbRep_SubPreds.csv")
 
 #Add in geo and Gowers clim distance
