@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for calculating climate distance (Figure S3)
+# Code for calculating climate distance (Figure S4)
 
 ## Load Libraries
 ```{r}
@@ -453,6 +453,11 @@ sub_dist_recent %>% filter(timeframe=="recent") %>%
   ungroup() %>% 
   summarise(meanTempDist=mean(ann_tmean_dist)) #1.883408	
 
+sub_dist_recent %>% filter(timeframe=="historic") %>% 
+  filter(Season=="Growth Season", elevation.group=="low") %>% 
+  ungroup() %>% 
+  summarise(meanTempDist=mean(ann_tmean_dist))
+#1.181389
 ```
 
 ### Average subtraction distance

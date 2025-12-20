@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for figures relating climate distance to fitness (Figure 4-5; S4-S8)
+# Code for figures relating climate distance to fitness (Figure 4-5; S5-S9)
 
 To Do: Add lines for model predictions 
 
@@ -215,7 +215,7 @@ ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 9, units = "in
 prob_fitness_summary %>% filter(pop=="WL2")
 ```
 
-## Figure S4: Additonal Temp and PPT recent water yar climate distance
+## Figure S5: Additonal Temp and PPT recent water yar climate distance
 ```{r}
 WYtemp_est <- est_summary %>% 
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
@@ -259,15 +259,15 @@ WYtemp_y1surv <- y1surv_summary %>%
 ggsave("../Figures/Indiv_Fit_Comps/Y1Surv_TempDist_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 
-figs4_sub <- ggarrange(WYtemp_est, WYtemp_y1surv, 
+figS5_sub <- ggarrange(WYtemp_est, WYtemp_y1surv, 
                         WYppt_est, 
                         labels = c("A)", "B)", "C)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/FigureS4_TmpPPT.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/FigureS5_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure S5: Growth Season Clim Dist - Temp and PPT
+## Figure S6: Growth Season Clim Dist - Temp and PPT
 ```{r}
 est_temp <- est_summary %>% 
   ggplot(aes(x=TempDist_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
@@ -306,15 +306,15 @@ totrep_ppt <- wl2_tot_fecundity_summary %>%
   labs(y="Total Fruit Number", x="Recent Growth Season PPT Dist (mm)", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
-figs5_sub <- ggarrange(est_temp, NULL,
+figS6_sub <- ggarrange(est_temp, NULL,
                          totrep_temp, totrep_ppt,
                         labels = c("A)", "", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/FigureS5_GrwSsn.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/FigureS6_GrwSsn.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure S6: Additional Gower's recent water year climate distance 
+## Figure S7: Additional Gower's recent water year climate distance 
 ```{r}
 est_gower <- est_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanEst, group = pop, colour = elev_m)) +
@@ -359,15 +359,15 @@ wintersurv_gower <- wintersurv_summary %>%
 ggsave("../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 
-figs6_gower <- ggarrange(est_gower, y1surv_gower, 
+figS7_gower <- ggarrange(est_gower, y1surv_gower, 
                         wintersurv_gower, 
                         labels = c("A)", "B)", "C)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/FigureS6_WTRYRGowers.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/FigureS7_WTRYRGowers.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure S7: Gower's growth season climate distance effects
+## Figure S8: Gower's growth season climate distance effects
 ```{r}
 est_gowers <- est_summary %>% 
   ggplot(aes(x=GD_Historic_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
@@ -418,16 +418,16 @@ totrep_gowers <- wl2_tot_fecundity_summary %>%
   labs(y="Total Fruit Number", x="Recent Growth Season Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
-figs7_gower <- ggarrange(est_gowers, y1_surv_gowers, 
+figS8_gower <- ggarrange(est_gowers, y1_surv_gowers, 
                         repsurvy2_gowers, totrep_gowers,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/FigureS7_GRWSSNGowers.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/FigureS8_GRWSSNGowers.png", width = 26, height = 18, units = "in")
 ```
 
 
-## Figure S8: Geographic Distance
+## Figure S9: Geographic Distance
 ```{r}
 est_geo <- est_summary %>% 
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
@@ -467,9 +467,9 @@ repsurvy2_geo <- wl2_surv_to_bud_y2_summary %>%
   labs(y="Survival to Budding Y2", x="Geographic Distance (m)", colour = "Elevation (m)") +
   theme(text=element_text(size=30), axis.text.x = element_text(angle = 45,  hjust = 1))
 
-figS8_geo <- ggarrange(probfit_geo, est_geo, repsurvy2_geo, 
+figS9_geo <- ggarrange(probfit_geo, est_geo, repsurvy2_geo, 
                         labels = c("A)", "B)", "C)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/FigureS8_Geo.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/FigureS9_Geo.png", width = 26, height = 18, units = "in")
 ```
