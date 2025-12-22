@@ -300,7 +300,6 @@ summary(wtr_yr_recent_mod_ind)
 ## Figures
 ```{r}
 total_fecund_summary <- wl2_total_fitness %>% 
-  filter(pop!="SQ1", pop!="WR") %>% 
   rename(AvgGD_Recent_Water_Yr=`AvgGD_Recent_Water Year`) %>% 
   group_by(pop, elev_m, AvgGD_Recent_Water_Yr) %>% 
   summarise(meanTotalFecund=mean(Total_Fitness, na.rm=TRUE), semEst=sem(Total_Fitness, na.rm=TRUE))
