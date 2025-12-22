@@ -115,7 +115,6 @@ wl2_total_fitness_transformations %>%
 ## Scale predictors
 ```{r}
 wl2_total_fitness_scaled <- wl2_total_fitness %>% 
-  filter(pop!="SQ1", pop!="WR") %>% 
   rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
          AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
          AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
@@ -126,7 +125,7 @@ wl2_total_fitness_scaled <- wl2_total_fitness %>%
               "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
 ```
 
 ## Plot group means and variances to facilitate choosing the right error distribution
@@ -144,7 +143,7 @@ Based on this website, quasipoisson might work. https://r.qcbs.ca/workshop07/boo
 
 ### Basic model - Poisson and Quasi-Poisson 
 ```{r}
-total_fecund_poisson <- glmer(Total_Fitness ~ (1|pop/mf) + (1|block), 
+total_fecund_poisson <- glmer(Total_Fitness ~ height.cm + (1|pop/mf) + (1|block), 
                               family = poisson,
                               data=wl2_total_fitness_scaled)
 summary(total_fecund_poisson)
@@ -186,7 +185,7 @@ total_fecund_SUB_models_CD_GD <- total_fecund_SUB_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
                             data = wl2_total_fitness_scaled)))
-#convergence warning for water year models 
+#convergence warnings for growth season models 
 
 #show results:
 total_fecund_SUB_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
@@ -212,13 +211,13 @@ total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>%
   unnest(rsq) %>% 
   select(-f:-glmer)
 
-#investigate water year recent model:
-mod_test <- glmer(Total_Fitness ~ AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block), 
+#investigate growth season models:
+mod_test <- glmer(Total_Fitness ~ AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), 
                               family = poisson,
                               data=wl2_total_fitness_scaled)
-summary(mod_test)
-#Warning: Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
+#Recent: Warning: Model failed to converge with max|grad| = 0.121913 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
  #- Rescale variables?
+#Historic: Warning: Model failed to converge with max|grad| = 0.572738 (tol = 0.002, component 1)
 ```
 
 ### Add in Gowers climate distance
@@ -236,6 +235,7 @@ total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
   mutate(glmer = map(f, ~ glmer(as.formula(.), 
                             family = poisson,
                             data = wl2_total_fitness_scaled)))
+#convergence issues with water year models
 
 #show results:
 total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
@@ -261,6 +261,13 @@ total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>%
   unnest(rsq) %>% 
   select(-f:-glmer)
 
+#investigate water year models  
+mod_test <- glmer(Total_Fitness ~ AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), 
+                              family = poisson,
+                              data=wl2_total_fitness_scaled)
+#Warning: Model failed to converge with max|grad| = 0.141704 (tol = 0.002, component 1)Warning: Model is nearly unidentifiable: very large eigenvalue
+# - Rescale variables?
+
 #pairwise test between WL2 and BH (the pop with the highest total fitness):
 wtr_yr_recent_mod <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop/mf) + (1|block), family = poisson, data = wl2_total_fitness_scaled)
 #get min and max GD
@@ -275,8 +282,19 @@ summary(emm_results)
 
 # Perform pairwise comparison
 pairs(emm_results) 
-#P=0.0099
+#P=<.0001
 #but this is based off the poisson model, not the quasi-poisson...
+#plus the model did not converge!
+```
+
+## Try independent model with just BH and WL2
+```{r}
+wl2_total_fitness_scaled_ind <- wl2_total_fitness_scaled %>% 
+  filter(pop=="BH" | pop=="WL2")
+
+wtr_yr_recent_mod_ind <- glmer(Total_Fitness ~  AvgTempDist_Recent_Wtr_Year + height.cm + (1|block), 
+                               family = poisson, data = wl2_total_fitness_scaled_ind)
+summary(wtr_yr_recent_mod_ind)
 ```
 
 ## Figures
