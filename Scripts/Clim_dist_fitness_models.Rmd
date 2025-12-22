@@ -67,7 +67,7 @@ wl2_establishment_scaled <- wl2_establishment %>%
               "TempDist_Recent_GrwSsn_2023", "TempDist_Recent_Wtr_Year_2023",
               "PPTDist_Historic_GrwSsn_2023", "PPTDist_Historic_Wtr_Year_2023",
               "PPTDist_Recent_GrwSsn_2023", "PPTDist_Recent_Wtr_Year_2023",
-              "Geographic_Dist"), scale) 
+              "Geographic_Dist", "height.cm"), scale) 
 
 wl2_y1_surv_scaled <- first_yr_surv %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -77,7 +77,7 @@ wl2_y1_surv_scaled <- first_yr_surv %>%
               "TempDist_Recent_GrwSsn_2023", "TempDist_Recent_Wtr_Year_2023",
               "PPTDist_Historic_GrwSsn_2023", "PPTDist_Historic_Wtr_Year_2023",
               "PPTDist_Recent_GrwSsn_2023", "PPTDist_Recent_Wtr_Year_2023",
-              "Geographic_Dist"), list(scaled=scale))
+              "Geographic_Dist", "height.cm"), list(scaled=scale))
 
 wl2_winter_surv_scaled <- winter_surv %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -85,7 +85,7 @@ wl2_winter_surv_scaled <- winter_surv %>%
   mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "TempDist_Historic_Wtr_Year_2024","TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_Wtr_Year_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
 
 wl2_surv_to_rep_y2_scaled <- wl2_surv_to_bud_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -96,7 +96,7 @@ wl2_surv_to_rep_y2_scaled <- wl2_surv_to_bud_y2 %>%
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
 
 wl2_fruits_y2_scaled <- wl2_fruits_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -108,7 +108,7 @@ wl2_fruits_y2_scaled <- wl2_fruits_y2 %>%
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
   
 wl2_FrFlN_y2_scaled <- wl2_fruits_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -121,7 +121,7 @@ wl2_FrFlN_y2_scaled <- wl2_fruits_y2 %>%
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
 
 wl2_prob_fitness_scaled <- wl2_prob_rep %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -131,7 +131,7 @@ wl2_prob_fitness_scaled <- wl2_prob_rep %>%
               "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist"), list(scaled=scale))
+              "Geographic_Dist", "height.cm"), list(scaled=scale))
 
 wl2_rep_output_scaled <- wl2_tot_fecundity %>% 
   left_join(wl2_pretrans_size_all) %>% 
@@ -143,7 +143,7 @@ wl2_rep_output_scaled <- wl2_tot_fecundity %>%
               "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist"), scale)
+              "Geographic_Dist", "height.cm"), scale)
 ```
 
 ## Set Model Engine
