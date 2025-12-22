@@ -741,7 +741,7 @@ prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, newdata=
                                                re.form= NA, type="response")) %>% 
   bind_cols(wl2_prob_fitness_scaled) %>% 
   select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist)
-all.equal(prob_fitness_sub_preds$.pred == prob_fitness_sub_preds_check$.pred)
+all.equal(prob_fitness_sub_preds$.pred, prob_fitness_sub_preds_check$.pred)
 write_csv(prob_fitness_sub_preds, "../Processed.Data/ProbRep_SubPreds.csv")
 
 #Add in geo and Gowers clim distance
