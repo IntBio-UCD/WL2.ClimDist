@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for models relating climate distance to fitness (Table 2-3)
 
+To do: give predictions a data frame from one row per combination of factors that are relevant (fixed effects; expand_grid)
+
 ## Libraries
 ```{r}
 library(tidyverse)
@@ -144,6 +146,15 @@ wl2_rep_output_scaled <- wl2_tot_fecundity %>%
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
               "Geographic_Dist", "height.cm"), scale)
+```
+
+## Create a dataframe for model predictions
+```{r}
+pred_df_cuml <- wl2_prob_fitness_scaled %>% 
+  select(AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
+         AvgTempDist_Historic_GrwSsn:Geographic_Dist,
+         AvgGD_Historic_GrwSsn_scaled:Geographic_Dist_scaled) %>% 
+  distinct()
 ```
 
 ## Set Model Engine
@@ -735,14 +746,14 @@ prob_fitness_sub_preds <- prob_fitness_SUB_fits_wl2 %>% mutate(extracted_fit=map
 #double check that above gives predictions for fixed effects only:
 WY_Recent_sub_mod <- glmer(ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled +
                              AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + 
-                             height.cm + (1|pop/mf) + (1|block),
+                             (1|pop/mf) + (1|block),
                            family="binomial", data=wl2_prob_fitness_scaled)
-prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, newdata=wl2_prob_fitness_scaled, 
+prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, newdata=pred_df_cuml, 
                                                re.form= NA, type="response")) %>% 
-  bind_cols(wl2_prob_fitness_scaled) %>% 
+  bind_cols(pred_df_cuml) %>% 
   select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist)
 all.equal(prob_fitness_sub_preds$.pred, prob_fitness_sub_preds_check$.pred)
-write_csv(prob_fitness_sub_preds, "../Processed.Data/ProbRep_SubPreds.csv")
+write_csv(prob_fitness_sub_preds_check, "../Processed.Data/ProbRep_SubPreds.csv")
 
 #Add in geo and Gowers clim distance
 prob_fitness_GD_wflow_wl2 <- workflow() %>%

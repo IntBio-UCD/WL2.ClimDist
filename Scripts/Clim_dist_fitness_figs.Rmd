@@ -124,13 +124,13 @@ WYtemp_probfit <- prob_fitness_summary %>%
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.3,linewidth = 2) +
   annotate("text", x = 0.6194583, y= 0.095, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
-  #geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
        color="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr.png",
+ggsave("../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr_Preds.png",
        width = 12, height = 6, units = "in")
 
 WYtemp_totfruit <- wl2_tot_fecundity_summary %>% 
