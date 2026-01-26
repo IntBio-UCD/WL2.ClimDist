@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-12-22" />
+<meta name="date" content="2026-01-26" />
 
 <title>Clim_dist_fitness_figs</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_figs</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-12-22</h4>
+<h4 class="date">2026-01-26</h4>
 
 </div>
 
@@ -471,10 +471,9 @@ sem &lt;- function(x, na.rm=FALSE) {           #for calculating standard error
 <h2>Read in the predictions from the models in
 “Clim_dist_fitness_models.Rmd”</h2>
 <pre class="r"><code>prob_rep_sub_preds &lt;- read_csv(&quot;../Processed.Data/ProbRep_SubPreds.csv&quot;) %&gt;% mutate(pop=NA)</code></pre>
-<pre><code>## Rows: 1573 Columns: 5
+<pre><code>## Rows: 23 Columns: 4
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
-## chr (1): name
 ## dbl (4): .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geo...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
@@ -611,23 +610,23 @@ wl2_tot_fecundity_summary &lt;- wl2_tot_fecundity %&gt;%
   ggplot(aes(x=AvgTempDist_Recent_Wtr_Year, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
-  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.3,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.6194583, y= 0.095, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
-  #geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, 
        color=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
-ggsave(&quot;../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr.png&quot;,
+ggsave(&quot;../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr_Preds.png&quot;,
        width = 12, height = 6, units = &quot;in&quot;)
 
 WYtemp_totfruit &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=AvgTempDist_Recent_Wtr_Year, y=meanTotFruit, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=.3,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 1.3, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -649,7 +648,7 @@ ggsave(&quot;../Figures/Figure4_TmpPPT.png&quot;, width = 26, height = 9, units 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
-  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.2532683, y= 0.095, label = &quot;WL2&quot;,  
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -664,7 +663,7 @@ tot_fit_gower &lt;- wl2_tot_fitness_summary %&gt;%
   ggplot(aes(x=AvgGD_Recent_Water.Year, y=meanTotFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=0,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y=&quot;Total Fitness&quot;, x=&quot;Recent Water Year Climate Dist&quot;, 
@@ -686,7 +685,7 @@ distance</h2>
   ggplot(aes(x=PPTDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.3,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = -1120, y= 0.5714286, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -700,7 +699,7 @@ WYtemp_y1surv &lt;- y1surv_summary %&gt;%
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 1.635292, y= 0.88, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -714,7 +713,7 @@ WYppt_totfruit &lt;- wl2_tot_fecundity_summary %&gt;%
   ggplot(aes(x=AvgPPTDist_Historic_Wtr_Year, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = -545, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -726,7 +725,7 @@ WYtemp_repsurvy2 &lt;- wl2_surv_to_bud_y2_summary %&gt;%
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=.3,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.4, y= 0.8333333, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -750,7 +749,7 @@ distance</h2>
   ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.38, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -764,7 +763,7 @@ wintersurv_gower &lt;- wintersurv_summary %&gt;%
   ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.1453708, y= 0.24, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -786,7 +785,7 @@ ggsave(&quot;../Figures/FigureS6_WTRYRGowers.png&quot;, width = 26, height = 9, 
   ggplot(aes(x=TempDist_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.11881672, y= 0.65, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -799,7 +798,7 @@ est_ppt &lt;- est_summary %&gt;%
   ggplot(aes(x=PPTDist_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 107.33533, y= 0.65, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -812,7 +811,7 @@ totrep_temp &lt;- wl2_tot_fecundity_summary %&gt;%
   ggplot(aes(x=AvgTempDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = -1.6, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -824,7 +823,7 @@ totrep_ppt &lt;- wl2_tot_fecundity_summary %&gt;%
   ggplot(aes(x=AvgPPTDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 150, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -845,7 +844,7 @@ ggsave(&quot;../Figures/FigureS7_GrwSsnTmpPPT.png&quot;, width = 26, height = 18
   ggplot(aes(x=GD_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.2450035, y= 0.65, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -858,7 +857,7 @@ y1_surv_gowers &lt;- y1surv_summary %&gt;%
   ggplot(aes(x=GD_Historic_GrwSsn_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.228, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -870,7 +869,7 @@ totrep_gowers &lt;- wl2_tot_fecundity_summary %&gt;%
   ggplot(aes(x=`AvgGD_Recent_Growth Season`, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 0.235    , y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -891,7 +890,7 @@ ggsave(&quot;../Figures/FigureS8_GRWSSNGowers.png&quot;, width = 26, height = 18
   ggplot(aes(x=Geographic_Dist, y=meanEst, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=.02, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 136.2622, y=0.50, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -904,7 +903,7 @@ probfit_geo &lt;- prob_fitness_summary %&gt;%
   ggplot(aes(x=Geographic_Dist, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
-  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=.2, linewidth = 2) +
+  geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = 136.2622, y= 0.095, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
