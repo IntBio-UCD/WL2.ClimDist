@@ -128,6 +128,30 @@ wl2_total_fitness_scaled <- wl2_total_fitness %>%
               "Geographic_Dist", "height.cm"), scale)
 ```
 
+## Create a dataframe for model predictions
+```{r}
+wl2_total_fitness_scaled_2 <- wl2_total_fitness %>% 
+  rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
+         AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
+         AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
+         AvgGD_Historic_GrwSsn=`AvgGD_Historic_Growth Season`) %>% 
+  select(block:Long, AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
+         AvgTempDist_Historic_GrwSsn:Geographic_Dist, height.cm, Total_Fitness) %>% 
+  mutate(across(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
+              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
+              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
+              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
+              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
+              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
+geo_fixed <- wl2_total_fitness_scaled_2 %>% summarise(Geographic_Dist=mean(Geographic_Dist), Geographic_Dist_scaled=mean(Geographic_Dist_scaled))
+summary(wl2_total_fitness_scaled_2)
+
+pred_df_recent_wtr_yr <- tibble(AvgGD_Recent_Wtr_Year = seq(from = 0.2, to=0.65, length.out=46)) %>% 
+  mutate(AvgGD_Recent_Wtr_Year_scaled = scale(AvgGD_Recent_Wtr_Year)) %>% 
+  bind_cols(geo_fixed)
+```
+
 ## Plot group means and variances to facilitate choosing the right error distribution
 ```{r}
 wl2_total_fitness %>% 
@@ -221,6 +245,60 @@ mod_test <- glmer(Total_Fitness ~ AvgTempDist_Historic_GrwSsn + AvgPPTDist_Histo
 ```
 
 ### Add in Gowers climate distance
+No Height
+```{r}
+total_fecund_models_CD_GD <- tribble(
+  ~name,          ~f,
+  "1_pop.block",      "Total_Fitness ~  (1|pop/mf) + (1|block)", 
+  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + (1|pop) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + (1|pop) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist + (1|pop) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist + (1|pop) + (1|block)"
+)
+#run the models 
+total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
+  mutate(glmer = map(f, ~ glmer(as.formula(.), 
+                            family = poisson,
+                            data = wl2_total_fitness_scaled)))
+#investigate convergence warnings  
+mod_test <- glmer(Total_Fitness ~ AvgGD_Recent_Wtr_Year + Geographic_Dist + (1|pop/mf) + (1|block), 
+                              family = poisson,
+                              data=wl2_total_fitness_scaled)
+#convergence issues with water year models when mf included 
+
+#show results:
+total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
+  select(name, term:p.value) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist") %>%
+  drop_na(p.value) #recent water year sig
+
+#quasi-poisson correction:
+total_fecund_models_CD_GD %>% 
+  mutate(phi=map(glmer, phi_function)) %>% 
+  mutate(tidy=map(glmer, tidy)) %>% 
+  unnest(tidy) %>% 
+  unnest(phi) %>% 
+  transmute(term = term, estimate = estimate, 
+                std.error = std.error * sqrt(phi),
+                statistic = estimate/std.error,
+                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
+  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
+  drop_na(p.value) #after correction, no clim dist sig
+```
+
+Recent Water Year predictions
+```{r}
+WY_Recent_GD_mod <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled +
+                            Geographic_Dist_scaled + (1|pop) + (1|block),
+                           family="poisson", data=wl2_total_fitness_scaled_2)
+WY_Recent_GD_preds <- tibble(.pred=predict(WY_Recent_GD_mod,
+                                           newdata=pred_df_recent_wtr_yr,
+                                           re.form= NA, type="response")) %>% 
+  bind_cols(pred_df_recent_wtr_yr) %>% 
+  mutate(pop=NA)
+```
+
+Height 
 ```{r}
 total_fecund_models_CD_GD <- tribble(
   ~name,          ~f,
@@ -309,14 +387,16 @@ total_fecund_summary %>%
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanTotalFecund, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanTotalFecund-semEst,ymax=meanTotalFecund+semEst),width=.02,linewidth = 2) +
+  geom_errorbar(aes(ymin=meanTotalFecund-semEst,ymax=meanTotalFecund+semEst),width=0,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Recent Water Year Climate Dist", 
        color="Elevation (m)") +
   annotate("text", x = 0.2532683, y= 2.4, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
+  #geom_line(data=WY_Recent_GD_preds, aes(x=AvgGD_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) +
   theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/TotalFitness_GD_Recent_WtrYr.png",
+ggsave("../Figures/Indiv_Fit_Comps/TotalFitness_GD_Recent_WtrYr_PredLine.png",
        width = 12, height = 6, units = "in")
 ```
+
