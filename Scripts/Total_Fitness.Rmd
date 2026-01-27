@@ -381,7 +381,7 @@ total_fecund_summary <- wl2_total_fitness %>%
   rename(AvgGD_Recent_Water_Yr=`AvgGD_Recent_Water Year`) %>% 
   group_by(pop, elev_m, AvgGD_Recent_Water_Yr) %>% 
   summarise(meanTotalFecund=mean(Total_Fitness, na.rm=TRUE), semEst=sem(Total_Fitness, na.rm=TRUE))
-total_fecund_summary %>% arrange(meanTotalFecund) #BH had the highest total fitness 
+total_fecund_summary %>% arrange(AvgGD_Recent_Water_Yr) #BH had the highest total fitness 
 
 total_fecund_summary %>% 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanTotalFecund, group = pop, color=elev_m)) +

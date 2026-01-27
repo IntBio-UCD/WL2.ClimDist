@@ -102,6 +102,7 @@ prob_fitness_summary <- wl2_prob_rep %>%
                          if_else(pop=="TM2", "Both Years", "Year 2 Only")))
 prob_fitness_summary$RepYear <- factor(prob_fitness_summary$RepYear,
                                                levels = c('None','Year 2 Only', 'Both Years'))
+prob_fitness_summary %>% arrange(desc(meanProbFit))
 
 wl2_tot_fecundity_summary <- wl2_tot_fecundity %>% 
   filter(pop!="SQ1", pop!="WR") %>% 
