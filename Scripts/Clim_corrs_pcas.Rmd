@@ -320,6 +320,67 @@ home_sites_pca_allclim +
 ggsave("../Figures/AllClim_PC1-PC2_PlusGarden.png", width = 14.8, height = 6, units = "in")
 ```
 
+#### Water Year Only
+```{r}
+home_sites_pca_allclim_wtryr <- all_clim_avgs_locs.pc %>%  
+  filter(Season=="Water Year") %>% 
+  mutate(group=str_c(parent.pop,elev_m))  %>%
+  ggplot(aes(x=PC1, y=PC2, shape=timeframe, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  labs(x="PC1 (36.47%)", y="PC2 (25.94%)", color="Elevation (m)") +
+  geom_vline(xintercept = 0, linetype="dashed") + geom_hline(yintercept = 0, linetype="dashed") +
+  geom_path(aes(group=group),arrow = arrow(length=unit(5, "points")), linewidth = .9) +
+  theme_classic() +
+  theme(text=element_text(size=28)) +
+  coord_cartesian(clip = "off") 
+
+## add WL2 garden 2023 and 2024
+home_sites_pca_allclim_wtryr$data <- rbind(home_sites_pca_allclim_wtryr$data, 
+  data.frame(
+    parent.pop = "WL2_Garden",
+    elev_m = 2020,
+    Lat = NA,
+    timeframe = c("2023", "2023", "2024", "2024"),
+    Season = c("Growth Season", "Water Year", "Growth Season", "Water Year"),
+    PC1 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC1"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC1"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC1"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC1"] ),
+    PC2 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC2"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC2"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC2"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC2"] ),
+    PC3 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC3"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC3"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC3"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC3"] ),
+    PC4 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC4"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC4"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC4"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC4"] ),
+    PC5 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC5"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC5"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC5"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC5"] ),
+    PC6 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC6"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC6"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC6"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC6"] ),
+    PC7 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC7"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC7"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC7"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC7"] ),
+    PC8 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC8"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC8"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC8"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC8"] ),
+    PC9 =  c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC9"],  WL2GRDN_allclim_predicted_2023_wtryr[, "PC9"] , WL2GRDN_allclim_predicted_2024_grwssn[, "PC9"],  WL2GRDN_allclim_predicted_2024_wtryr[, "PC9"] ),
+    PC10 = c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC10"], WL2GRDN_allclim_predicted_2023_wtryr[, "PC10"], WL2GRDN_allclim_predicted_2024_grwssn[, "PC10"], WL2GRDN_allclim_predicted_2024_wtryr[, "PC10"]),
+    PC11 = c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC11"], WL2GRDN_allclim_predicted_2023_wtryr[, "PC11"], WL2GRDN_allclim_predicted_2024_grwssn[, "PC11"], WL2GRDN_allclim_predicted_2024_wtryr[, "PC11"]),
+    PC12 = c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC12"], WL2GRDN_allclim_predicted_2023_wtryr[, "PC12"], WL2GRDN_allclim_predicted_2024_grwssn[, "PC12"], WL2GRDN_allclim_predicted_2024_wtryr[, "PC12"]),
+    PC13 = c(WL2GRDN_allclim_predicted_2023_grwssn[, "PC13"], WL2GRDN_allclim_predicted_2023_wtryr[, "PC13"], WL2GRDN_allclim_predicted_2024_grwssn[, "PC13"], WL2GRDN_allclim_predicted_2024_wtryr[, "PC13"]),
+    group = c("new", "new2", "new3", "new4")
+  )
+)
+
+WL2_label_wtryr <- data.frame(
+  label = c("WL2 \n 2023", "WL2 \n 2024"),
+  Season   = c("Water Year", "Water Year"),
+  x     = c(-6.0, -1.5),
+  y     = c(5.6, 2.5),
+  timeframe = NA
+)
+
+home_sites_pca_allclim_wtryr + 
+  geom_point(data=filter(home_sites_pca_allclim_wtryr$data, parent.pop == "WL2_Garden", Season=="Water Year"), 
+             size=6, shape = 18, show.legend = FALSE) +
+  geom_text(data = WL2_label_wtryr,
+  mapping = aes(x = x, y = y, label = label),
+  colour = "#8959c9",
+  size=7
+) +
+  geom_path(data=filter(home_sites_pca_allclim_wtryr$data, parent.pop == "WL2"),
+            aes(group=group),arrow = arrow(length=unit(5, "points"), 
+                                           type="closed"), linewidth = 1.9) 
+ggsave("../Figures/AllClim_PC1-PC2_PlusGarden_WtrYr.png", width = 8, height = 6, units = "in")
+```
+
 ## All climate PCA (all years, water year, growing season, historic and recent) - Fig 1a, S3
 
 ```{r}
