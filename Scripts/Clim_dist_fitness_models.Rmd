@@ -11,7 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for models relating climate distance to fitness (Table 2-3)
 
-To do: give predictions a data frame from one row per combination of factors that are relevant (fixed effects; expand_grid)
+To do: Try the method with holding geo distance as the average on prob of rep 
+Could try with median geo distance 
 
 ## Libraries
 ```{r}
@@ -150,6 +151,28 @@ wl2_rep_output_scaled <- wl2_tot_fecundity %>%
 
 ## Create a dataframe for model predictions
 ```{r}
+wl2_prob_fitness_scaled_2 <- wl2_prob_rep %>% 
+  left_join(wl2_pretrans_size_all) %>% 
+  select(block:Long, AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
+         AvgTempDist_Historic_GrwSsn:Geographic_Dist, height.cm, ProbFitness) %>% 
+  mutate(across(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
+              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
+              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
+              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
+              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
+              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
+geo_fixed <- wl2_prob_fitness_scaled_2 %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgPPTDist_Recent_Wtr_Year=mean(AvgPPTDist_Recent_Wtr_Year),
+            AvgPPTDist_Recent_Wtr_Year_scaled=mean(AvgPPTDist_Recent_Wtr_Year_scaled))
+summary(wl2_prob_fitness_scaled_2)
+
+pred_df_recent_wtr_yr_temp <- tibble(AvgTempDist_Recent_Wtr_Year = seq(from = -4, to=9, length.out=46)) %>% 
+  mutate(AvgTempDist_Recent_Wtr_Year_scaled = scale(AvgTempDist_Recent_Wtr_Year)) %>% 
+  bind_cols(geo_fixed) 
+
 pred_df_cuml <- wl2_prob_fitness_scaled %>% 
   select(AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
          AvgTempDist_Historic_GrwSsn:Geographic_Dist,
@@ -748,9 +771,10 @@ WY_Recent_sub_mod <- glmer(ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled +
                              AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + 
                              (1|pop/mf) + (1|block),
                            family="binomial", data=wl2_prob_fitness_scaled)
-prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, newdata=pred_df_cuml, 
+prob_fitness_sub_preds_check <- tibble(.pred=predict(WY_Recent_sub_mod, 
+                                                     newdata=pred_df_recent_wtr_yr_temp,
                                                re.form= NA, type="response")) %>% 
-  bind_cols(pred_df_cuml) %>% 
+  bind_cols(pred_df_recent_wtr_yr_temp) %>% 
   select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist)
 all.equal(prob_fitness_sub_preds$.pred, prob_fitness_sub_preds_check$.pred)
 write_csv(prob_fitness_sub_preds_check, "../Processed.Data/ProbRep_SubPreds.csv")
