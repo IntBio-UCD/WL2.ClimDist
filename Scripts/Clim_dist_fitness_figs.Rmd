@@ -116,7 +116,11 @@ wl2_tot_fecundity_summary$RepYear <- factor(wl2_tot_fecundity_summary$RepYear,
 
 wl2_tot_fitness_summary <- wl2_tot_fitness %>% 
   group_by(pop, elev_m, AvgGD_Recent_Water.Year) %>% 
-  summarise(meanTotFit=mean(Total_Fitness, na.rm=TRUE), semTotFit=sem(Total_Fitness, na.rm=TRUE))
+  summarise(meanTotFit=mean(Total_Fitness, na.rm=TRUE), semTotFit=sem(Total_Fitness, na.rm=TRUE)) %>%
+  mutate(RepYear=if_else(meanTotFit==0, "None",
+                         if_else(pop=="TM2", "Both Years", "Year 2 Only")))
+wl2_tot_fitness_summary$RepYear <- factor(wl2_tot_fitness_summary$RepYear,
+                                               levels = c('None','Year 2 Only', 'Both Years'))
 ```
 
 ## Figure 4: Temp recent water climate distance
@@ -190,6 +194,34 @@ ggsave("../Figures/Figure4_TmpPPT.png", width = 26, height = 18, units = "in")
 
 ## Figure 5: Gower's recent water year climate distance
 ```{r}
+wintersurv_gower <- wintersurv_summary %>% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
+  annotate("text", x = 0.1453708, y= 0.24, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Winter Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
+  theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
+
+repsurv2_gower <- wl2_surv_to_bud_y2_summary %>% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  annotate("text", x = 0.17, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/RepSurv2_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
+
 probfit_gower <- prob_fitness_summary %>% 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
@@ -208,21 +240,24 @@ ggsave("../Figures/Indiv_Fit_Comps/ProbFit_ClimDist_Recent_WtrYr.png",
 tot_fit_gower <- wl2_tot_fitness_summary %>% 
   ggplot(aes(x=AvgGD_Recent_Water.Year, y=meanTotFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=0,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Recent Water Year Climate Dist", 
-       color="Elevation (m)") +
-  annotate("text", x = 0.2532683, y= 2.4, label = "WL2", 
+       color="Elevation (m)", shape="Rep Year(s)") +
+  annotate("text", x = 0.2532683, y= 2.3, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/TotalFitness_GD_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
 
-fig5_gower <- ggarrange(probfit_gower, tot_fit_gower, 
-                        labels = c("A)", "B)"), 
+fig5_gower <- ggarrange(wintersurv_gower, repsurv2_gower,
+                        probfit_gower, tot_fit_gower, 
+                        labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 9, units = "in")
+ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S5: Additonal Temp and PPT recent water yar climate distance
@@ -293,19 +328,6 @@ y1surv_gower <- y1surv_summary %>%
 ggsave("../Figures/Indiv_Fit_Comps/Y1Surv_ClimDist_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 
-wintersurv_gower <- wintersurv_summary %>% 
-  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
-  annotate("text", x = 0.1453708, y= 0.24, label = "WL2", 
-           colour = "purple", fontface="bold", size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Winter Survival", x="Recent Water Year Climate Dist", colour="Elevation (m)") +
-  theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png",
-       width = 12, height = 6, units = "in")
 
 figS6_gower <- ggarrange(y1surv_gower, wintersurv_gower,
                         labels = c("A)", "B)"), 
@@ -488,19 +510,3 @@ ggsave("../Figures/Indiv_Fit_Comps/Est_ClimDist_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 ```
 
-## Survival to Rep Y2 - Recent Water Year Clim Dist
-```{r}
-wl2_surv_to_bud_y2_summary %>% 
-  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  annotate("text", x = 0.2, y= 0.8333333, label = "WL2", 
-           colour = "purple", fontface="bold", size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
-  labs(y="Survival to Budding Y2", x="Recent Water Year Climate Dist", colour = "Elevation (m)") +
-  theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/RepSurv2_ClimDist_Recent_WtrYr.png",
-       width = 12, height = 6, units = "in")
-```
