@@ -68,7 +68,7 @@ est_summary <- wl2_establishment %>%
   group_by(pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2023, GD_Historic_Wtr_Year_2023, 
            TempDist_Recent_Wtr_Year_2023, PPTDist_Recent_Wtr_Year_2023,
            TempDist_Recent_GrwSsn_2023, PPTDist_Recent_GrwSsn_2023,
-           GD_Recent_GrwSsn_2023) %>% 
+           GD_Historic_GrwSsn_2023) %>% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE))
 
 y1surv_summary <- first_yr_surv %>% 
@@ -260,7 +260,7 @@ fig5_gower <- ggarrange(wintersurv_gower, repsurv2_gower,
 ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure S5: Additonal Temp and PPT recent water year climate distance
+## Figure S5: Additonal Temp and PPT water year climate distance
 ```{r}
 WYtemp_est <- est_summary %>% 
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
@@ -313,6 +313,20 @@ ggsave("../Figures/FigureS5_TmpPPT.png", width = 26, height = 18, units = "in")
 
 ## Figure S6: Additional Gower's recent water year climate distance 
 ```{r}
+est_gower <- est_summary %>% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  annotate("text", x = 0.3611659, y= 0.65, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y="Establishment", x="Recent Water Year Climate Dist", color="Elevation (m)") +
+  theme(text=element_text(size=30))
+ggsave("../Figures/Indiv_Fit_Comps/Est_ClimDist_Recent_WtrYr.png",
+       width = 12, height = 6, units = "in")
+
 y1surv_gower <- y1surv_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
@@ -328,7 +342,7 @@ ggsave("../Figures/Indiv_Fit_Comps/Y1Surv_ClimDist_Recent_WtrYr.png",
        width = 12, height = 6, units = "in")
 
 
-figS6_gower <- ggarrange(y1surv_gower, wintersurv_gower,
+figS6_gower <- ggarrange(est_gower, y1surv_gower,
                         labels = c("A)", "B)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
@@ -366,25 +380,27 @@ est_ppt <- est_summary %>%
 totrep_temp <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=AvgTempDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate("text", x = -1.6, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fruit Number", x="Recent Growth Season Temp Dist (°C)", colour="Elevation (m)") +
+  labs(y="Total Fruit Number", x="Recent Growth Season Temp Dist (°C)",
+       colour="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 totrep_ppt <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=AvgPPTDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate("text", x = 150, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fruit Number", x="Recent Growth Season PPT Dist (mm)", colour="Elevation (m)") +
+  labs(y="Total Fruit Number", x="Recent Growth Season PPT Dist (mm)",
+       colour="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 figS7_sub <- ggarrange(est_temp, est_ppt,
@@ -398,7 +414,7 @@ ggsave("../Figures/FigureS7_GrwSsnTmpPPT.png", width = 26, height = 18, units = 
 ## Figure S8: Gower's growth season climate distance effects
 ```{r}
 est_gowers <- est_summary %>% 
-  ggplot(aes(x=GD_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
+  ggplot(aes(x=GD_Historic_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
@@ -406,7 +422,7 @@ est_gowers <- est_summary %>%
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Recent Growth Season Climate Dist", 
+  labs(y="Establishment", x="Historic Growth Season Climate Dist", 
        color="Elevation (m)") +
   theme(text=element_text(size=30))
 
@@ -422,21 +438,34 @@ y1_surv_gowers <- y1surv_summary %>%
   labs(y="Y1 Survival", x="Historic Growth Season Climate Dist", colour="Elevation (m)") +
   theme(text=element_text(size=30))
 
+repsurv2_gower <- wl2_surv_to_bud_y2_summary %>% 
+  ggplot(aes(x=GD_Recent_GrwSsn_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  annotate("text", x = 0.26, y= 0.8333333, label = "WL2", 
+           colour = "purple", fontface="bold", size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y="Survival to Budding Y2", x="Recent Growth Season Climate Dist", colour = "Elevation (m)") +
+  theme(text=element_text(size=30))
+
 totrep_gowers <- wl2_tot_fecundity_summary %>% 
   ggplot(aes(x=`AvgGD_Recent_Growth Season`, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate("text", x = 0.235	, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Total Fruit Number", x="Recent Growth Season Climate Dist", colour="Elevation (m)") +
+  labs(y="Total Fruit Number", x="Recent Growth Season Climate Dist",
+       colour="Elevation (m)", shape="Rep Year(s)") +
   theme(text=element_text(size=30))
 
 figS8_gower <- ggarrange(est_gowers, y1_surv_gowers, 
-                        totrep_gowers,
-                        labels = c("A)", "B)", "C)"), 
+                        repsurv2_gower, totrep_gowers,
+                        labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
 ggsave("../Figures/FigureS8_GRWSSNGowers.png", width = 26, height = 18, units = "in")
@@ -476,23 +505,5 @@ figS9_geo <- ggarrange(est_geo, probfit_geo,
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=1) 
 ggsave("../Figures/FigureS9_Geo.png", width = 26, height = 9, units = "in")
-```
-
-## Establishment - Recent Water Year Temp and Clim Dist 
-```{r}
-
-est_summary %>% 
-  ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
-  scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
-  annotate("text", x = 0.3611659, y= 0.65, label = "WL2", 
-           colour = "purple", fontface="bold", size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y="Establishment", x="Recent Water Year Climate Dist", color="Elevation (m)") +
-  theme(text=element_text(size=30))
-ggsave("../Figures/Indiv_Fit_Comps/Est_ClimDist_Recent_WtrYr.png",
-       width = 12, height = 6, units = "in")
 ```
 
