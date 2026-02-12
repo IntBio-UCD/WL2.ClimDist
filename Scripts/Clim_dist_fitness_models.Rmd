@@ -64,120 +64,213 @@ head(wl2_pretrans_size_all)
 ```{r}
 wl2_establishment_scaled <- wl2_establishment %>% 
   left_join(wl2_pretrans_size_all) %>% 
-  mutate_at(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
+  mutate(across(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
               "GD_Recent_GrwSsn_2023", "GD_Historic_GrwSsn_2023",
               "TempDist_Historic_GrwSsn_2023", "TempDist_Historic_Wtr_Year_2023",
               "TempDist_Recent_GrwSsn_2023", "TempDist_Recent_Wtr_Year_2023",
               "PPTDist_Historic_GrwSsn_2023", "PPTDist_Historic_Wtr_Year_2023",
               "PPTDist_Recent_GrwSsn_2023", "PPTDist_Recent_Wtr_Year_2023",
-              "Geographic_Dist", "height.cm"), scale) 
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled")) 
 
 wl2_y1_surv_scaled <- first_yr_surv %>% 
   left_join(wl2_pretrans_size_all) %>% 
-  mutate_at(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
+  mutate(across(c("GD_Recent_Wtr_Year_2023", "GD_Historic_Wtr_Year_2023",
               "GD_Recent_GrwSsn_2023", "GD_Historic_GrwSsn_2023",
               "TempDist_Historic_GrwSsn_2023", "TempDist_Historic_Wtr_Year_2023",
               "TempDist_Recent_GrwSsn_2023", "TempDist_Recent_Wtr_Year_2023",
               "PPTDist_Historic_GrwSsn_2023", "PPTDist_Historic_Wtr_Year_2023",
               "PPTDist_Recent_GrwSsn_2023", "PPTDist_Recent_Wtr_Year_2023",
-              "Geographic_Dist", "height.cm"), list(scaled=scale))
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled")) 
 
 wl2_winter_surv_scaled <- winter_surv %>% 
   left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="WR") %>% #remove pops with too low sample size 
-  mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
+  mutate(across(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "TempDist_Historic_Wtr_Year_2024","TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_Wtr_Year_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist", "height.cm"), scale)
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
 
 wl2_surv_to_rep_y2_scaled <- wl2_surv_to_bud_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
   filter(pop != "LV1", pop != "SQ1", pop != "WR") %>% #remove pops with too low sample size 
-  mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
+  mutate(across(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "GD_Recent_GrwSsn_2024", "GD_Historic_GrwSsn_2024",
               "TempDist_Historic_GrwSsn_2024", "TempDist_Historic_Wtr_Year_2024",
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist", "height.cm"), scale)
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
 
 wl2_fruits_y2_scaled <- wl2_fruits_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% #remove pops with too low sample size 
   mutate(logFruits=log(y2_fruits)) %>%  #transform fruit number with a log transformation 
-  mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
+  mutate(across(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "GD_Recent_GrwSsn_2024", "GD_Historic_GrwSsn_2024",
               "TempDist_Historic_GrwSsn_2024", "TempDist_Historic_Wtr_Year_2024",
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist", "height.cm"), scale)
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
   
 wl2_FrFlN_y2_scaled <- wl2_fruits_y2 %>% 
   left_join(wl2_pretrans_size_all) %>% 
   filter(pop!="LV1", pop!="SQ1", pop!="WR") %>% #remove pops with too low sample size 
   drop_na(FrFlN_y2) %>% 
   mutate(logFrFLs=log(FrFlN_y2)) %>% #transform fruit number with a log transformation 
-  mutate_at(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
+  mutate(across(c("GD_Recent_Wtr_Year_2024", "GD_Historic_Wtr_Year_2024",
               "GD_Recent_GrwSsn_2024", "GD_Historic_GrwSsn_2024",
               "TempDist_Historic_GrwSsn_2024", "TempDist_Historic_Wtr_Year_2024",
               "TempDist_Recent_GrwSsn_2024", "TempDist_Recent_Wtr_Year_2024",
               "PPTDist_Historic_GrwSsn_2024", "PPTDist_Historic_Wtr_Year_2024",
               "PPTDist_Recent_GrwSsn_2024", "PPTDist_Recent_Wtr_Year_2024",
-              "Geographic_Dist", "height.cm"), scale)
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
 
 wl2_prob_fitness_scaled <- wl2_prob_rep %>% 
   left_join(wl2_pretrans_size_all) %>% 
-  mutate_at(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
-              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
-              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
-              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
-              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
-              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist", "height.cm"), list(scaled=scale))
-
-wl2_rep_output_scaled <- wl2_tot_fecundity %>% 
-  left_join(wl2_pretrans_size_all) %>% 
-  mutate(logTotalFecundity=log(Total_Fecundity)) %>% 
-  filter(pop!="SQ1", pop!="WR") %>% 
-  mutate_at(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
-              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
-              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
-              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
-              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
-              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist", "height.cm"), scale)
-```
-
-## Create a dataframe for model predictions
-```{r}
-wl2_prob_fitness_scaled_2 <- wl2_prob_rep %>% 
-  left_join(wl2_pretrans_size_all) %>% 
-  select(block:Long, AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
-         AvgTempDist_Historic_GrwSsn:Geographic_Dist, height.cm, ProbFitness) %>% 
   mutate(across(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
               "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
               "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
               "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
-geo_fixed <- wl2_prob_fitness_scaled_2 %>% 
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled")) 
+
+wl2_rep_output_scaled <- wl2_tot_fecundity %>% 
+  left_join(wl2_pretrans_size_all) %>% 
+  mutate(logTotalFecundity=log(Total_Fecundity)) %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
+  mutate(across(c("AvgGD_Historic_GrwSsn", "AvgGD_Historic_Wtr_Year",
+              "AvgGD_Recent_GrwSsn", "AvgGD_Recent_Wtr_Year",
+              "AvgTempDist_Historic_GrwSsn", "AvgTempDist_Historic_Wtr_Year",
+              "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
+              "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
+              "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled")) 
+```
+
+## Create dataframes for model predictions
+
+### Geo and Water Year PPT dist fixed 
+```{r}
+geo_ppt_fixed_2023 <- wl2_establishment_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_Wtr_Year_2023=mean(PPTDist_Recent_Wtr_Year_2023),
+            PPTDist_Recent_Wtr_Year_2023_scaled=mean(PPTDist_Recent_Wtr_Year_2023_scaled))
+
+#summary(wl2_establishment_scaled) #get range for tempdist 
+
+pred_df_recent_wtr_yr_temp_2023 <- tibble(TempDist_Recent_Wtr_Year_2023 = seq(from = -3, to=10, length.out=46)) %>% 
+  mutate(TempDist_Recent_Wtr_Year_2023_scaled = scale(TempDist_Recent_Wtr_Year_2023)) %>% 
+  bind_cols(geo_ppt_fixed_2023) 
+
+geo_ppt_fixed_2024 <- wl2_surv_to_rep_y2_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_Wtr_Year_2024=mean(PPTDist_Recent_Wtr_Year_2024),
+            PPTDist_Recent_Wtr_Year_2024_scaled=mean(PPTDist_Recent_Wtr_Year_2024_scaled))
+
+#summary(wl2_surv_to_rep_y2_scaled) #get range for tempdist 
+
+pred_df_recent_wtr_yr_temp_2024 <- tibble(TempDist_Recent_Wtr_Year_2024 = seq(from = -2, to=8, length.out=46)) %>% 
+  mutate(TempDist_Recent_Wtr_Year_2024_scaled = scale(TempDist_Recent_Wtr_Year_2024)) %>% 
+  bind_cols(geo_ppt_fixed_2024) 
+
+geo_avgppt_fixed <- wl2_prob_fitness_scaled %>% 
   summarise(Geographic_Dist=mean(Geographic_Dist),
             Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
             AvgPPTDist_Recent_Wtr_Year=mean(AvgPPTDist_Recent_Wtr_Year),
             AvgPPTDist_Recent_Wtr_Year_scaled=mean(AvgPPTDist_Recent_Wtr_Year_scaled))
-summary(wl2_prob_fitness_scaled_2)
 
-pred_df_recent_wtr_yr_temp <- tibble(AvgTempDist_Recent_Wtr_Year = seq(from = -4, to=9, length.out=46)) %>% 
+#summary(wl2_prob_fitness_scaled) #get range for avgtempdist 
+
+pred_df_recent_wtr_yr_avgtemp <- tibble(AvgTempDist_Recent_Wtr_Year = seq(from = -4, to=9, length.out=46)) %>% 
   mutate(AvgTempDist_Recent_Wtr_Year_scaled = scale(AvgTempDist_Recent_Wtr_Year)) %>% 
-  bind_cols(geo_fixed) 
+  bind_cols(geo_avgppt_fixed) 
+```
 
-pred_df_cuml <- wl2_prob_fitness_scaled %>% 
-  select(AvgGD_Historic_GrwSsn:AvgGD_Recent_Wtr_Year, 
-         AvgTempDist_Historic_GrwSsn:Geographic_Dist,
-         AvgGD_Historic_GrwSsn_scaled:Geographic_Dist_scaled) %>% 
-  distinct()
+### Geo and Water Year Temp dist fixed 
+```{r}
+geo_temp_fixed_2023 <- wl2_establishment_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            TempDist_Recent_Wtr_Year_2023=mean(TempDist_Recent_Wtr_Year_2023),
+            TempDist_Recent_Wtr_Year_2023_scaled=mean(TempDist_Recent_Wtr_Year_2023_scaled))
+
+summary(wl2_establishment_scaled) #get range for pptdist 
+
+pred_df_recent_wtr_yr_ppt_2023 <- tibble(PPTDist_Recent_Wtr_Year_2023 = seq(from = -1903, to=-671, length.out=46)) %>% 
+  mutate(PPTDist_Recent_Wtr_Year_2023_scaled = scale(PPTDist_Recent_Wtr_Year_2023)) %>% 
+  bind_cols(geo_temp_fixed_2023) 
+```
+
+### Geo fixed for Clim Dist
+```{r}
+geo_fixed <- wl2_establishment_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled))
+
+pred_df_gowers <- tibble(GD_Recent_Wtr_Year_2023 = seq(from = 0.35, to=0.70, length.out=46),
+                         GD_Historic_GrwSsn_2023 = seq(from = 0.22, to=0.54, length.out=46),
+                         GD_Recent_Wtr_Year_2024 = seq(from = 0.14, to=0.58, length.out=46),
+                         AvgGD_Recent_Wtr_Year = seq(from = 0.25, to=0.64, length.out=46),
+                         AvgGD_Recent_GrwSsn = seq(from = 0.20, to=0.47, length.out=46)
+                         ) %>% 
+  mutate(across(c("GD_Recent_Wtr_Year_2023", "GD_Historic_GrwSsn_2023",
+                  "GD_Recent_Wtr_Year_2024", "AvgGD_Recent_Wtr_Year", "AvgGD_Recent_GrwSsn"),
+                scale, .names = "{.col}_scaled")) %>% 
+  bind_cols(geo_fixed)
+```
+
+### Geo and GrwSsn PPT dist fixed 
+```{r}
+geo_ppt_fixed_2023_grwssn <- wl2_establishment_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_GrwSsn_2023=mean(PPTDist_Recent_GrwSsn_2023),
+            PPTDist_Recent_GrwSsn_2023_scaled=mean(PPTDist_Recent_GrwSsn_2023_scaled))
+
+#summary(wl2_establishment_scaled) #get range for tempdist 
+
+pred_df_recent_grwssn_temp_2023 <- tibble(TempDist_Recent_GrwSsn_2023 = seq(from = -3, to=4, length.out=46)) %>% 
+  mutate(TempDist_Recent_GrwSsn_2023_scaled = scale(TempDist_Recent_GrwSsn_2023)) %>% 
+  bind_cols(geo_ppt_fixed_2023_grwssn) 
+
+geo_avgppt_fixed_grwssn <- wl2_prob_fitness_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgPPTDist_Recent_GrwSsn=mean(AvgPPTDist_Recent_GrwSsn),
+            AvgPPTDist_Recent_GrwSsn_scaled=mean(AvgPPTDist_Recent_GrwSsn_scaled))
+
+pred_df_recent_grwssn_avgtemp <- tibble(AvgTempDist_Recent_GrwSsn = seq(from = -5, to=3, length.out=46)) %>% 
+  mutate(AvgTempDist_Recent_GrwSsn_scaled = scale(AvgTempDist_Recent_GrwSsn)) %>% 
+  bind_cols(geo_avgppt_fixed_grwssn) 
+```
+
+### Geo and GrwSsn Temp dist fixed
+```{r}
+geo_avgtemp_fixed_grwssn <- wl2_prob_fitness_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgTempDist_Recent_GrwSsn=mean(AvgTempDist_Recent_GrwSsn),
+            AvgTempDist_Recent_GrwSsn_scaled=mean(AvgTempDist_Recent_GrwSsn_scaled))
+
+pred_df_recent_grwssn_avgppt <- tibble(AvgPPTDist_Recent_GrwSsn = seq(from = -73, to=936, length.out=46)) %>% 
+  mutate(AvgPPTDist_Recent_GrwSsn_scaled = scale(AvgPPTDist_Recent_GrwSsn)) %>% 
+  bind_cols(geo_avgtemp_fixed_grwssn) 
+```
+
+### Gower's Clim Dist fixed 
+Predictions based on Geo Distance 
+```{r}
+climdist_fixed <- wl2_establishment_scaled %>% 
+  summarise(GD_Recent_Wtr_Year_2023=mean(GD_Recent_Wtr_Year_2023),
+            GD_Recent_Wtr_Year_2023_scaled=mean(GD_Recent_Wtr_Year_2023_scaled))
+
+pred_df_gowers <- tibble(Geographic_Dist = seq(from = 0.35, to=0.70, length.out=46)) %>%
+  mutate(Geographic_Dist_scaled = scale(Geographic_Dist)) %>% 
+  bind_cols(climdist_fixed)
 ```
 
 ## Set Model Engine
