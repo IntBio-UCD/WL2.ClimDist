@@ -263,13 +263,17 @@ pred_df_recent_grwssn_avgppt <- tibble(AvgPPTDist_Recent_GrwSsn = seq(from = -73
 ### Gower's Clim Dist fixed 
 Predictions based on Geo Distance 
 ```{r}
-climdist_fixed <- wl2_establishment_scaled %>% 
+climdist_fixed_2023 <- wl2_establishment_scaled %>% 
   summarise(GD_Recent_Wtr_Year_2023=mean(GD_Recent_Wtr_Year_2023),
             GD_Recent_Wtr_Year_2023_scaled=mean(GD_Recent_Wtr_Year_2023_scaled))
+climdist_fixed_2024 <- wl2_surv_to_rep_y2_scaled %>% 
+  summarise(GD_Recent_Wtr_Year_2024=mean(GD_Recent_Wtr_Year_2024),
+            GD_Recent_Wtr_Year_2024_scaled=mean(GD_Recent_Wtr_Year_2024_scaled))
 
 pred_df_geo <- tibble(Geographic_Dist = seq(from = 136, to=317601, length.out=46)) %>%
   mutate(Geographic_Dist_scaled = scale(Geographic_Dist)) %>% 
-  bind_cols(climdist_fixed)
+  bind_cols(climdist_fixed_2023) %>% 
+  bind_cols(climdist_fixed_2024)
 ```
 
 ## Set Model Engine
@@ -917,6 +921,17 @@ repsurv2_GD_preds2$GD_Recent_GrwSsn_2024_scaled <- as.vector(repsurv2_GD_preds2$
 repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled <- as.vector(repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled)
 repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled <- as.vector(repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled)
 write_csv(repsurv2_GD_preds2, "../Processed.Data/RepSurv2_GDPreds_GrwSsnRecent.csv")
+
+repsurv2_GD_preds3 <- surv_GD_fits_wl2 %>%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
+  filter(name=="WY_Recent") %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_geo)) %>% 
+  unnest(predictions) %>% 
+  bind_cols(pred_df_geo) %>% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_GD_preds3$Geographic_Dist_scaled <- as.vector(repsurv2_GD_preds3$Geographic_Dist_scaled)
+write_csv(repsurv2_GD_preds3, "../Processed.Data/RepSurv2_GeoDist_Preds.csv")
 ```
 
 ## Fruit N Y2 Models
@@ -1107,8 +1122,8 @@ prob_fitness_SUB_fits_wl2 <- tibble(wflow=list(
   GS_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled+ Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
- # GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
-  #    add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Recent_height = {prob_fitness_SUB_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
@@ -1126,7 +1141,7 @@ name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
   mutate(fit = map(wflow, fit, data = wl2_prob_fitness_scaled))
-#convergence issues with GS_historical model 
+#convergence issues with GS_historical model with mf included
 
 ##show results:
 prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
