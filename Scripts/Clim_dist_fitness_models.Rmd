@@ -11,9 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Code for models relating climate distance to fitness (Table 2-3)
 
-To do: Try the method with holding geo distance as the average on prob of rep 
-Could try with median geo distance 
-
 ## Libraries
 ```{r}
 library(tidyverse)

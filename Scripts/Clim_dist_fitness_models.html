@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2025-12-22" />
+<meta name="date" content="2026-02-12" />
 
 <title>Clim_dist_fitness_models</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_models</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2025-12-22</h4>
+<h4 class="date">2026-02-12</h4>
 
 </div>
 
@@ -413,7 +413,7 @@ library(tidymodels) #model workflows </code></pre>
 ## ✖ recipes::step()   masks lmerTest::step(), stats::step()
 ## ✖ Matrix::unpack()  masks tidyr::unpack()
 ## ✖ recipes::update() masks Matrix::update(), stats::update()
-## • Dig deeper into tidy modeling with R at https://www.tmwr.org</code></pre>
+## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
 <pre class="r"><code>library(multilevelmod)
 library(performance) #for calculating rsq for glmmerMod objects</code></pre>
 <pre><code>## 
@@ -540,90 +540,211 @@ head(wl2_pretrans_size_all)</code></pre>
 size</h2>
 <pre class="r"><code>wl2_establishment_scaled &lt;- wl2_establishment %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2023&quot;, &quot;GD_Historic_Wtr_Year_2023&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2023&quot;, &quot;GD_Historic_Wtr_Year_2023&quot;,
               &quot;GD_Recent_GrwSsn_2023&quot;, &quot;GD_Historic_GrwSsn_2023&quot;,
               &quot;TempDist_Historic_GrwSsn_2023&quot;, &quot;TempDist_Historic_Wtr_Year_2023&quot;,
               &quot;TempDist_Recent_GrwSsn_2023&quot;, &quot;TempDist_Recent_Wtr_Year_2023&quot;,
               &quot;PPTDist_Historic_GrwSsn_2023&quot;, &quot;PPTDist_Historic_Wtr_Year_2023&quot;,
               &quot;PPTDist_Recent_GrwSsn_2023&quot;, &quot;PPTDist_Recent_Wtr_Year_2023&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale) </code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;)) </code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
 <pre class="r"><code>wl2_y1_surv_scaled &lt;- first_yr_surv %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2023&quot;, &quot;GD_Historic_Wtr_Year_2023&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2023&quot;, &quot;GD_Historic_Wtr_Year_2023&quot;,
               &quot;GD_Recent_GrwSsn_2023&quot;, &quot;GD_Historic_GrwSsn_2023&quot;,
               &quot;TempDist_Historic_GrwSsn_2023&quot;, &quot;TempDist_Historic_Wtr_Year_2023&quot;,
               &quot;TempDist_Recent_GrwSsn_2023&quot;, &quot;TempDist_Recent_Wtr_Year_2023&quot;,
               &quot;PPTDist_Historic_GrwSsn_2023&quot;, &quot;PPTDist_Historic_Wtr_Year_2023&quot;,
               &quot;PPTDist_Recent_GrwSsn_2023&quot;, &quot;PPTDist_Recent_Wtr_Year_2023&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), list(scaled=scale))</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;)) </code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
 <pre class="r"><code>wl2_winter_surv_scaled &lt;- winter_surv %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
   filter(pop!=&quot;WR&quot;) %&gt;% #remove pops with too low sample size 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
               &quot;TempDist_Historic_Wtr_Year_2024&quot;,&quot;TempDist_Recent_Wtr_Year_2024&quot;,
               &quot;PPTDist_Historic_Wtr_Year_2024&quot;, &quot;PPTDist_Recent_Wtr_Year_2024&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale)</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;))</code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
 <pre class="r"><code>wl2_surv_to_rep_y2_scaled &lt;- wl2_surv_to_bud_y2 %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
   filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% #remove pops with too low sample size 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
               &quot;GD_Recent_GrwSsn_2024&quot;, &quot;GD_Historic_GrwSsn_2024&quot;,
               &quot;TempDist_Historic_GrwSsn_2024&quot;, &quot;TempDist_Historic_Wtr_Year_2024&quot;,
               &quot;TempDist_Recent_GrwSsn_2024&quot;, &quot;TempDist_Recent_Wtr_Year_2024&quot;,
               &quot;PPTDist_Historic_GrwSsn_2024&quot;, &quot;PPTDist_Historic_Wtr_Year_2024&quot;,
               &quot;PPTDist_Recent_GrwSsn_2024&quot;, &quot;PPTDist_Recent_Wtr_Year_2024&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale)</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;))</code></pre>
 <pre><code>## Joining with `by = join_by(pop, mf, rep, Genotype)`</code></pre>
 <pre class="r"><code>wl2_fruits_y2_scaled &lt;- wl2_fruits_y2 %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
   filter(pop!=&quot;LV1&quot;, pop!=&quot;SQ1&quot;, pop!=&quot;WR&quot;) %&gt;% #remove pops with too low sample size 
   mutate(logFruits=log(y2_fruits)) %&gt;%  #transform fruit number with a log transformation 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
               &quot;GD_Recent_GrwSsn_2024&quot;, &quot;GD_Historic_GrwSsn_2024&quot;,
               &quot;TempDist_Historic_GrwSsn_2024&quot;, &quot;TempDist_Historic_Wtr_Year_2024&quot;,
               &quot;TempDist_Recent_GrwSsn_2024&quot;, &quot;TempDist_Recent_Wtr_Year_2024&quot;,
               &quot;PPTDist_Historic_GrwSsn_2024&quot;, &quot;PPTDist_Historic_Wtr_Year_2024&quot;,
               &quot;PPTDist_Recent_GrwSsn_2024&quot;, &quot;PPTDist_Recent_Wtr_Year_2024&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale)</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;))</code></pre>
 <pre><code>## Joining with `by = join_by(pop, mf, rep, Genotype)`</code></pre>
 <pre class="r"><code>wl2_FrFlN_y2_scaled &lt;- wl2_fruits_y2 %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
   filter(pop!=&quot;LV1&quot;, pop!=&quot;SQ1&quot;, pop!=&quot;WR&quot;) %&gt;% #remove pops with too low sample size 
   drop_na(FrFlN_y2) %&gt;% 
   mutate(logFrFLs=log(FrFlN_y2)) %&gt;% #transform fruit number with a log transformation 
-  mutate_at(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Historic_Wtr_Year_2024&quot;,
               &quot;GD_Recent_GrwSsn_2024&quot;, &quot;GD_Historic_GrwSsn_2024&quot;,
               &quot;TempDist_Historic_GrwSsn_2024&quot;, &quot;TempDist_Historic_Wtr_Year_2024&quot;,
               &quot;TempDist_Recent_GrwSsn_2024&quot;, &quot;TempDist_Recent_Wtr_Year_2024&quot;,
               &quot;PPTDist_Historic_GrwSsn_2024&quot;, &quot;PPTDist_Historic_Wtr_Year_2024&quot;,
               &quot;PPTDist_Recent_GrwSsn_2024&quot;, &quot;PPTDist_Recent_Wtr_Year_2024&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale)</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;))</code></pre>
 <pre><code>## Joining with `by = join_by(pop, mf, rep, Genotype)`</code></pre>
 <pre class="r"><code>wl2_prob_fitness_scaled &lt;- wl2_prob_rep %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
-  mutate_at(c(&quot;AvgGD_Historic_GrwSsn&quot;, &quot;AvgGD_Historic_Wtr_Year&quot;,
+  mutate(across(c(&quot;AvgGD_Historic_GrwSsn&quot;, &quot;AvgGD_Historic_Wtr_Year&quot;,
               &quot;AvgGD_Recent_GrwSsn&quot;, &quot;AvgGD_Recent_Wtr_Year&quot;,
               &quot;AvgTempDist_Historic_GrwSsn&quot;, &quot;AvgTempDist_Historic_Wtr_Year&quot;,
               &quot;AvgTempDist_Recent_GrwSsn&quot;, &quot;AvgTempDist_Recent_Wtr_Year&quot;,
               &quot;AvgPPTDist_Historic_GrwSsn&quot;, &quot;AvgPPTDist_Historic_Wtr_Year&quot;,
               &quot;AvgPPTDist_Recent_GrwSsn&quot;, &quot;AvgPPTDist_Recent_Wtr_Year&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), list(scaled=scale))</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;)) </code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
 <pre class="r"><code>wl2_rep_output_scaled &lt;- wl2_tot_fecundity %&gt;% 
   left_join(wl2_pretrans_size_all) %&gt;% 
   mutate(logTotalFecundity=log(Total_Fecundity)) %&gt;% 
   filter(pop!=&quot;SQ1&quot;, pop!=&quot;WR&quot;) %&gt;% 
-  mutate_at(c(&quot;AvgGD_Historic_GrwSsn&quot;, &quot;AvgGD_Historic_Wtr_Year&quot;,
+  mutate(across(c(&quot;AvgGD_Historic_GrwSsn&quot;, &quot;AvgGD_Historic_Wtr_Year&quot;,
               &quot;AvgGD_Recent_GrwSsn&quot;, &quot;AvgGD_Recent_Wtr_Year&quot;,
               &quot;AvgTempDist_Historic_GrwSsn&quot;, &quot;AvgTempDist_Historic_Wtr_Year&quot;,
               &quot;AvgTempDist_Recent_GrwSsn&quot;, &quot;AvgTempDist_Recent_Wtr_Year&quot;,
               &quot;AvgPPTDist_Historic_GrwSsn&quot;, &quot;AvgPPTDist_Historic_Wtr_Year&quot;,
               &quot;AvgPPTDist_Recent_GrwSsn&quot;, &quot;AvgPPTDist_Recent_Wtr_Year&quot;,
-              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale)</code></pre>
+              &quot;Geographic_Dist&quot;, &quot;height.cm&quot;), scale, .names = &quot;{.col}_scaled&quot;)) </code></pre>
 <pre><code>## Joining with `by = join_by(Genotype, pop, mf, rep)`</code></pre>
+</div>
+<div id="create-dataframes-for-model-predictions" class="section level2">
+<h2>Create dataframes for model predictions</h2>
+<div id="geo-and-water-year-ppt-dist-fixed" class="section level3">
+<h3>Geo and Water Year PPT dist fixed</h3>
+<pre class="r"><code>geo_ppt_fixed_2023 &lt;- wl2_establishment_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_Wtr_Year_2023=mean(PPTDist_Recent_Wtr_Year_2023),
+            PPTDist_Recent_Wtr_Year_2023_scaled=mean(PPTDist_Recent_Wtr_Year_2023_scaled))
+
+#summary(wl2_establishment_scaled) #get range for tempdist 
+
+pred_df_recent_wtr_yr_temp_2023 &lt;- tibble(TempDist_Recent_Wtr_Year_2023 = seq(from = -3, to=10, length.out=46)) %&gt;% 
+  mutate(TempDist_Recent_Wtr_Year_2023_scaled = scale(TempDist_Recent_Wtr_Year_2023)) %&gt;% 
+  bind_cols(geo_ppt_fixed_2023) 
+
+geo_ppt_fixed_2024 &lt;- wl2_surv_to_rep_y2_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_Wtr_Year_2024=mean(PPTDist_Recent_Wtr_Year_2024),
+            PPTDist_Recent_Wtr_Year_2024_scaled=mean(PPTDist_Recent_Wtr_Year_2024_scaled))
+
+#summary(wl2_surv_to_rep_y2_scaled) #get range for tempdist 
+
+pred_df_recent_wtr_yr_temp_2024 &lt;- tibble(TempDist_Recent_Wtr_Year_2024 = seq(from = -2, to=8, length.out=46)) %&gt;% 
+  mutate(TempDist_Recent_Wtr_Year_2024_scaled = scale(TempDist_Recent_Wtr_Year_2024)) %&gt;% 
+  bind_cols(geo_ppt_fixed_2024) 
+
+geo_avgppt_fixed &lt;- wl2_prob_fitness_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgPPTDist_Recent_Wtr_Year=mean(AvgPPTDist_Recent_Wtr_Year),
+            AvgPPTDist_Recent_Wtr_Year_scaled=mean(AvgPPTDist_Recent_Wtr_Year_scaled))
+
+#summary(wl2_prob_fitness_scaled) #get range for avgtempdist 
+
+pred_df_recent_wtr_yr_avgtemp &lt;- tibble(AvgTempDist_Recent_Wtr_Year = seq(from = -4, to=9, length.out=46)) %&gt;% 
+  mutate(AvgTempDist_Recent_Wtr_Year_scaled = scale(AvgTempDist_Recent_Wtr_Year)) %&gt;% 
+  bind_cols(geo_avgppt_fixed) </code></pre>
+</div>
+<div id="geo-and-water-year-temp-dist-fixed" class="section level3">
+<h3>Geo and Water Year Temp dist fixed</h3>
+<pre class="r"><code>geo_temp_fixed_2023 &lt;- wl2_establishment_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            TempDist_Recent_Wtr_Year_2023=mean(TempDist_Recent_Wtr_Year_2023),
+            TempDist_Recent_Wtr_Year_2023_scaled=mean(TempDist_Recent_Wtr_Year_2023_scaled))
+
+#summary(wl2_establishment_scaled) #get range for pptdist 
+
+pred_df_recent_wtr_yr_ppt_2023 &lt;- tibble(PPTDist_Recent_Wtr_Year_2023 = seq(from = -1903, to=-671, length.out=46)) %&gt;% 
+  mutate(PPTDist_Recent_Wtr_Year_2023_scaled = scale(PPTDist_Recent_Wtr_Year_2023)) %&gt;% 
+  bind_cols(geo_temp_fixed_2023) </code></pre>
+</div>
+<div id="geo-fixed-for-clim-dist" class="section level3">
+<h3>Geo fixed for Clim Dist</h3>
+<pre class="r"><code>geo_fixed &lt;- wl2_establishment_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled))
+
+pred_df_gowers &lt;- tibble(GD_Recent_Wtr_Year_2023 = seq(from = 0.35, to=0.70, length.out=46),
+                         GD_Historic_GrwSsn_2023 = seq(from = 0.22, to=0.54, length.out=46),
+                         GD_Recent_Wtr_Year_2024 = seq(from = 0.14, to=0.58, length.out=46),
+                         GD_Recent_GrwSsn_2024 = seq(from = 0.15, to=0.50, length.out=46),
+                         AvgGD_Recent_Wtr_Year = seq(from = 0.25, to=0.64, length.out=46),
+                         AvgGD_Recent_GrwSsn = seq(from = 0.20, to=0.47, length.out=46)
+                         ) %&gt;% 
+  mutate(across(c(&quot;GD_Recent_Wtr_Year_2023&quot;, &quot;GD_Historic_GrwSsn_2023&quot;,
+                  &quot;GD_Recent_Wtr_Year_2024&quot;, &quot;GD_Recent_GrwSsn_2024&quot;,
+                  &quot;AvgGD_Recent_Wtr_Year&quot;, &quot;AvgGD_Recent_GrwSsn&quot;),
+                scale, .names = &quot;{.col}_scaled&quot;)) %&gt;% 
+  bind_cols(geo_fixed)</code></pre>
+</div>
+<div id="geo-and-grwssn-ppt-dist-fixed" class="section level3">
+<h3>Geo and GrwSsn PPT dist fixed</h3>
+<pre class="r"><code>geo_ppt_fixed_2023_grwssn &lt;- wl2_establishment_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            PPTDist_Recent_GrwSsn_2023=mean(PPTDist_Recent_GrwSsn_2023),
+            PPTDist_Recent_GrwSsn_2023_scaled=mean(PPTDist_Recent_GrwSsn_2023_scaled))
+
+#summary(wl2_establishment_scaled) #get range for tempdist 
+
+pred_df_recent_grwssn_temp_2023 &lt;- tibble(TempDist_Recent_GrwSsn_2023 = seq(from = -3, to=4, length.out=46)) %&gt;% 
+  mutate(TempDist_Recent_GrwSsn_2023_scaled = scale(TempDist_Recent_GrwSsn_2023)) %&gt;% 
+  bind_cols(geo_ppt_fixed_2023_grwssn) 
+
+geo_avgppt_fixed_grwssn &lt;- wl2_prob_fitness_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgPPTDist_Recent_GrwSsn=mean(AvgPPTDist_Recent_GrwSsn),
+            AvgPPTDist_Recent_GrwSsn_scaled=mean(AvgPPTDist_Recent_GrwSsn_scaled))
+
+pred_df_recent_grwssn_avgtemp &lt;- tibble(AvgTempDist_Recent_GrwSsn = seq(from = -5, to=3, length.out=46)) %&gt;% 
+  mutate(AvgTempDist_Recent_GrwSsn_scaled = scale(AvgTempDist_Recent_GrwSsn)) %&gt;% 
+  bind_cols(geo_avgppt_fixed_grwssn) </code></pre>
+</div>
+<div id="geo-and-grwssn-temp-dist-fixed" class="section level3">
+<h3>Geo and GrwSsn Temp dist fixed</h3>
+<pre class="r"><code>geo_avgtemp_fixed_grwssn &lt;- wl2_prob_fitness_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgTempDist_Recent_GrwSsn=mean(AvgTempDist_Recent_GrwSsn),
+            AvgTempDist_Recent_GrwSsn_scaled=mean(AvgTempDist_Recent_GrwSsn_scaled))
+
+pred_df_recent_grwssn_avgppt &lt;- tibble(AvgPPTDist_Recent_GrwSsn = seq(from = -73, to=936, length.out=46)) %&gt;% 
+  mutate(AvgPPTDist_Recent_GrwSsn_scaled = scale(AvgPPTDist_Recent_GrwSsn)) %&gt;% 
+  bind_cols(geo_avgtemp_fixed_grwssn) </code></pre>
+</div>
+<div id="gowers-clim-dist-fixed" class="section level3">
+<h3>Gower’s Clim Dist fixed</h3>
+<p>Predictions based on Geo Distance</p>
+<pre class="r"><code>climdist_fixed &lt;- wl2_establishment_scaled %&gt;% 
+  summarise(GD_Recent_Wtr_Year_2023=mean(GD_Recent_Wtr_Year_2023),
+            GD_Recent_Wtr_Year_2023_scaled=mean(GD_Recent_Wtr_Year_2023_scaled))
+
+pred_df_geo &lt;- tibble(Geographic_Dist = seq(from = 0.35, to=0.70, length.out=46)) %&gt;%
+  mutate(Geographic_Dist_scaled = scale(Geographic_Dist)) %&gt;% 
+  bind_cols(climdist_fixed)</code></pre>
+</div>
 </div>
 <div id="set-model-engine" class="section level2">
 <h2>Set Model Engine</h2>
@@ -679,22 +800,34 @@ surv_fits_wl2 &lt;- surv_fits %&gt;%
 ## optimizer (Nelder_Mead) convergence code: 0 (OK) ; 0 optimizer warnings; 1 lme4 warnings</code></pre>
 <pre class="r"><code>#Add in Geo and tmp/ppt dist
 surv_GD_wflow_sub &lt;- workflow() %&gt;%
-  add_variables(outcomes = Establishment, predictors = c(pop, block, height.cm, contains(&quot;Dist&quot;))) 
+  add_variables(outcomes = Establishment, predictors = c(pop, block, height.cm_scaled, contains(&quot;Dist&quot;))) 
 surv_GD_fits_sub &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_Wtr_Year_2023_scaled + PPTDist_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_Wtr_Year_2023_scaled + PPTDist_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_GrwSsn_2023_scaled + PPTDist_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_GrwSsn_2023_scaled + PPTDist_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_Wtr_Year_2023_scaled + PPTDist_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_Wtr_Year_2023_scaled + PPTDist_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Recent_GrwSsn_2023_scaled + PPTDist_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ TempDist_Historic_GrwSsn_2023_scaled + PPTDist_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -704,68 +837,116 @@ surv_GD_fits_wl2_sub &lt;- surv_GD_fits_sub %&gt;%
 
 ##show results:
 surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 17 × 6
+<pre><code>## # A tibble: 29 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                    0.408     0.0752     5.43  5.66e-8
-##  2 WY_Recent     TempDist_Recent_Wtr_Year_…   0.0708    0.0911     0.777 4.37e-1
-##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2…  -0.194     0.0751    -2.58  9.82e-3
-##  4 WY_Recent     Geographic_Dist             -0.248     0.0645    -3.84  1.23e-4
-##  5 WY_Recent     height.cm                    0.329     0.0776     4.24  2.23e-5
-##  6 WY_Historical TempDist_Historic_Wtr_Yea…   0.0563    0.0941     0.598 5.50e-1
-##  7 WY_Historical PPTDist_Historic_Wtr_Year…  -0.200     0.0784    -2.55  1.08e-2
-##  8 WY_Historical Geographic_Dist             -0.237     0.0648    -3.66  2.54e-4
-##  9 WY_Historical height.cm                    0.330     0.0776     4.26  2.05e-5
-## 10 GS_Recent     TempDist_Recent_GrwSsn_20…   0.424     0.103      4.11  3.96e-5
-## 11 GS_Recent     PPTDist_Recent_GrwSsn_2023  -0.383     0.108     -3.53  4.17e-4
-## 12 GS_Recent     Geographic_Dist             -0.243     0.0597    -4.07  4.73e-5
-## 13 GS_Recent     height.cm                    0.426     0.0742     5.74  9.51e-9
-## 14 GS_Historical TempDist_Historic_GrwSsn_…   0.356     0.104      3.42  6.38e-4
-## 15 GS_Historical PPTDist_Historic_GrwSsn_2…  -0.306     0.108     -2.83  4.62e-3
-## 16 GS_Historical Geographic_Dist             -0.203     0.0652    -3.11  1.90e-3
-## 17 GS_Historical height.cm                    0.421     0.0776     5.43  5.63e-8</code></pre>
+##  1 pop.block     height.cm_scaled              0.408    0.0752      5.43 5.66e-8
+##  2 WY_Recent     TempDist_Recent_Wtr_Year_…    0.291    0.0762      3.82 1.33e-4
+##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2…   -0.154    0.0759     -2.03 4.22e-2
+##  4 WY_Recent     Geographic_Dist_scaled       -0.251    0.0652     -3.84 1.21e-4
+##  5 WY_Historical TempDist_Historic_Wtr_Yea…    0.280    0.0798      3.51 4.56e-4
+##  6 WY_Historical PPTDist_Historic_Wtr_Year…   -0.159    0.0796     -2.00 4.57e-2
+##  7 WY_Historical Geographic_Dist_scaled       -0.239    0.0656     -3.63 2.78e-4
+##  8 GS_Recent     TempDist_Recent_GrwSsn_20…    0.416    0.136       3.05 2.30e-3
+##  9 GS_Recent     PPTDist_Recent_GrwSsn_202…   -0.136    0.135      -1.00 3.16e-1
+## 10 GS_Recent     Geographic_Dist_scaled       -0.239    0.0792     -3.02 2.51e-3
+## # ℹ 19 more rows</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name             rsq
-##    &lt;chr&gt;          &lt;dbl&gt;
-##  1 pop.block     0.180 
-##  2 pop.block     0.0415
-##  3 WY_Recent     0.185 
-##  4 WY_Recent     0.0779
-##  5 WY_Historical 0.185 
-##  6 WY_Historical 0.0776
-##  7 GS_Recent     0.184 
-##  8 GS_Recent     0.0808
-##  9 GS_Historical 0.183 
-## 10 GS_Historical 0.0767</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                    rsq
+##    &lt;chr&gt;                 &lt;dbl&gt;
+##  1 pop.block            0.180 
+##  2 pop.block            0.0415
+##  3 WY_Recent            0.168 
+##  4 WY_Recent            0.0619
+##  5 WY_Historical        0.167 
+##  6 WY_Historical        0.0614
+##  7 GS_Recent            0.165 
+##  8 GS_Recent            0.0490
+##  9 GS_Historical        0.165 
+## 10 GS_Historical        0.0471
+## 11 WY_Recent_height     0.185 
+## 12 WY_Recent_height     0.0779
+## 13 WY_Historical_height 0.185 
+## 14 WY_Historical_height 0.0776
+## 15 GS_Recent_height     0.184 
+## 16 GS_Recent_height     0.0808
+## 17 GS_Historical_height 0.183 
+## 18 GS_Historical_height 0.0767</code></pre>
 <pre class="r"><code>#conditional rsq = first row per model - based on fixed and random effects 
 #and marginal rsq is the second row per model - based only on fixed effects
 
+##predictions for figures:
+est_sub_preds &lt;- surv_GD_fits_wl2_sub %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_wtr_yr_temp_2023)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_recent_wtr_yr_temp_2023) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_sub_preds$TempDist_Recent_Wtr_Year_2023_scaled &lt;- as.vector(est_sub_preds$TempDist_Recent_Wtr_Year_2023_scaled)
+write_csv(est_sub_preds, &quot;../Processed.Data/Est_SubPreds_WYRecentTemp.csv&quot;)
+
+est_sub_preds2 &lt;- surv_GD_fits_wl2_sub %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_wtr_yr_ppt_2023)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_recent_wtr_yr_ppt_2023) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_sub_preds2$PPTDist_Recent_Wtr_Year_2023_scaled &lt;- as.vector(est_sub_preds2$PPTDist_Recent_Wtr_Year_2023_scaled)
+write_csv(est_sub_preds2, &quot;../Processed.Data/Est_SubPreds_WYRecentPPT.csv&quot;)
+
+est_sub_preds3 &lt;- surv_GD_fits_wl2_sub %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;GS_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_grwssn_temp_2023)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_recent_grwssn_temp_2023) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_sub_preds3$TempDist_Recent_GrwSsn_2023_scaled &lt;- as.vector(est_sub_preds3$TempDist_Recent_GrwSsn_2023_scaled)
+write_csv(est_sub_preds3, &quot;../Processed.Data/Est_SubPreds_GrwSsnRecentTemp.csv&quot;)
+
 #Add in Geo and Gowers clim dist
 surv_GD_wflow &lt;- workflow() %&gt;%
-  add_variables(outcomes = Establishment, predictors = c(pop, height.cm, block, contains(&quot;GD&quot;), Geographic_Dist)) 
+  add_variables(outcomes = Establishment, predictors = c(pop, height.cm_scaled, block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
 surv_GD_fits &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Establishment ~ GD_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -775,25 +956,23 @@ surv_GD_fits_wl2 &lt;- surv_GD_fits %&gt;%
 
 ##show results:
 surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 13 × 6
-##    name          term                      estimate std.error statistic  p.value
-##    &lt;chr&gt;         &lt;chr&gt;                        &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
-##  1 pop.block     height.cm                   0.408     0.0752     5.43  5.66e- 8
-##  2 WY_Recent     GD_Recent_Wtr_Year_2023     0.128     0.0871     1.47  1.42e- 1
-##  3 WY_Recent     Geographic_Dist            -0.266     0.0755    -3.52  4.26e- 4
-##  4 WY_Recent     height.cm                   0.345     0.0765     4.50  6.64e- 6
-##  5 WY_Historical GD_Historic_Wtr_Year_2023   0.0611    0.0832     0.734 4.63e- 1
-##  6 WY_Historical Geographic_Dist            -0.252     0.0780    -3.23  1.24e- 3
-##  7 WY_Historical height.cm                   0.379     0.0726     5.22  1.77e- 7
-##  8 GS_Recent     GD_Recent_GrwSsn_2023      -0.255     0.0647    -3.94  8.25e- 5
-##  9 GS_Recent     Geographic_Dist            -0.192     0.0637    -3.01  2.57e- 3
-## 10 GS_Recent     height.cm                   0.443     0.0639     6.93  4.28e-12
-## 11 GS_Historical GD_Historic_GrwSsn_2023    -0.276     0.0639    -4.31  1.60e- 5
-## 12 GS_Historical Geographic_Dist            -0.183     0.0611    -2.99  2.75e- 3
-## 13 GS_Historical height.cm                   0.386     0.0600     6.43  1.27e-10</code></pre>
+<pre><code>## # A tibble: 21 × 6
+##    name             term                    estimate std.error statistic p.value
+##    &lt;chr&gt;            &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.block        height.cm_scaled           0.408    0.0752      5.43 5.66e-8
+##  2 WY_Recent        GD_Recent_Wtr_Year_202…    0.305    0.0843      3.62 2.96e-4
+##  3 WY_Recent        Geographic_Dist_scaled    -0.320    0.0799     -4.01 6.15e-5
+##  4 WY_Historical    GD_Historic_Wtr_Year_2…    0.181    0.0993      1.83 6.78e-2
+##  5 WY_Historical    Geographic_Dist_scaled    -0.301    0.0939     -3.20 1.36e-3
+##  6 GS_Recent        GD_Recent_GrwSsn_2023_…   -0.194    0.101      -1.92 5.54e-2
+##  7 GS_Recent        Geographic_Dist_scaled    -0.271    0.0963     -2.81 4.96e-3
+##  8 GS_Historical    GD_Historic_GrwSsn_202…   -0.294    0.0911     -3.22 1.27e-3
+##  9 GS_Historical    Geographic_Dist_scaled    -0.233    0.0866     -2.69 7.07e-3
+## 10 WY_Recent_height GD_Recent_Wtr_Year_202…    0.128    0.0871      1.47 1.42e-1
+## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>#surv_GD_fits_wl2 %&gt;% mutate(glance=map(fit, glance)) %&gt;% unnest(glance) %&gt;% 
  # select(-wflow:-sigma) 
 
@@ -802,21 +981,73 @@ surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name             rsq
-##    &lt;chr&gt;          &lt;dbl&gt;
-##  1 pop.block     0.180 
-##  2 pop.block     0.0415
-##  3 WY_Recent     0.183 
-##  4 WY_Recent     0.0666
-##  5 WY_Historical 0.181 
-##  6 WY_Historical 0.0615
-##  7 GS_Recent     0.185 
-##  8 GS_Recent     0.0788
-##  9 GS_Historical 0.186 
-## 10 GS_Historical 0.0828</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                    rsq
+##    &lt;chr&gt;                 &lt;dbl&gt;
+##  1 pop.block            0.180 
+##  2 pop.block            0.0415
+##  3 WY_Recent            0.165 
+##  4 WY_Recent            0.0453
+##  5 WY_Historical        0.167 
+##  6 WY_Historical        0.0303
+##  7 GS_Recent            0.172 
+##  8 GS_Recent            0.0347
+##  9 GS_Historical        0.171 
+## 10 GS_Historical        0.0462
+## 11 WY_Recent_height     0.183 
+## 12 WY_Recent_height     0.0666
+## 13 WY_Historical_height 0.181 
+## 14 WY_Historical_height 0.0615
+## 15 GS_Recent_height     0.185 
+## 16 GS_Recent_height     0.0788
+## 17 GS_Historical_height 0.186 
+## 18 GS_Historical_height 0.0828</code></pre>
 <pre class="r"><code>#conditional rsq = first row per model - based on fixed and random effects 
-#and marginal rsq is the second row per model - based only on fixed effects</code></pre>
+#and marginal rsq is the second row per model - based only on fixed effects
+
+##predictions for figures:
+est_GD_preds &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(est_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+est_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(est_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+est_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(est_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+est_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(est_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+est_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(est_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+est_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(est_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(est_GD_preds, &quot;../Processed.Data/Est_GDPreds_WYRecent.csv&quot;)
+
+est_GD_preds2 &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_geo)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_geo) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_GD_preds2$Geographic_Dist_scaled &lt;- as.vector(est_GD_preds2$Geographic_Dist_scaled)
+write_csv(est_GD_preds2, &quot;../Processed.Data/Est_GeoDist_Preds.csv&quot;)
+
+est_GD_preds3 &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;GS_Historical&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+est_GD_preds3$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(est_GD_preds3$GD_Recent_Wtr_Year_2023_scaled)
+est_GD_preds3$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(est_GD_preds3$GD_Historic_GrwSsn_2023_scaled)
+est_GD_preds3$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(est_GD_preds3$GD_Recent_Wtr_Year_2024_scaled)
+est_GD_preds3$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(est_GD_preds3$GD_Recent_GrwSsn_2024_scaled)
+est_GD_preds3$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(est_GD_preds3$AvgGD_Recent_Wtr_Year_scaled)
+est_GD_preds3$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(est_GD_preds3$AvgGD_Recent_GrwSsn_scaled)
+write_csv(est_GD_preds3, &quot;../Processed.Data/Est_GDPreds_GrwSsnHist.csv&quot;)</code></pre>
 </div>
 <div id="first-year-surv-models" class="section level2">
 <h2>First Year Surv Models</h2>
@@ -864,22 +1095,34 @@ surv_fits_wl2 %&gt;% filter(name==&quot;pop.mf.block&quot;) %&gt;% pull(fit) #no
 ##      0.3728</code></pre>
 <pre class="r"><code>#Add in Geo and tmp/ppt dist
 surv_GD_wflow_sub &lt;- workflow() %&gt;%
-  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm, block, contains(&quot;Dist&quot;))) 
+  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm_scaled, block, contains(&quot;Dist&quot;))) 
 surv_GD_fits_sub &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_Wtr_Year_2023 + PPTDist_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_Wtr_Year_2023_scaled + PPTDist_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_Wtr_Year_2023 + PPTDist_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_Wtr_Year_2023_scaled + PPTDist_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_GrwSsn_2023 + PPTDist_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_GrwSsn_2023_scaled + PPTDist_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_GrwSsn_2023 + PPTDist_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_GrwSsn_2023_scaled + PPTDist_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_Wtr_Year_2023_scaled + PPTDist_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_Wtr_Year_2023_scaled + PPTDist_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Recent_GrwSsn_2023_scaled + PPTDist_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ TempDist_Historic_GrwSsn_2023_scaled + PPTDist_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -887,38 +1130,27 @@ name=names(wflow)
 surv_GD_fits_wl2_sub &lt;- surv_GD_fits_sub %&gt;%
   mutate(fit = map(wflow, fit, data = wl2_y1_surv_scaled))</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<pre><code>## Warning: There were 10 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `fit = map(wflow, fit, data = wl2_y1_surv_scaled)`.
-## Caused by warning:
-## ! Some predictor variables are on very different scales: consider rescaling
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 9 remaining warnings.</code></pre>
 <pre class="r"><code>##show results
 surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 17 × 6
+<pre><code>## # A tibble: 29 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                  -1.87e-1   1.52e-1   -1.23   2.19e-1
-##  2 WY_Recent     TempDist_Recent_Wtr_Year_…  2.66e-1   6.48e-2    4.10   4.13e-5
-##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2… -1.15e-3   8.41e-4   -1.37   1.72e-1
-##  4 WY_Recent     Geographic_Dist            -1.13e-6   2.84e-6   -0.397  6.92e-1
-##  5 WY_Recent     height.cm                  -3.02e-1   1.50e-1   -2.01   4.43e-2
-##  6 WY_Historical TempDist_Historic_Wtr_Yea…  2.50e-1   6.37e-2    3.92   8.79e-5
-##  7 WY_Historical PPTDist_Historic_Wtr_Year… -1.06e-3   8.50e-4   -1.25   2.10e-1
-##  8 WY_Historical Geographic_Dist            -5.76e-7   2.87e-6   -0.201  8.41e-1
-##  9 WY_Historical height.cm                  -3.02e-1   1.50e-1   -2.02   4.36e-2
-## 10 GS_Recent     TempDist_Recent_GrwSsn_20…  3.83e-1   2.08e-1    1.84   6.57e-2
-## 11 GS_Recent     PPTDist_Recent_GrwSsn_2023  4.23e-4   1.74e-3    0.244  8.08e-1
-## 12 GS_Recent     Geographic_Dist            -4.16e-7   3.24e-6   -0.128  8.98e-1
-## 13 GS_Recent     height.cm                  -2.52e-1   1.53e-1   -1.65   9.89e-2
-## 14 GS_Historical TempDist_Historic_GrwSsn_…  3.06e-1   1.69e-1    1.82   6.94e-2
-## 15 GS_Historical PPTDist_Historic_GrwSsn_2…  1.26e-3   1.79e-3    0.703  4.82e-1
-## 16 GS_Historical Geographic_Dist             3.24e-7   3.26e-6    0.0995 9.21e-1
-## 17 GS_Historical height.cm                  -2.67e-1   1.53e-1   -1.75   8.07e-2</code></pre>
+##  1 pop.block     height.cm_scaled            -0.196      0.159   -1.23   2.19e-1
+##  2 WY_Recent     TempDist_Recent_Wtr_Year_…   1.00       0.265    3.78   1.56e-4
+##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2…  -0.360      0.234   -1.54   1.24e-1
+##  4 WY_Recent     Geographic_Dist_scaled      -0.0832     0.197   -0.422  6.73e-1
+##  5 WY_Historical TempDist_Historic_Wtr_Yea…   0.992      0.276    3.59   3.34e-4
+##  6 WY_Historical PPTDist_Historic_Wtr_Year…  -0.350      0.246   -1.42   1.55e-1
+##  7 WY_Historical Geographic_Dist_scaled      -0.0437     0.198   -0.221  8.25e-1
+##  8 GS_Recent     TempDist_Recent_GrwSsn_20…   0.854      0.438    1.95   5.15e-2
+##  9 GS_Recent     PPTDist_Recent_GrwSsn_202…  -0.0183     0.473   -0.0387 9.69e-1
+## 10 GS_Recent     Geographic_Dist_scaled      -0.0407     0.253   -0.161  8.72e-1
+## # ℹ 19 more rows</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -940,37 +1172,69 @@ surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 4 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name              rsq
-##    &lt;chr&gt;           &lt;dbl&gt;
-##  1 pop.block     NA     
-##  2 pop.block      0.0115
-##  3 WY_Recent     NA     
-##  4 WY_Recent      0.319 
-##  5 WY_Historical NA     
-##  6 WY_Historical  0.319 
-##  7 GS_Recent     NA     
-##  8 GS_Recent      0.177 
-##  9 GS_Historical NA     
-## 10 GS_Historical  0.188</code></pre>
-<pre class="r"><code>#Add in Geo and Gowers clim dist
+<pre><code>## # A tibble: 18 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.block            NA     
+##  2 pop.block             0.0115
+##  3 WY_Recent             0.444 
+##  4 WY_Recent             0.254 
+##  5 WY_Historical         0.444 
+##  6 WY_Historical         0.252 
+##  7 GS_Recent             0.424 
+##  8 GS_Recent             0.126 
+##  9 GS_Historical         0.425 
+## 10 GS_Historical         0.134 
+## 11 WY_Recent_height     NA     
+## 12 WY_Recent_height      0.319 
+## 13 WY_Historical_height NA     
+## 14 WY_Historical_height  0.319 
+## 15 GS_Recent_height     NA     
+## 16 GS_Recent_height      0.177 
+## 17 GS_Historical_height NA     
+## 18 GS_Historical_height  0.188</code></pre>
+<pre class="r"><code>##predictions for figures:
+y1surv_sub_preds &lt;- surv_GD_fits_wl2_sub %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_wtr_yr_temp_2023)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_recent_wtr_yr_temp_2023) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+y1surv_sub_preds$TempDist_Recent_Wtr_Year_2023_scaled &lt;- as.vector(y1surv_sub_preds$TempDist_Recent_Wtr_Year_2023_scaled)
+write_csv(y1surv_sub_preds, &quot;../Processed.Data/Y1Surv_SubPreds_WYRecentTemp.csv&quot;)
+
+#Add in Geo and Gowers clim dist
 surv_GD_wflow &lt;- workflow() %&gt;%
-  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm, block, contains(&quot;GD&quot;), Geographic_Dist)) 
+  add_variables(outcomes = Y1Survival, predictors = c(pop, mf, height.cm_scaled, block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
 surv_GD_fits &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_Wtr_Year_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Recent = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Historical = {surv_GD_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_GrwSsn_2023 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_Wtr_Year_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Recent_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow %&gt;% 
+      add_model(glmer.model_binomial, formula = Y1Survival ~ GD_Historic_GrwSsn_2023_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -980,34 +1244,28 @@ surv_GD_fits_wl2 &lt;- surv_GD_fits %&gt;%
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<pre><code>## Warning: There were 6 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `fit = map(wflow, fit, data = wl2_y1_surv_scaled)`.
-## Caused by warning:
-## ! Some predictor variables are on very different scales: consider rescaling
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 5 remaining warnings.</code></pre>
 <pre class="r"><code>##show results 
 surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 13 × 6
-##    name          term                       estimate std.error statistic p.value
-##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                  -1.87e-1   1.52e-1    -1.23  2.19e-1
-##  2 WY_Recent     GD_Recent_Wtr_Year_2023     1.10e+1   2.92e+0     3.77  1.66e-4
-##  3 WY_Recent     Geographic_Dist            -4.14e-6   3.58e-6    -1.16  2.47e-1
-##  4 WY_Recent     height.cm                  -2.63e-1   1.49e-1    -1.77  7.72e-2
-##  5 WY_Historical GD_Historic_Wtr_Year_2023   9.12e+0   4.25e+0     2.14  3.20e-2
-##  6 WY_Historical Geographic_Dist            -3.33e-6   3.55e-6    -0.938 3.48e-1
-##  7 WY_Historical height.cm                  -2.13e-1   1.50e-1    -1.42  1.57e-1
-##  8 GS_Recent     GD_Recent_GrwSsn_2023      -6.43e+0   5.12e+0    -1.26  2.09e-1
-##  9 GS_Recent     Geographic_Dist            -2.76e-6   3.74e-6    -0.740 4.59e-1
-## 10 GS_Recent     height.cm                  -1.67e-1   1.53e-1    -1.09  2.77e-1
-## 11 GS_Historical GD_Historic_GrwSsn_2023    -8.68e+0   3.52e+0    -2.47  1.36e-2
-## 12 GS_Historical Geographic_Dist            -1.46e-6   3.40e-6    -0.431 6.67e-1
-## 13 GS_Historical height.cm                  -1.62e-1   1.52e-1    -1.07  2.85e-1</code></pre>
+<pre><code>## # A tibble: 21 × 6
+##    name             term                    estimate std.error statistic p.value
+##    &lt;chr&gt;            &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.block        height.cm_scaled         -0.196      0.159    -1.23  2.19e-1
+##  2 WY_Recent        GD_Recent_Wtr_Year_202…   1.07       0.292     3.65  2.64e-4
+##  3 WY_Recent        Geographic_Dist_scaled   -0.273      0.229    -1.19  2.32e-1
+##  4 WY_Historical    GD_Historic_Wtr_Year_2…   0.668      0.319     2.09  3.62e-2
+##  5 WY_Historical    Geographic_Dist_scaled   -0.225      0.267    -0.842 4.00e-1
+##  6 GS_Recent        GD_Recent_GrwSsn_2023_…  -0.430      0.302    -1.42  1.55e-1
+##  7 GS_Recent        Geographic_Dist_scaled   -0.184      0.282    -0.652 5.15e-1
+##  8 GS_Historical    GD_Historic_GrwSsn_202…  -0.664      0.258    -2.57  1.01e-2
+##  9 GS_Historical    Geographic_Dist_scaled   -0.0932     0.262    -0.355 7.22e-1
+## 10 WY_Recent_height GD_Recent_Wtr_Year_202…   1.22       0.324     3.78  1.60e-4
+## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -1017,8 +1275,10 @@ surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 5 warnings in `mutate()`.
+<pre><code>## Warning: There were 7 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(extracted_fit, r2)`.
 ## Caused by warning:
@@ -1028,32 +1288,72 @@ surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 4 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name              rsq
-##    &lt;chr&gt;           &lt;dbl&gt;
-##  1 pop.block     NA     
-##  2 pop.block      0.0115
-##  3 WY_Recent     NA     
-##  4 WY_Recent      0.261 
-##  5 WY_Historical NA     
-##  6 WY_Historical  0.132 
-##  7 GS_Recent     NA     
-##  8 GS_Recent      0.0848
-##  9 GS_Historical NA     
-## 10 GS_Historical  0.136</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 6 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.block            NA     
+##  2 pop.block             0.0115
+##  3 WY_Recent             0.445 
+##  4 WY_Recent             0.186 
+##  5 WY_Historical         0.433 
+##  6 WY_Historical         0.0785
+##  7 GS_Recent            NA     
+##  8 GS_Recent             0.0714
+##  9 GS_Historical        NA     
+## 10 GS_Historical         0.127 
+## 11 WY_Recent_height     NA     
+## 12 WY_Recent_height      0.261 
+## 13 WY_Historical_height NA     
+## 14 WY_Historical_height  0.132 
+## 15 GS_Recent_height     NA     
+## 16 GS_Recent_height      0.0848
+## 17 GS_Historical_height NA     
+## 18 GS_Historical_height  0.136</code></pre>
+<pre class="r"><code>##predictions for figures:
+y1surv_GD_preds &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+y1surv_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(y1surv_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+y1surv_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(y1surv_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+y1surv_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(y1surv_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+y1surv_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(y1surv_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+y1surv_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(y1surv_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+y1surv_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(y1surv_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(y1surv_GD_preds, &quot;../Processed.Data/Y1Surv_GDPreds_WYRecent.csv&quot;)
+
+y1surv_GD_preds2 &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;GS_Historical&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+y1surv_GD_preds2$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(y1surv_GD_preds2$GD_Recent_Wtr_Year_2023_scaled)
+y1surv_GD_preds2$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(y1surv_GD_preds2$GD_Historic_GrwSsn_2023_scaled)
+y1surv_GD_preds2$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(y1surv_GD_preds2$GD_Recent_Wtr_Year_2024_scaled)
+y1surv_GD_preds2$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(y1surv_GD_preds2$GD_Recent_GrwSsn_2024_scaled)
+y1surv_GD_preds2$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(y1surv_GD_preds2$AvgGD_Recent_Wtr_Year_scaled)
+y1surv_GD_preds2$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(y1surv_GD_preds2$AvgGD_Recent_GrwSsn_scaled)
+write_csv(y1surv_GD_preds2, &quot;../Processed.Data/Y1Surv_GDPreds_GrwSsnHist.csv&quot;)</code></pre>
 </div>
 <div id="winter-surv-models" class="section level2">
 <h2>Winter Surv Models</h2>
 <pre class="r"><code>#basic model workflow 
 surv_wflow &lt;- workflow() %&gt;% 
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block,  height.cm,))
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, block,  height.cm_scaled,))
 surv_fits &lt;- tibble(wflow=list(
   pop.block = {surv_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm_scaled + (1|pop) + (1|block))},
   
   pop.mf.block = {surv_wflow %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -1068,13 +1368,13 @@ surv_fits_wl2 %&gt;% filter(name==&quot;pop.mf.block&quot;) %&gt;% pull(fit) #no
 ## 
 ## ── Preprocessor ────────────────────────────────────────────────────────────────
 ## Outcomes: WinterSurv
-## Predictors: c(pop, mf, block, height.cm, )
+## Predictors: c(pop, mf, block, height.cm_scaled, )
 ## 
 ## ── Model ───────────────────────────────────────────────────────────────────────
 ## Generalized linear mixed model fit by maximum likelihood (Laplace
 ##   Approximation) [glmerMod]
 ##  Family: binomial  ( logit )
-## Formula: WinterSurv ~ height.cm + (1 | pop/mf) + (1 | block)
+## Formula: WinterSurv ~ height.cm_scaled + (1 | pop/mf) + (1 | block)
 ##    Data: data
 ##       AIC       BIC    logLik  deviance  df.resid 
 ##  465.7083  486.4185 -227.8541  455.7083       460 
@@ -1085,20 +1385,26 @@ surv_fits_wl2 %&gt;% filter(name==&quot;pop.mf.block&quot;) %&gt;% pull(fit) #no
 ##  block  (Intercept) 0.2453  
 ## Number of obs: 465, groups:  mf:pop, 111; pop, 21; block, 13
 ## Fixed Effects:
-## (Intercept)    height.cm  
-##     -2.9220       0.2653</code></pre>
+##      (Intercept)  height.cm_scaled  
+##          -2.9220            0.2653</code></pre>
 <pre class="r"><code>#Add in Geo and tmp/ppt dist
 surv_GD_wflow_wl2_sub &lt;- workflow() %&gt;%
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf,  height.cm, block, contains(&quot;Dist&quot;))) 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf,  height.cm_scaled, block, contains(&quot;Dist&quot;))) 
 surv_GD_fits_wl2_sub &lt;- tibble(wflow=list(
   pop.mf.block = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -1108,47 +1414,63 @@ name=names(wflow)
 
 ##show results
 surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 9 × 6
-##   name          term                        estimate std.error statistic p.value
-##   &lt;chr&gt;         &lt;chr&gt;                          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 pop.mf.block  height.cm                    0.265       0.195    1.36     0.173
-## 2 WY_Recent     TempDist_Recent_Wtr_Year_2…  0.868       0.649    1.34     0.181
-## 3 WY_Recent     PPTDist_Recent_Wtr_Year_20… -0.472       0.605   -0.780    0.436
-## 4 WY_Recent     Geographic_Dist             -0.0414      0.449   -0.0924   0.926
-## 5 WY_Recent     height.cm                    0.187       0.195    0.958    0.338
-## 6 WY_Historical TempDist_Historic_Wtr_Year…  0.835       0.669    1.25     0.212
-## 7 WY_Historical PPTDist_Historic_Wtr_Year_… -0.498       0.620   -0.803    0.422
-## 8 WY_Historical Geographic_Dist              0.00642     0.438    0.0147   0.988
-## 9 WY_Historical height.cm                    0.186       0.195    0.954    0.340</code></pre>
+<pre><code>## # A tibble: 15 × 6
+##    name                 term                estimate std.error statistic p.value
+##    &lt;chr&gt;                &lt;chr&gt;                  &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.mf.block         height.cm_scaled     0.265       0.195    1.36     0.173
+##  2 WY_Recent            TempDist_Recent_Wt…  1.04        0.646    1.60     0.109
+##  3 WY_Recent            PPTDist_Recent_Wtr… -0.422       0.616   -0.685    0.493
+##  4 WY_Recent            Geographic_Dist_sc… -0.0261      0.457   -0.0570   0.955
+##  5 WY_Historical        TempDist_Historic_…  1.00        0.666    1.51     0.132
+##  6 WY_Historical        PPTDist_Historic_W… -0.447       0.630   -0.709    0.479
+##  7 WY_Historical        Geographic_Dist_sc…  0.0210      0.446    0.0471   0.962
+##  8 WY_Recent_height     TempDist_Recent_Wt…  0.868       0.649    1.34     0.181
+##  9 WY_Recent_height     PPTDist_Recent_Wtr… -0.472       0.605   -0.780    0.436
+## 10 WY_Recent_height     Geographic_Dist_sc… -0.0414      0.449   -0.0924   0.926
+## 11 WY_Recent_height     height.cm_scaled     0.187       0.195    0.958    0.338
+## 12 WY_Historical_height TempDist_Historic_…  0.835       0.669    1.25     0.212
+## 13 WY_Historical_height PPTDist_Historic_W… -0.498       0.620   -0.803    0.422
+## 14 WY_Historical_height Geographic_Dist_sc…  0.00642     0.438    0.0147   0.988
+## 15 WY_Historical_height height.cm_scaled     0.186       0.195    0.954    0.340</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 6 × 2
-##   name              rsq
-##   &lt;chr&gt;           &lt;dbl&gt;
-## 1 pop.mf.block  0.606  
-## 2 pop.mf.block  0.00842
-## 3 WY_Recent     0.600  
-## 4 WY_Recent     0.202  
-## 5 WY_Historical 0.599  
-## 6 WY_Historical 0.208</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.mf.block         0.606  
+##  2 pop.mf.block         0.00842
+##  3 WY_Recent            0.612  
+##  4 WY_Recent            0.200  
+##  5 WY_Historical        0.610  
+##  6 WY_Historical        0.205  
+##  7 WY_Recent_height     0.600  
+##  8 WY_Recent_height     0.202  
+##  9 WY_Historical_height 0.599  
+## 10 WY_Historical_height 0.208</code></pre>
 <pre class="r"><code>#Add in Geo and Gowers clim dist
 surv_GD_wflow_wl2 &lt;- workflow() %&gt;%
-  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, height.cm,  block, contains(&quot;GD&quot;), Geographic_Dist)) 
+  add_variables(outcomes = WinterSurv, predictors = c(pop, mf, height.cm_scaled,  block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
 surv_GD_fits_wl2 &lt;- tibble(wflow=list(
   pop.mf.block = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = WinterSurv ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
   
 ),
 name=names(wflow)
@@ -1158,33 +1480,57 @@ name=names(wflow)
 
 ##show results 
 surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 7 × 6
-##   name          term                      estimate std.error statistic p.value
-##   &lt;chr&gt;         &lt;chr&gt;                        &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-## 1 pop.mf.block  height.cm                    0.265     0.195     1.36   0.173 
-## 2 WY_Recent     GD_Recent_Wtr_Year_2024      1.32      0.545     2.43   0.0151
-## 3 WY_Recent     Geographic_Dist             -0.234     0.426    -0.549  0.583 
-## 4 WY_Recent     height.cm                    0.190     0.191     0.995  0.320 
-## 5 WY_Historical GD_Historic_Wtr_Year_2024    1.06      0.521     2.03   0.0423
-## 6 WY_Historical Geographic_Dist             -0.279     0.447    -0.623  0.533 
-## 7 WY_Historical height.cm                    0.231     0.191     1.21   0.226</code></pre>
+<pre><code>## # A tibble: 11 × 6
+##    name                 term                estimate std.error statistic p.value
+##    &lt;chr&gt;                &lt;chr&gt;                  &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.mf.block         height.cm_scaled       0.265     0.195     1.36  0.173  
+##  2 WY_Recent            GD_Recent_Wtr_Year…    1.44      0.545     2.65  0.00816
+##  3 WY_Recent            Geographic_Dist_sc…   -0.258     0.430    -0.599 0.549  
+##  4 WY_Historical        GD_Historic_Wtr_Ye…    1.16      0.538     2.15  0.0317 
+##  5 WY_Historical        Geographic_Dist_sc…   -0.309     0.462    -0.668 0.504  
+##  6 WY_Recent_height     GD_Recent_Wtr_Year…    1.32      0.545     2.43  0.0151 
+##  7 WY_Recent_height     Geographic_Dist_sc…   -0.234     0.426    -0.549 0.583  
+##  8 WY_Recent_height     height.cm_scaled       0.190     0.191     0.995 0.320  
+##  9 WY_Historical_height GD_Historic_Wtr_Ye…    1.06      0.521     2.03  0.0423 
+## 10 WY_Historical_height Geographic_Dist_sc…   -0.279     0.447    -0.623 0.533  
+## 11 WY_Historical_height height.cm_scaled       0.231     0.191     1.21  0.226</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 6 × 2
-##   name              rsq
-##   &lt;chr&gt;           &lt;dbl&gt;
-## 1 pop.mf.block  0.606  
-## 2 pop.mf.block  0.00842
-## 3 WY_Recent     0.599  
-## 4 WY_Recent     0.235  
-## 5 WY_Historical 0.583  
-## 6 WY_Historical 0.161</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.mf.block         0.606  
+##  2 pop.mf.block         0.00842
+##  3 WY_Recent            0.607  
+##  4 WY_Recent            0.233  
+##  5 WY_Historical        0.600  
+##  6 WY_Historical        0.150  
+##  7 WY_Recent_height     0.599  
+##  8 WY_Recent_height     0.235  
+##  9 WY_Historical_height 0.583  
+## 10 WY_Historical_height 0.161</code></pre>
+<pre class="r"><code>##predictions for figures:
+wintsurv_GD_preds &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+wintsurv_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(wintsurv_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+wintsurv_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(wintsurv_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+wintsurv_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(wintsurv_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+wintsurv_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(wintsurv_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+wintsurv_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(wintsurv_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+wintsurv_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(wintsurv_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(wintsurv_GD_preds, &quot;../Processed.Data/WintSurv_GDPreds_WYRecent.csv&quot;)</code></pre>
 </div>
 <div id="surv-to-buds-y2-models" class="section level2">
 <h2>Surv to Buds Y2 Models</h2>
@@ -1239,22 +1585,34 @@ surv_fits_wl2 &lt;- surv_fits %&gt;%
 
 #Add in Geo and tmp/ppt dist
 surv_GD_wflow_wl2_sub &lt;- workflow() %&gt;%
-  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm,  block, contains(&quot;Dist&quot;))) 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm_scaled,  block, contains(&quot;Dist&quot;))) 
 surv_GD_fits_wl2_sub &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2_sub %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+ # WY_Historical_height = {surv_GD_wflow_wl2_sub %&gt;% 
+  #    add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
+  
+  GS_Recent_height = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_wl2_sub %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -1262,36 +1620,32 @@ name=names(wflow)
   mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled)`.
-## Caused by warning in `checkConv()`:
-## ! Model failed to converge with max|grad| = 0.00591219 (tol = 0.002, component 1)</code></pre>
-<pre class="r"><code>##show results 
+<pre class="r"><code>#mod_test &lt;- glmer(SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block), family = &quot;binomial&quot;, data=wl2_surv_to_rep_y2_scaled) #convergence issues with WY_Historical_height model 
+
+##show results 
 surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 17 × 6
+<pre><code>## # A tibble: 25 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                   -0.646      0.239   -2.70   0.00689
-##  2 WY_Recent     TempDist_Recent_Wtr_Year_…   0.0146     0.448    0.0325 0.974  
-##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2…   0.516      0.386    1.34   0.181  
-##  4 WY_Recent     Geographic_Dist              0.509      0.288    1.77   0.0772 
-##  5 WY_Recent     height.cm                   -0.716      0.333   -2.15   0.0316 
-##  6 WY_Historical TempDist_Historic_Wtr_Yea…   0.0687     0.470    0.146  0.884  
-##  7 WY_Historical PPTDist_Historic_Wtr_Year…   0.539      0.399    1.35   0.176  
-##  8 WY_Historical Geographic_Dist              0.487      0.282    1.73   0.0837 
-##  9 WY_Historical height.cm                   -0.735      0.337   -2.18   0.0294 
-## 10 GS_Recent     TempDist_Recent_GrwSsn_20…  -0.565      0.472   -1.20   0.230  
-## 11 GS_Recent     PPTDist_Recent_GrwSsn_2024   0.509      0.473    1.08   0.282  
-## 12 GS_Recent     Geographic_Dist              0.322      0.269    1.19   0.232  
-## 13 GS_Recent     height.cm                   -0.620      0.352   -1.76   0.0781 
-## 14 GS_Historical TempDist_Historic_GrwSsn_…  -0.593      0.483   -1.23   0.220  
-## 15 GS_Historical PPTDist_Historic_GrwSsn_2…   0.529      0.477    1.11   0.267  
-## 16 GS_Historical Geographic_Dist              0.289      0.262    1.10   0.271  
-## 17 GS_Historical height.cm                   -0.640      0.349   -1.83   0.0666</code></pre>
+##  1 pop.block     height.cm_scaled            -0.646      0.239   -2.70   0.00689
+##  2 WY_Recent     TempDist_Recent_Wtr_Year_…  -0.665      0.336   -1.98   0.0479 
+##  3 WY_Recent     PPTDist_Recent_Wtr_Year_2…   0.0412     0.311    0.132  0.895  
+##  4 WY_Recent     Geographic_Dist_scaled       0.315      0.262    1.20   0.230  
+##  5 WY_Historical TempDist_Historic_Wtr_Yea…  -0.666      0.346   -1.93   0.0540 
+##  6 WY_Historical PPTDist_Historic_Wtr_Year…   0.0199     0.316    0.0630 0.950  
+##  7 WY_Historical Geographic_Dist_scaled       0.283      0.256    1.11   0.268  
+##  8 GS_Recent     TempDist_Recent_GrwSsn_20…  -0.861      0.457   -1.88   0.0597 
+##  9 GS_Recent     PPTDist_Recent_GrwSsn_202…   0.261      0.450    0.579  0.563  
+## 10 GS_Recent     Geographic_Dist_scaled       0.145      0.248    0.585  0.558  
+## # ℹ 15 more rows</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2_sub %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -1301,8 +1655,11 @@ surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 5 warnings in `mutate()`.
+<pre><code>## Warning: There were 8 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(extracted_fit, r2)`.
 ## Caused by warning:
@@ -1312,38 +1669,68 @@ surv_GD_fits_wl2_sub %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 4 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name             rsq
-##    &lt;chr&gt;          &lt;dbl&gt;
-##  1 pop.block     NA    
-##  2 pop.block      0.112
-##  3 WY_Recent     NA    
-##  4 WY_Recent      0.187
-##  5 WY_Historical NA    
-##  6 WY_Historical  0.188
-##  7 GS_Recent     NA    
-##  8 GS_Recent      0.154
-##  9 GS_Historical NA    
-## 10 GS_Historical  0.158</code></pre>
-<pre class="r"><code>#Add in Geo and Gowers clim dist
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 7 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 16 × 2
+##    name                    rsq
+##    &lt;chr&gt;                 &lt;dbl&gt;
+##  1 pop.block            NA    
+##  2 pop.block             0.112
+##  3 WY_Recent            NA    
+##  4 WY_Recent             0.138
+##  5 WY_Historical        NA    
+##  6 WY_Historical         0.135
+##  7 GS_Recent            NA    
+##  8 GS_Recent             0.128
+##  9 GS_Historical        NA    
+## 10 GS_Historical         0.129
+## 11 WY_Recent_height     NA    
+## 12 WY_Recent_height      0.187
+## 13 GS_Recent_height     NA    
+## 14 GS_Recent_height      0.154
+## 15 GS_Historical_height NA    
+## 16 GS_Historical_height  0.158</code></pre>
+<pre class="r"><code>##predictions for figures:
+repsurv2_sub_preds &lt;- surv_GD_fits_wl2_sub %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_wtr_yr_temp_2024)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_recent_wtr_yr_temp_2024) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_sub_preds$TempDist_Recent_Wtr_Year_2024_scaled &lt;- as.vector(repsurv2_sub_preds$TempDist_Recent_Wtr_Year_2024_scaled)
+write_csv(repsurv2_sub_preds, &quot;../Processed.Data/RepSurv2_SubPreds_WYRecentTemp.csv&quot;)
+
+#Add in Geo and Gowers clim dist
 surv_GD_wflow_wl2 &lt;- workflow() %&gt;%
-  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm,  block, contains(&quot;GD&quot;), Geographic_Dist)) 
+  add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm_scaled,  block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
 surv_GD_fits_wl2 &lt;- tibble(wflow=list(
   pop.block = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop) + (1|block))}
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -1352,31 +1739,30 @@ name=names(wflow)
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>##show results:
 surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 13 × 6
-##    name          term                      estimate std.error statistic p.value
-##    &lt;chr&gt;         &lt;chr&gt;                        &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                   -0.646     0.239    -2.70  0.00689
-##  2 WY_Recent     GD_Recent_Wtr_Year_2024     -0.495     0.294    -1.69  0.0919 
-##  3 WY_Recent     Geographic_Dist              0.464     0.263     1.76  0.0783 
-##  4 WY_Recent     height.cm                   -0.578     0.249    -2.32  0.0205 
-##  5 WY_Historical GD_Historic_Wtr_Year_2024   -0.494     0.283    -1.75  0.0810 
-##  6 WY_Historical Geographic_Dist              0.472     0.263     1.79  0.0731 
-##  7 WY_Historical height.cm                   -0.630     0.248    -2.54  0.0111 
-##  8 GS_Recent     GD_Recent_GrwSsn_2024       -0.182     0.283    -0.641 0.521  
-##  9 GS_Recent     Geographic_Dist              0.264     0.233     1.13  0.257  
-## 10 GS_Recent     height.cm                   -0.569     0.276    -2.06  0.0394 
-## 11 GS_Historical GD_Historic_GrwSsn_2024     -0.117     0.245    -0.478 0.633  
-## 12 GS_Historical Geographic_Dist              0.278     0.233     1.19  0.233  
-## 13 GS_Historical height.cm                   -0.621     0.253    -2.46  0.0140</code></pre>
-<pre class="r"><code># recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
-
-surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
+<pre><code>## # A tibble: 21 × 6
+##    name             term                    estimate std.error statistic p.value
+##    &lt;chr&gt;            &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.block        height.cm_scaled          -0.646     0.239     -2.70 0.00689
+##  2 WY_Recent        GD_Recent_Wtr_Year_202…   -0.614     0.267     -2.30 0.0215 
+##  3 WY_Recent        Geographic_Dist_scaled     0.503     0.251      2.00 0.0453 
+##  4 WY_Historical    GD_Historic_Wtr_Year_2…   -0.531     0.254     -2.09 0.0369 
+##  5 WY_Historical    Geographic_Dist_scaled     0.473     0.248      1.91 0.0562 
+##  6 GS_Recent        GD_Recent_GrwSsn_2024_…   -0.506     0.249     -2.04 0.0418 
+##  7 GS_Recent        Geographic_Dist_scaled     0.249     0.230      1.08 0.280  
+##  8 GS_Historical    GD_Historic_GrwSsn_202…   -0.333     0.235     -1.41 0.157  
+##  9 GS_Historical    Geographic_Dist_scaled     0.294     0.246      1.19 0.233  
+## 10 WY_Recent_height GD_Recent_Wtr_Year_202…   -0.495     0.294     -1.69 0.0919 
+## # ℹ 11 more rows</code></pre>
+<pre class="r"><code>surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -1385,8 +1771,11 @@ surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 5 warnings in `mutate()`.
+<pre><code>## Warning: There were 8 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(extracted_fit, r2)`.
 ## Caused by warning:
@@ -1396,20 +1785,60 @@ surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 4 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name             rsq
-##    &lt;chr&gt;          &lt;dbl&gt;
-##  1 pop.block     NA    
-##  2 pop.block      0.112
-##  3 WY_Recent     NA    
-##  4 WY_Recent      0.180
-##  5 WY_Historical NA    
-##  6 WY_Historical  0.183
-##  7 GS_Recent     NA    
-##  8 GS_Recent      0.134
-##  9 GS_Historical NA    
-## 10 GS_Historical  0.130</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 7 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.block            NA     
+##  2 pop.block             0.112 
+##  3 WY_Recent            NA     
+##  4 WY_Recent             0.0966
+##  5 WY_Historical        NA     
+##  6 WY_Historical         0.0767
+##  7 GS_Recent            NA     
+##  8 GS_Recent             0.0843
+##  9 GS_Historical         0.261 
+## 10 GS_Historical         0.0378
+## 11 WY_Recent_height     NA     
+## 12 WY_Recent_height      0.180 
+## 13 WY_Historical_height NA     
+## 14 WY_Historical_height  0.183 
+## 15 GS_Recent_height     NA     
+## 16 GS_Recent_height      0.134 
+## 17 GS_Historical_height NA     
+## 18 GS_Historical_height  0.130</code></pre>
+<pre class="r"><code>##predictions for figures:
+repsurv2_GD_preds &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;WY_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(repsurv2_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+repsurv2_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(repsurv2_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+repsurv2_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(repsurv2_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+repsurv2_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(repsurv2_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+repsurv2_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(repsurv2_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+repsurv2_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(repsurv2_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(repsurv2_GD_preds, &quot;../Processed.Data/RepSurv2_GDPreds_WYRecent.csv&quot;)
+
+repsurv2_GD_preds2 &lt;- surv_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+  filter(name==&quot;GS_Recent&quot;) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
+  unnest(predictions) %&gt;% 
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_GD_preds2$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(repsurv2_GD_preds2$GD_Recent_Wtr_Year_2023_scaled)
+repsurv2_GD_preds2$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(repsurv2_GD_preds2$GD_Historic_GrwSsn_2023_scaled)
+repsurv2_GD_preds2$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(repsurv2_GD_preds2$GD_Recent_Wtr_Year_2024_scaled)
+repsurv2_GD_preds2$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(repsurv2_GD_preds2$GD_Recent_GrwSsn_2024_scaled)
+repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled)
+repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled)
+write_csv(repsurv2_GD_preds2, &quot;../Processed.Data/RepSurv2_GDPreds_GrwSsnRecent.csv&quot;)</code></pre>
 </div>
 <div id="fruit-n-y2-models" class="section level2">
 <h2>Fruit N Y2 Models</h2>
@@ -1439,11 +1868,15 @@ fruits_modelslog %&gt;% mutate(tidy=map(lmer, tidy, effects = &quot;ran_pars&quo
 <pre class="r"><code>#Add in Geo and tmp/ppt dist
 fruits_models_log_CD_GD_sub &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logFruits ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logFruits ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logFruits ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logFruits ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logFruits ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logFruits ~  height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logFruits ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logFruits ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logFruits ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logFruits ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;logFruits ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;logFruits ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;8_GS_Recent_height&quot;,      &quot;logFruits ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;logFruits ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;
 )
 #run the models 
 fruits_models_log_CD_GD_sub &lt;- fruits_models_log_CD_GD_sub %&gt;%
@@ -1452,33 +1885,31 @@ fruits_models_log_CD_GD_sub &lt;- fruits_models_log_CD_GD_sub %&gt;%
          glance = map(lmer, glance)) #glance at the model results</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>#boundary (singular) fit: see help(&#39;isSingular&#39;) warning for all models with climate distance - pop explains 0 variance when you add clim distance 
 ##show results:
 fruits_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 17 × 7
+<pre><code>## # A tibble: 29 × 7
 ##    name            term               estimate std.error statistic    df p.value
 ##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm            0.175      0.126     1.38   22.4  0.180 
-##  2 2_WY_Recent     TempDist_Recent_W…  -0.371      0.218    -1.71   41.1  0.0957
-##  3 2_WY_Recent     PPTDist_Recent_Wt…  -0.238      0.196    -1.21   32.3  0.234 
-##  4 2_WY_Recent     Geographic_Dist      0.0981     0.145     0.679  28.9  0.502 
-##  5 2_WY_Recent     height.cm            0.244      0.155     1.58   61.1  0.120 
-##  6 3_WY_Historical TempDist_Historic…  -0.413      0.231    -1.79   41.2  0.0813
-##  7 3_WY_Historical PPTDist_Historic_…  -0.271      0.205    -1.32   31.7  0.196 
-##  8 3_WY_Historical Geographic_Dist      0.0949     0.141     0.675  28.3  0.505 
-##  9 3_WY_Historical height.cm            0.255      0.156     1.64   61.4  0.106 
-## 10 4_GS_Recent     TempDist_Recent_G…  -0.160      0.228    -0.700  18.2  0.493 
-## 11 4_GS_Recent     PPTDist_Recent_Gr…  -0.200      0.226    -0.885  27.5  0.384 
-## 12 4_GS_Recent     Geographic_Dist      0.0759     0.132     0.575  27.2  0.570 
-## 13 4_GS_Recent     height.cm            0.294      0.159     1.84   61.2  0.0699
-## 14 5_GS_Historical TempDist_Historic…  -0.139      0.228    -0.609  18.8  0.550 
-## 15 5_GS_Historical PPTDist_Historic_…  -0.220      0.224    -0.979  27.2  0.336 
-## 16 5_GS_Historical Geographic_Dist      0.0788     0.130     0.606  24.9  0.550 
-## 17 5_GS_Historical height.cm            0.294      0.159     1.85   61.2  0.0685</code></pre>
+##  1 1_pop.block     height.cm_scaled     0.175      0.126     1.38   22.4   0.180
+##  2 2_WY_Recent     TempDist_Recent_W…  -0.139      0.157    -0.883  24.5   0.386
+##  3 2_WY_Recent     PPTDist_Recent_Wt…  -0.0881     0.171    -0.517  24.7   0.610
+##  4 2_WY_Recent     Geographic_Dist_s…   0.189      0.131     1.45   24.6   0.160
+##  5 3_WY_Historical TempDist_Historic…  -0.154      0.166    -0.926  24.3   0.364
+##  6 3_WY_Historical PPTDist_Historic_…  -0.102      0.176    -0.578  23.8   0.568
+##  7 3_WY_Historical Geographic_Dist_s…   0.188      0.127     1.48   23.8   0.151
+##  8 4_GS_Recent     TempDist_Recent_G…  -0.0536     0.218    -0.245  19.3   0.809
+##  9 4_GS_Recent     PPTDist_Recent_Gr…  -0.0754     0.216    -0.349  25.2   0.730
+## 10 4_GS_Recent     Geographic_Dist_s…   0.186      0.117     1.58   22.6   0.127
+## # ℹ 19 more rows</code></pre>
 <pre class="r"><code>fruits_models_log_CD_GD_sub %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -1486,8 +1917,12 @@ fruits_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(ti
 <pre><code>## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 4 warnings in `mutate()`.
+<pre><code>## Warning: There were 8 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(lmer, r2)`.
 ## Caused by warning:
@@ -1497,20 +1932,28 @@ fruits_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(ti
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name                rsq
-##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 1_pop.block      0.511 
-##  2 1_pop.block      0.0254
-##  3 2_WY_Recent     NA     
-##  4 2_WY_Recent      0.123 
-##  5 3_WY_Historical NA     
-##  6 3_WY_Historical  0.128 
-##  7 4_GS_Recent     NA     
-##  8 4_GS_Recent      0.143 
-##  9 5_GS_Historical NA     
-## 10 5_GS_Historical  0.145</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 7 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                       rsq
+##    &lt;chr&gt;                    &lt;dbl&gt;
+##  1 1_pop.block             0.511 
+##  2 1_pop.block             0.0254
+##  3 2_WY_Recent            NA     
+##  4 2_WY_Recent             0.0830
+##  5 3_WY_Historical        NA     
+##  6 3_WY_Historical         0.0843
+##  7 4_GS_Recent            NA     
+##  8 4_GS_Recent             0.0886
+##  9 5_GS_Historical        NA     
+## 10 5_GS_Historical         0.0893
+## 11 6_WY_Recent_height     NA     
+## 12 6_WY_Recent_height      0.123 
+## 13 7_WY_Historical_height NA     
+## 14 7_WY_Historical_height  0.128 
+## 15 8_GS_Recent_height     NA     
+## 16 8_GS_Recent_height      0.143 
+## 17 9_GS_Historical_height NA     
+## 18 9_GS_Historical_height  0.145</code></pre>
 <pre class="r"><code># Can&#39;t compute random effect variances. Some variance components equal zero. --&gt; NA conditional rsq
 # Your model may suffer from singularity (see `?lme4::isSingular` and `?performance::check_singularity`).
 #  Decrease the `tolerance` level to force the calculation of random effect variances, or impose
@@ -1519,11 +1962,15 @@ fruits_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(ti
 #Add in Geo and Gowers clim dist
 fruits_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logFruits ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logFruits ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logFruits ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logFruits ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logFruits ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logFruits ~  height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logFruits ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logFruits ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logFruits ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logFruits ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;logFruits ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;logFruits ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;8_GS_Recent_height&quot;,      &quot;logFruits ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;logFruits ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;
 )
 #run the models 
 fruits_models_log_CD_GD &lt;- fruits_models_log_CD_GD %&gt;%
@@ -1531,35 +1978,41 @@ fruits_models_log_CD_GD &lt;- fruits_models_log_CD_GD %&gt;%
                             data = wl2_fruits_y2_scaled)), #run the models 
          glance = map(lmer, glance)) #glance at the model results</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>##show results:
 fruits_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 13 × 7
-##    name            term               estimate std.error statistic    df p.value
-##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm            0.175      0.126     1.38  22.4   0.180 
-##  2 2_WY_Recent     GD_Recent_Wtr_Yea…  -0.145      0.174    -0.831  1.92  0.497 
-##  3 2_WY_Recent     Geographic_Dist      0.229      0.161     1.42   1.74  0.308 
-##  4 2_WY_Recent     height.cm            0.154      0.132     1.16   9.49  0.273 
-##  5 3_WY_Historical GD_Historic_Wtr_Y…  -0.110      0.175    -0.630  1.74  0.601 
-##  6 3_WY_Historical Geographic_Dist      0.213      0.167     1.28   1.67  0.350 
-##  7 3_WY_Historical height.cm            0.146      0.131     1.11   8.28  0.297 
-##  8 4_GS_Recent     GD_Recent_GrwSsn_…  -0.178      0.137    -1.30  31.8   0.203 
-##  9 4_GS_Recent     Geographic_Dist      0.219      0.118     1.85  16.7   0.0826
-## 10 4_GS_Recent     height.cm            0.152      0.133     1.14  52.7   0.259 
-## 11 5_GS_Historical GD_Historic_GrwSs…  -0.0817     0.122    -0.668 35.4   0.508 
-## 12 5_GS_Historical Geographic_Dist      0.218      0.123     1.78  16.4   0.0935
-## 13 5_GS_Historical height.cm            0.0877     0.121     0.725 46.1   0.472</code></pre>
+<pre><code>## # A tibble: 21 × 7
+##    name               term            estimate std.error statistic    df p.value
+##    &lt;chr&gt;              &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1 1_pop.block        height.cm_scal…   0.175      0.126     1.38  22.4   0.180 
+##  2 2_WY_Recent        GD_Recent_Wtr_…  -0.0828     0.132    -0.627 19.4   0.538 
+##  3 2_WY_Recent        Geographic_Dis…   0.251      0.128     1.96  19.6   0.0639
+##  4 3_WY_Historical    GD_Historic_Wt…  -0.0648     0.133    -0.486 20.2   0.632 
+##  5 3_WY_Historical    Geographic_Dis…   0.243      0.130     1.88  20.2   0.0749
+##  6 4_GS_Recent        GD_Recent_GrwS…  -0.0960     0.113    -0.850 25.7   0.403 
+##  7 4_GS_Recent        Geographic_Dis…   0.233      0.114     2.05  17.1   0.0559
+##  8 5_GS_Historical    GD_Historic_Gr…  -0.0532     0.112    -0.473 34.0   0.639 
+##  9 5_GS_Historical    Geographic_Dis…   0.229      0.118     1.95  17.1   0.0682
+## 10 6_WY_Recent_height GD_Recent_Wtr_…  -0.145      0.174    -0.831  1.92  0.497 
+## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>fruits_models_log_CD_GD %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-f:-glance)</code></pre>
 <pre><code>## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 2 warnings in `mutate()`.
+<pre><code>## Warning: There were 6 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(lmer, r2)`.
 ## Caused by warning:
@@ -1569,20 +2022,28 @@ fruits_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) 
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name                rsq
-##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 1_pop.block      0.511 
-##  2 1_pop.block      0.0254
-##  3 2_WY_Recent      0.523 
-##  4 2_WY_Recent      0.0483
-##  5 3_WY_Historical  0.522 
-##  6 3_WY_Historical  0.0452
-##  7 4_GS_Recent     NA     
-##  8 4_GS_Recent      0.103 
-##  9 5_GS_Historical NA     
-## 10 5_GS_Historical  0.0795</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 5 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                       rsq
+##    &lt;chr&gt;                    &lt;dbl&gt;
+##  1 1_pop.block             0.511 
+##  2 1_pop.block             0.0254
+##  3 2_WY_Recent            NA     
+##  4 2_WY_Recent             0.0748
+##  5 3_WY_Historical        NA     
+##  6 3_WY_Historical         0.0718
+##  7 4_GS_Recent            NA     
+##  8 4_GS_Recent             0.0806
+##  9 5_GS_Historical        NA     
+## 10 5_GS_Historical         0.0708
+## 11 6_WY_Recent_height      0.523 
+## 12 6_WY_Recent_height      0.0483
+## 13 7_WY_Historical_height  0.522 
+## 14 7_WY_Historical_height  0.0452
+## 15 8_GS_Recent_height     NA     
+## 16 8_GS_Recent_height      0.103 
+## 17 9_GS_Historical_height NA     
+## 18 9_GS_Historical_height  0.0795</code></pre>
 <pre class="r"><code># Can&#39;t compute random effect variances. Some variance components equal zero. --&gt; NA conditional rsq</code></pre>
 </div>
 <div id="fruit-flowers-y2" class="section level2">
@@ -1613,11 +2074,11 @@ FrFlN_modelslog %&gt;% mutate(tidy=map(lmer, tidy, effects = &quot;ran_pars&quot
 <pre class="r"><code>#Add in Geo and tmp/ppt dist
 FrFlN_models_log_CD_GD_sub &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logFrFLs ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logFrFLs ~  TempDist_Recent_Wtr_Year_2024 + PPTDist_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logFrFLs ~  TempDist_Historic_Wtr_Year_2024 + PPTDist_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logFrFLs ~  TempDist_Recent_GrwSsn_2024 + PPTDist_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logFrFLs ~  TempDist_Historic_GrwSsn_2024 + PPTDist_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logFrFLs ~  (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logFrFLs ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logFrFLs ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logFrFLs ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logFrFLs ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;
 )
 #run the models 
 FrFlN_models_log_CD_GD_sub &lt;- FrFlN_models_log_CD_GD_sub %&gt;%
@@ -1625,40 +2086,39 @@ FrFlN_models_log_CD_GD_sub &lt;- FrFlN_models_log_CD_GD_sub %&gt;%
                             data = wl2_FrFlN_y2_scaled)), #run the models 
          glance = map(lmer, glance)) #glance at the model results</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>#boundary (singular) fit: see help(&#39;isSingular&#39;) warning for all models with climate distance 
 ##show results:
 FrFlN_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;)) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 17 × 7
+<pre><code>## # A tibble: 12 × 7
 ##    name            term               estimate std.error statistic    df p.value
 ##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm            0.159      0.122     1.31  24.3    0.203
-##  2 2_WY_Recent     TempDist_Recent_W…  -0.258      0.224    -1.15   7.19   0.287
-##  3 2_WY_Recent     PPTDist_Recent_Wt…  -0.108      0.208    -0.518  3.93   0.632
-##  4 2_WY_Recent     Geographic_Dist      0.164      0.150     1.10   4.21   0.332
-##  5 2_WY_Recent     height.cm            0.198      0.153     1.29  44.3    0.204
-##  6 3_WY_Historical TempDist_Historic…  -0.290      0.234    -1.24   7.78   0.252
-##  7 3_WY_Historical PPTDist_Historic_…  -0.141      0.212    -0.667  3.91   0.542
-##  8 3_WY_Historical Geographic_Dist      0.157      0.142     1.11   4.30   0.327
-##  9 3_WY_Historical height.cm            0.203      0.154     1.32  45.3    0.193
-## 10 4_GS_Recent     TempDist_Recent_G…  -0.199      0.213    -0.934 18.2    0.363
-## 11 4_GS_Recent     PPTDist_Recent_Gr…  -0.0987     0.216    -0.457 28.5    0.651
-## 12 4_GS_Recent     Geographic_Dist      0.121      0.126     0.967 26.8    0.342
-## 13 4_GS_Recent     height.cm            0.248      0.155     1.60  57.6    0.115
-## 14 5_GS_Historical TempDist_Historic…  -0.158      0.213    -0.742 18.8    0.467
-## 15 5_GS_Historical PPTDist_Historic_…  -0.139      0.213    -0.652 28.3    0.519
-## 16 5_GS_Historical Geographic_Dist      0.117      0.124     0.950 24.3    0.352
-## 17 5_GS_Historical height.cm            0.248      0.155     1.61  57.9    0.113</code></pre>
+##  1 2_WY_Recent     TempDist_Recent_W… -0.0763      0.151   -0.507   25.9  0.616 
+##  2 2_WY_Recent     PPTDist_Recent_Wt…  0.00788     0.165    0.0478  27.1  0.962 
+##  3 2_WY_Recent     Geographic_Dist_s…  0.242       0.125    1.94    26.1  0.0629
+##  4 3_WY_Historical TempDist_Historic… -0.0869      0.159   -0.546   25.7  0.590 
+##  5 3_WY_Historical PPTDist_Historic_… -0.00771     0.170   -0.0453  26.1  0.964 
+##  6 3_WY_Historical Geographic_Dist_s…  0.235       0.121    1.94    25.1  0.0631
+##  7 4_GS_Recent     TempDist_Recent_G… -0.116       0.206   -0.562   20.3  0.580 
+##  8 4_GS_Recent     PPTDist_Recent_Gr…  0.0134      0.205    0.0654  26.6  0.948 
+##  9 4_GS_Recent     Geographic_Dist_s…  0.216       0.111    1.95    23.3  0.0636
+## 10 5_GS_Historical TempDist_Historic… -0.0834      0.208   -0.401   20.9  0.693 
+## 11 5_GS_Historical PPTDist_Historic_… -0.0209      0.201   -0.104   26.2  0.918 
+## 12 5_GS_Historical Geographic_Dist_s…  0.210       0.109    1.92    21.0  0.0683</code></pre>
 <pre class="r"><code>FrFlN_models_log_CD_GD_sub %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-f:-glance)</code></pre>
 <pre><code>## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 2 warnings in `mutate()`.
+<pre><code>## Warning: There were 4 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(lmer, r2)`.
 ## Caused by warning:
@@ -1668,30 +2128,30 @@ FrFlN_models_log_CD_GD_sub %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tid
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <pre><code>## # A tibble: 10 × 2
 ##    name                rsq
 ##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 1_pop.block      0.523 
-##  2 1_pop.block      0.0218
-##  3 2_WY_Recent      0.530 
-##  4 2_WY_Recent      0.0612
-##  5 3_WY_Historical  0.527 
-##  6 3_WY_Historical  0.0633
+##  1 1_pop.block      0.489 
+##  2 1_pop.block      0     
+##  3 2_WY_Recent     NA     
+##  4 2_WY_Recent      0.0941
+##  5 3_WY_Historical NA     
+##  6 3_WY_Historical  0.0944
 ##  7 4_GS_Recent     NA     
-##  8 4_GS_Recent      0.137 
+##  8 4_GS_Recent      0.0993
 ##  9 5_GS_Historical NA     
-## 10 5_GS_Historical  0.137</code></pre>
+## 10 5_GS_Historical  0.0987</code></pre>
 <pre class="r"><code># Can&#39;t compute random effect variances. Some variance components equal zero. --&gt; NA conditional rsq
 
 #Add in Geo and Gowers clim dist
 FrFlN_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logFrFLs ~  height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logFrFLs ~  GD_Recent_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logFrFLs ~  GD_Historic_Wtr_Year_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logFrFLs ~  GD_Recent_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logFrFLs ~  GD_Historic_GrwSsn_2024 + Geographic_Dist + height.cm + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logFrFLs ~  (1|pop/mf) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logFrFLs ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logFrFLs ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logFrFLs ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logFrFLs ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;
 )
 #run the models 
 FrFlN_models_log_CD_GD &lt;- FrFlN_models_log_CD_GD %&gt;%
@@ -1699,35 +2159,34 @@ FrFlN_models_log_CD_GD &lt;- FrFlN_models_log_CD_GD %&gt;%
                             data = wl2_FrFlN_y2_scaled)), #run the models 
          glance = map(lmer, glance)) #glance at the model results</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>##show results:
 FrFlN_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 13 × 7
-##    name            term               estimate std.error statistic    df p.value
-##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm            0.159      0.122     1.31  24.3   0.203 
-##  2 2_WY_Recent     GD_Recent_Wtr_Yea…  -0.155      0.135    -1.15   2.18  0.362 
-##  3 2_WY_Recent     Geographic_Dist      0.283      0.123     2.29   1.83  0.160 
-##  4 2_WY_Recent     height.cm            0.0942     0.114     0.829  5.98  0.439 
-##  5 3_WY_Historical GD_Historic_Wtr_Y…  -0.129      0.137    -0.940  2.03  0.445 
-##  6 3_WY_Historical Geographic_Dist      0.272      0.129     2.10   1.80  0.185 
-##  7 3_WY_Historical height.cm            0.0843     0.113     0.746  5.37  0.487 
-##  8 4_GS_Recent     GD_Recent_GrwSsn_…  -0.164      0.129    -1.28  32.7   0.211 
-##  9 4_GS_Recent     Geographic_Dist      0.236      0.110     2.14  17.2   0.0466
-## 10 4_GS_Recent     height.cm            0.138      0.127     1.08  51.5   0.283 
-## 11 5_GS_Historical GD_Historic_GrwSs…  -0.0869     0.116    -0.750 37.3   0.458 
-## 12 5_GS_Historical Geographic_Dist      0.240      0.115     2.09  17.4   0.0517
-## 13 5_GS_Historical height.cm            0.0819     0.115     0.711 46.6   0.481</code></pre>
+<pre><code>## # A tibble: 8 × 7
+##   name            term                estimate std.error statistic    df p.value
+##   &lt;chr&gt;           &lt;chr&gt;                  &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1 2_WY_Recent     GD_Recent_Wtr_Year…  -0.120      0.123    -0.973  20.4  0.342 
+## 2 2_WY_Recent     Geographic_Dist_sc…   0.287      0.119     2.41   19.9  0.0256
+## 3 3_WY_Historical GD_Historic_Wtr_Ye…  -0.106      0.125    -0.851  21.6  0.404 
+## 4 3_WY_Historical Geographic_Dist_sc…   0.282      0.121     2.34   20.8  0.0297
+## 5 4_GS_Recent     GD_Recent_GrwSsn_2…  -0.0906     0.107    -0.849  26.9  0.403 
+## 6 4_GS_Recent     Geographic_Dist_sc…   0.249      0.107     2.32   17.7  0.0323
+## 7 5_GS_Historical GD_Historic_GrwSsn…  -0.0599     0.107    -0.561  35.6  0.578 
+## 8 5_GS_Historical Geographic_Dist_sc…   0.249      0.111     2.24   17.9  0.0380</code></pre>
 <pre class="r"><code>FrFlN_models_log_CD_GD %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-f:-glance)</code></pre>
 <pre><code>## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 2 warnings in `mutate()`.
+<pre><code>## Warning: There were 4 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(lmer, r2)`.
 ## Caused by warning:
@@ -1737,20 +2196,20 @@ FrFlN_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
 <pre><code>## # A tibble: 10 × 2
 ##    name                rsq
 ##    &lt;chr&gt;             &lt;dbl&gt;
-##  1 1_pop.block      0.523 
-##  2 1_pop.block      0.0218
-##  3 2_WY_Recent      0.532 
-##  4 2_WY_Recent      0.0575
-##  5 3_WY_Historical  0.530 
-##  6 3_WY_Historical  0.0538
+##  1 1_pop.block      0.489 
+##  2 1_pop.block      0     
+##  3 2_WY_Recent     NA     
+##  4 2_WY_Recent      0.101 
+##  5 3_WY_Historical NA     
+##  6 3_WY_Historical  0.0975
 ##  7 4_GS_Recent     NA     
-##  8 4_GS_Recent      0.115 
+##  8 4_GS_Recent      0.0961
 ##  9 5_GS_Historical NA     
-## 10 5_GS_Historical  0.0974</code></pre>
+## 10 5_GS_Historical  0.0889</code></pre>
 <pre class="r"><code># Can&#39;t compute random effect variances. Some variance components equal zero. --&gt; NA conditional rsq</code></pre>
 </div>
 <div id="prob-fruits-models" class="section level2">
@@ -1835,110 +2294,136 @@ prob_fitness_fits &lt;- prob_fitness_fits %&gt;%
 
 #Add in geo and temp/ppt distance
 prob_fitness_SUB_wflow_wl2 &lt;- workflow() %&gt;%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm,  block, contains(&quot;Dist&quot;))) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm_scaled,  block, contains(&quot;Dist&quot;))) 
 prob_fitness_SUB_fits_wl2 &lt;- tibble(wflow=list(
   pop.block = {prob_fitness_SUB_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_SUB_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_SUB_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_SUB_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled+ Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled+ Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
-  GS_Historical = {prob_fitness_SUB_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))}
+ # GS_Historical = {prob_fitness_SUB_wflow_wl2 %&gt;% 
+  #    add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {prob_fitness_SUB_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {prob_fitness_SUB_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Recent_height = {prob_fitness_SUB_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled+ Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Historical_height = {prob_fitness_SUB_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
   select(name,wflow) %&gt;%
   mutate(fit = map(wflow, fit, data = wl2_prob_fitness_scaled))
+#convergence issues with GS_historical model 
 
 ##show results:
 prob_fitness_SUB_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 17 × 6
+<pre><code>## # A tibble: 26 × 6
 ##    name          term                       estimate std.error statistic p.value
 ##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                    0.289      0.162     1.79   0.0740
-##  2 WY_Recent     AvgTempDist_Recent_Wtr_Ye…   1.61       0.745     2.16   0.0309
-##  3 WY_Recent     AvgPPTDist_Recent_Wtr_Yea…  -0.603      0.750    -0.804  0.421 
-##  4 WY_Recent     Geographic_Dist_scaled      -0.307      0.583    -0.527  0.598 
-##  5 WY_Recent     height.cm                    0.226      0.159     1.42   0.156 
-##  6 WY_Historical AvgTempDist_Historic_Wtr_…   1.57       0.767     2.05   0.0401
-##  7 WY_Historical AvgPPTDist_Historic_Wtr_Y…  -0.608      0.774    -0.786  0.432 
-##  8 WY_Historical Geographic_Dist_scaled      -0.239      0.565    -0.423  0.672 
-##  9 WY_Historical height.cm                    0.226      0.159     1.42   0.155 
-## 10 GS_Recent     AvgTempDist_Recent_GrwSsn…   1.28       1.22      1.05   0.293 
-## 11 GS_Recent     AvgPPTDist_Recent_GrwSsn_…   0.257      1.15      0.224  0.823 
-## 12 GS_Recent     Geographic_Dist_scaled      -0.169      0.649    -0.260  0.795 
-## 13 GS_Recent     height.cm                    0.253      0.160     1.58   0.115 
-## 14 GS_Historical AvgTempDist_Historic_GrwS…   0.922      1.10      0.841  0.400 
-## 15 GS_Historical AvgPPTDist_Historic_GrwSs…   0.731      0.995     0.734  0.463 
-## 16 GS_Historical Geographic_Dist_scaled      -0.0755     0.627    -0.120  0.904 
-## 17 GS_Historical height.cm                    0.245      0.160     1.53   0.127</code></pre>
+##  1 pop.block     height.cm_scaled              0.285     0.159     1.79   0.0740
+##  2 WY_Recent     AvgTempDist_Recent_Wtr_Ye…    1.80      0.746     2.41   0.0159
+##  3 WY_Recent     AvgPPTDist_Recent_Wtr_Yea…   -0.588     0.767    -0.766  0.444 
+##  4 WY_Recent     Geographic_Dist_scaled       -0.313     0.588    -0.532  0.595 
+##  5 WY_Historical AvgTempDist_Historic_Wtr_…    1.76      0.767     2.30   0.0214
+##  6 WY_Historical AvgPPTDist_Historic_Wtr_Y…   -0.590     0.791    -0.745  0.456 
+##  7 WY_Historical Geographic_Dist_scaled       -0.244     0.569    -0.428  0.669 
+##  8 GS_Recent     AvgTempDist_Recent_GrwSsn…    1.31      1.26      1.04   0.297 
+##  9 GS_Recent     AvgPPTDist_Recent_GrwSsn_…    0.424     1.19      0.355  0.722 
+## 10 GS_Recent     Geographic_Dist_scaled       -0.170     0.671    -0.254  0.800 
+## # ℹ 16 more rows</code></pre>
 <pre class="r"><code>prob_fitness_SUB_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name              rsq
-##    &lt;chr&gt;           &lt;dbl&gt;
-##  1 pop.block     0.725  
-##  2 pop.block     0.00677
-##  3 WY_Recent     0.744  
-##  4 WY_Recent     0.370  
-##  5 WY_Historical 0.742  
-##  6 WY_Historical 0.369  
-##  7 GS_Recent     0.755  
-##  8 GS_Recent     0.216  
-##  9 GS_Historical 0.753  
-## 10 GS_Historical 0.227</code></pre>
+<pre><code>## # A tibble: 16 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.block            0.725  
+##  2 pop.block            0.00677
+##  3 WY_Recent            0.752  
+##  4 WY_Recent            0.371  
+##  5 WY_Historical        0.749  
+##  6 WY_Historical        0.370  
+##  7 GS_Recent            0.770  
+##  8 GS_Recent            0.209  
+##  9 WY_Recent_height     0.744  
+## 10 WY_Recent_height     0.370  
+## 11 WY_Historical_height 0.742  
+## 12 WY_Historical_height 0.369  
+## 13 GS_Recent_height     0.755  
+## 14 GS_Recent_height     0.216  
+## 15 GS_Historical_height 0.753  
+## 16 GS_Historical_height 0.227</code></pre>
 <pre class="r"><code>##predictions for figures:
 prob_fitness_sub_preds &lt;- prob_fitness_SUB_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
   filter(name==&quot;WY_Recent&quot;) %&gt;% 
   mutate(predictions=map(extracted_fit, predict, 
-                         new_data=wl2_prob_fitness_scaled)) %&gt;% 
+                         new_data=pred_df_recent_wtr_yr_avgtemp)) %&gt;% 
   unnest(predictions) %&gt;% 
-  bind_cols(wl2_prob_fitness_scaled) %&gt;% 
-  select(name, .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist) 
+  bind_cols(pred_df_recent_wtr_yr_avgtemp) %&gt;% 
+  select(name, .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist_scaled) 
 #double check that above gives predictions for fixed effects only:
 WY_Recent_sub_mod &lt;- glmer(ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled +
                              AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + 
-                             height.cm + (1|pop/mf) + (1|block),
+                             (1|pop/mf) + (1|block),
                            family=&quot;binomial&quot;, data=wl2_prob_fitness_scaled)
-prob_fitness_sub_preds_check &lt;- tibble(.pred=predict(WY_Recent_sub_mod, newdata=wl2_prob_fitness_scaled, 
+prob_fitness_sub_preds_check &lt;- tibble(.pred=predict(WY_Recent_sub_mod, 
+                                                     newdata=pred_df_recent_wtr_yr_avgtemp,
                                                re.form= NA, type=&quot;response&quot;)) %&gt;% 
-  bind_cols(wl2_prob_fitness_scaled) %&gt;% 
-  select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist)
+  bind_cols(pred_df_recent_wtr_yr_avgtemp) %&gt;% 
+  select(.pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geographic_Dist_scaled)
 all.equal(prob_fitness_sub_preds$.pred, prob_fitness_sub_preds_check$.pred)</code></pre>
 <pre><code>## [1] &quot;names for current but not for target&quot;</code></pre>
 <pre class="r"><code>write_csv(prob_fitness_sub_preds, &quot;../Processed.Data/ProbRep_SubPreds.csv&quot;)
 
 #Add in geo and Gowers clim distance
 prob_fitness_GD_wflow_wl2 &lt;- workflow() %&gt;%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm,  block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm_scaled,  block, contains(&quot;GD&quot;), Geographic_Dist_scaled)) 
 prob_fitness_GD_fits_wl2 &lt;- tibble(wflow=list(
   pop.block = {prob_fitness_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Historical = {prob_fitness_GD_wflow_wl2 %&gt;% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {prob_fitness_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {prob_fitness_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Recent_height = {prob_fitness_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Historical_height = {prob_fitness_GD_wflow_wl2 %&gt;% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %&gt;% 
@@ -1947,51 +2432,65 @@ name=names(wflow)
 
 ##show results:
 prob_fitness_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value) %&gt;%
   select(-wflow:-group)</code></pre>
-<pre><code>## # A tibble: 13 × 6
-##    name          term                       estimate std.error statistic p.value
-##    &lt;chr&gt;         &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-##  1 pop.block     height.cm                    0.289      0.162    1.79    0.0740
-##  2 WY_Recent     AvgGD_Recent_Wtr_Year_sca…   1.47       0.625    2.35    0.0188
-##  3 WY_Recent     Geographic_Dist_scaled      -0.591      0.608   -0.972   0.331 
-##  4 WY_Recent     height.cm                    0.247      0.160    1.54    0.122 
-##  5 WY_Historical AvgGD_Historic_Wtr_Year_s…   0.983      0.638    1.54    0.123 
-##  6 WY_Historical Geographic_Dist_scaled      -0.577      0.649   -0.888   0.374 
-##  7 WY_Historical height.cm                    0.272      0.161    1.69    0.0904
-##  8 GS_Recent     AvgGD_Recent_GrwSsn_scaled   0.0369     0.710    0.0520  0.959 
-##  9 GS_Recent     Geographic_Dist_scaled      -0.504      0.683   -0.738   0.460 
-## 10 GS_Recent     height.cm                    0.285      0.162    1.76    0.0780
-## 11 GS_Historical AvgGD_Historic_GrwSsn_sca…  -0.808      0.784   -1.03    0.302 
-## 12 GS_Historical Geographic_Dist_scaled      -0.402      0.671   -0.600   0.549 
-## 13 GS_Historical height.cm                    0.290      0.162    1.79    0.0732</code></pre>
+<pre><code>## # A tibble: 21 × 6
+##    name             term                    estimate std.error statistic p.value
+##    &lt;chr&gt;            &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 pop.block        height.cm_scaled           0.285     0.159     1.79   0.0740
+##  2 WY_Recent        AvgGD_Recent_Wtr_Year_…    1.64      0.641     2.55   0.0107
+##  3 WY_Recent        Geographic_Dist_scaled    -0.636     0.626    -1.02   0.309 
+##  4 WY_Historical    AvgGD_Historic_Wtr_Yea…    1.12      0.679     1.65   0.0997
+##  5 WY_Historical    Geographic_Dist_scaled    -0.634     0.688    -0.921  0.357 
+##  6 GS_Recent        AvgGD_Recent_GrwSsn_sc…    0.100     0.791     0.127  0.899 
+##  7 GS_Recent        Geographic_Dist_scaled    -0.585     0.757    -0.772  0.440 
+##  8 GS_Historical    AvgGD_Historic_GrwSsn_…   -0.843     0.847    -0.995  0.320 
+##  9 GS_Historical    Geographic_Dist_scaled    -0.474     0.747    -0.635  0.525 
+## 10 WY_Recent_height AvgGD_Recent_Wtr_Year_…    1.47      0.625     2.35   0.0188
+## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>prob_fitness_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-wflow:-extracted_fit)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name              rsq
-##    &lt;chr&gt;           &lt;dbl&gt;
-##  1 pop.block     0.725  
-##  2 pop.block     0.00677
-##  3 WY_Recent     0.714  
-##  4 WY_Recent     0.234  
-##  5 WY_Historical 0.712  
-##  6 WY_Historical 0.118  
-##  7 GS_Recent     0.727  
-##  8 GS_Recent     0.0303 
-##  9 GS_Historical 0.736  
-## 10 GS_Historical 0.0924</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                     rsq
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 pop.block            0.725  
+##  2 pop.block            0.00677
+##  3 WY_Recent            0.728  
+##  4 WY_Recent            0.228  
+##  5 WY_Historical        0.738  
+##  6 WY_Historical        0.109  
+##  7 GS_Recent            0.766  
+##  8 GS_Recent            0.0233 
+##  9 GS_Historical        0.774  
+## 10 GS_Historical        0.0813 
+## 11 WY_Recent_height     0.714  
+## 12 WY_Recent_height     0.234  
+## 13 WY_Historical_height 0.712  
+## 14 WY_Historical_height 0.118  
+## 15 GS_Recent_height     0.727  
+## 16 GS_Recent_height     0.0303 
+## 17 GS_Historical_height 0.736  
+## 18 GS_Historical_height 0.0924</code></pre>
 <pre class="r"><code>##predictions for figures:
-prob_fitness_GD_preds &lt;- prob_fitness_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
+probrep_GD_preds &lt;- prob_fitness_GD_fits_wl2 %&gt;%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;%
   filter(name==&quot;WY_Recent&quot;) %&gt;% 
-  mutate(predictions=map(extracted_fit, predict, new_data=wl2_prob_fitness_scaled)) %&gt;% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %&gt;% 
   unnest(predictions) %&gt;% 
-  bind_cols(wl2_prob_fitness_scaled) %&gt;% 
-  select(name, .pred, AvgGD_Recent_Wtr_Year) 
-write_csv(prob_fitness_GD_preds, &quot;../Processed.Data/ProbRep_GDPreds.csv&quot;)</code></pre>
+  bind_cols(pred_df_gowers) %&gt;% 
+  select(-wflow, -fit, -extracted_fit) 
+probrep_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(probrep_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+probrep_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(probrep_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+probrep_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(probrep_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+probrep_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(probrep_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+probrep_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(probrep_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+probrep_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(probrep_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(probrep_GD_preds, &quot;../Processed.Data/ProbRep_GDPreds_WYRecent.csv&quot;)</code></pre>
 </div>
 <div id="total-fruits-models" class="section level2">
 <h2>Total Fruits Models</h2>
@@ -2022,15 +2521,19 @@ rep_output_modelslog &lt;- rep_output_modelslog %&gt;%
 <pre class="r"><code>#Add in Geo and temp/ppt dist
 rep_output_SUB_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_Wtr_Year + AvgPPTDist_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_Wtr_Year + AvgPPTDist_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_GrwSsn + AvgPPTDist_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5a_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn + AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  #Troubleshoot weird GrwSsn-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
-  &quot;5b_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn*AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5c_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5d_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgPPTDist_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;, 
+  &quot;5a_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;, 
+  #Troubleshoot weird GrwSsn_scaled-AvgTemp_Dist results (positive coefficient, but figure indicates it should be neg...):
+  &quot;5b_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn_scaled*AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;, 
+  &quot;5c_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;, 
+  &quot;5d_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled +  (1|pop) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;8_GS_Recent_height&quot;,      &quot;logTotalFecundity ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;logTotalFecundity ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;
 )
 #run the models 
 rep_output_SUB_models_log_CD_GD &lt;- rep_output_SUB_models_log_CD_GD %&gt;%
@@ -2039,51 +2542,55 @@ rep_output_SUB_models_log_CD_GD &lt;- rep_output_SUB_models_log_CD_GD %&gt;%
          glance = map(lmer, glance)) #glance at the model results</code></pre>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <pre class="r"><code>#some singularity warnings b/c pop explains 0 var in some models 
 rep_output_SUB_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy, effects = &quot;ran_pars&quot;, scales = &quot;vcov&quot;)) %&gt;% unnest(tidy) %&gt;% 
   select(name, group, estimate)</code></pre>
-<pre><code>## # A tibble: 24 × 3
+<pre><code>## # A tibble: 36 × 3
 ##    name            group    estimate
 ##    &lt;chr&gt;           &lt;chr&gt;       &lt;dbl&gt;
-##  1 1_pop.block     block     0.290  
-##  2 1_pop.block     pop       0.233  
-##  3 1_pop.block     Residual  0.740  
-##  4 2_WY_Recent     block     0.250  
-##  5 2_WY_Recent     pop       0.00141
-##  6 2_WY_Recent     Residual  0.749  
-##  7 3_WY_Historical block     0.252  
-##  8 3_WY_Historical pop       0.00639
-##  9 3_WY_Historical Residual  0.748  
-## 10 4_GS_Recent     block     0.255  
-## # ℹ 14 more rows</code></pre>
+##  1 1_pop.block     block      0.290 
+##  2 1_pop.block     pop        0.233 
+##  3 1_pop.block     Residual   0.740 
+##  4 2_WY_Recent     block      0.292 
+##  5 2_WY_Recent     pop        0.0262
+##  6 2_WY_Recent     Residual   0.762 
+##  7 3_WY_Historical block      0.293 
+##  8 3_WY_Historical pop        0.0330
+##  9 3_WY_Historical Residual   0.761 
+## 10 4_GS_Recent     block      0.282 
+## # ℹ 26 more rows</code></pre>
 <pre class="r"><code>##show results:
 rep_output_SUB_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term, estimate:p.value) %&gt;% 
-  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;Dist&quot;) | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 28 × 7
+<pre><code>## # A tibble: 37 × 7
 ##    name            term               estimate std.error statistic    df p.value
 ##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm             0.154     0.127     1.21  61.6  0.230  
-##  2 2_WY_Recent     AvgTempDist_Recen…   -0.622     0.148    -4.22   4.15 0.0125 
-##  3 2_WY_Recent     AvgPPTDist_Recent…   -0.585     0.126    -4.64   1.84 0.0510 
-##  4 2_WY_Recent     Geographic_Dist      -0.120     0.106    -1.13   3.22 0.336  
-##  5 2_WY_Recent     height.cm             0.305     0.139     2.20  75.7  0.0308 
-##  6 3_WY_Historical AvgTempDist_Histo…   -0.679     0.160    -4.23   4.79 0.00905
-##  7 3_WY_Historical AvgPPTDist_Histor…   -0.607     0.138    -4.40   2.32 0.0364 
-##  8 3_WY_Historical Geographic_Dist      -0.105     0.108    -0.972  3.95 0.387  
-##  9 3_WY_Historical height.cm             0.310     0.140     2.22  82.0  0.0293 
-## 10 4_GS_Recent     AvgTempDist_Recen…    0.259     0.146     1.78  88.7  0.0791 
-## # ℹ 18 more rows</code></pre>
+##  1 1_pop.block     height.cm_scaled    0.154      0.127     1.21   61.6  2.30e-1
+##  2 2_WY_Recent     AvgTempDist_Recen… -0.381      0.131    -2.92    2.17 9.11e-2
+##  3 2_WY_Recent     AvgPPTDist_Recent… -0.419      0.135    -3.10    1.90 9.60e-2
+##  4 2_WY_Recent     Geographic_Dist_s… -0.0143     0.114    -0.125   3.50 9.08e-1
+##  5 3_WY_Historical AvgTempDist_Histo… -0.417      0.143    -2.92    2.32 8.40e-2
+##  6 3_WY_Historical AvgPPTDist_Histor… -0.428      0.147    -2.91    2.14 9.27e-2
+##  7 3_WY_Historical Geographic_Dist_s…  0.00129    0.116     0.0111  3.82 9.92e-1
+##  8 4_GS_Recent     AvgTempDist_Recen…  0.306      0.145     2.11   89.7  3.79e-2
+##  9 4_GS_Recent     AvgPPTDist_Recent… -0.630      0.142    -4.43   87.8  2.69e-5
+## 10 4_GS_Recent     Geographic_Dist_s…  0.0402     0.0931    0.432  87.0  6.67e-1
+## # ℹ 27 more rows</code></pre>
 <pre class="r"><code>rep_output_SUB_models_log_CD_GD %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-f:-glance)</code></pre>
 <pre><code>## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
+## Random effect variances not available. Returned R2 does not account for random effects.
 ## Random effect variances not available. Returned R2 does not account for random effects.</code></pre>
-<pre><code>## Warning: There were 3 warnings in `mutate()`.
+<pre><code>## Warning: There were 5 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `rsq = map(lmer, r2)`.
 ## Caused by warning:
@@ -2093,36 +2600,53 @@ rep_output_SUB_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnes
 ##   Decrease the `tolerance` level to force the calculation of random effect
 ##   variances, or impose priors on your random effects parameters (using
 ##   packages like `brms` or `glmmTMB`).
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.</code></pre>
-<pre><code>## # A tibble: 16 × 2
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 4 remaining warnings.</code></pre>
+<pre><code>## # A tibble: 24 × 2
 ##    name                 rsq
 ##    &lt;chr&gt;              &lt;dbl&gt;
 ##  1 1_pop.block       0.425 
 ##  2 1_pop.block       0.0185
-##  3 2_WY_Recent       0.391 
-##  4 2_WY_Recent       0.186 
+##  3 2_WY_Recent       0.390 
+##  4 2_WY_Recent       0.136 
 ##  5 3_WY_Historical   0.392 
-##  6 3_WY_Historical   0.182 
+##  6 3_WY_Historical   0.131 
 ##  7 4_GS_Recent      NA     
-##  8 4_GS_Recent       0.238 
+##  8 4_GS_Recent       0.207 
 ##  9 5a_GS_Historical NA     
-## 10 5a_GS_Historical  0.239 
-## 11 5b_GS_Historical NA     
-## 12 5b_GS_Historical  0.248 
-## 13 5c_GS_Historical  0.459 
-## 14 5c_GS_Historical  0.0370
-## 15 5d_GS_Historical  0.399 
-## 16 5d_GS_Historical  0.140</code></pre>
+## 10 5a_GS_Historical  0.208 
+## # ℹ 14 more rows</code></pre>
 <pre class="r"><code># Can&#39;t compute random effect variances. Some variance components equal zero. --&gt; NA conditional rsq
+
+##predictions for figures:
+GS_Recent_mod &lt;- rep_output_SUB_models_log_CD_GD %&gt;% 
+  filter(name==&quot;4_GS_Recent&quot;) %&gt;% 
+  pull(lmer) 
+rep_output_sub_preds &lt;- tibble(.pred=predict(GS_Recent_mod[[1]],
+                                           newdata=pred_df_recent_grwssn_avgtemp,
+                                           re.form= NA, type=&quot;response&quot;)) %&gt;% 
+  bind_cols(pred_df_recent_grwssn_avgtemp) 
+rep_output_sub_preds$AvgTempDist_Recent_GrwSsn_scaled &lt;- as.vector(rep_output_sub_preds$AvgTempDist_Recent_GrwSsn_scaled)
+write_csv(rep_output_sub_preds, &quot;../Processed.Data/RepOutput_SubPreds_GSRecentTemp.csv&quot;)
+
+rep_output_sub_preds2 &lt;- tibble(.pred=predict(GS_Recent_mod[[1]],
+                                           newdata=pred_df_recent_grwssn_avgppt,
+                                           re.form= NA, type=&quot;response&quot;)) %&gt;% 
+  bind_cols(pred_df_recent_grwssn_avgppt) 
+rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled &lt;- as.vector(rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled)
+write_csv(rep_output_sub_preds2, &quot;../Processed.Data/RepOutput_SubPreds_GSRecentPPT.csv&quot;)
 
 #Add in Geo and Gowers clim dist
 rep_output_models_log_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_Wtr_Year + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_GrwSsn + Geographic_Dist + height.cm + (1|pop) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;logTotalFecundity ~  height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;8_GS_Recent_height&quot;,      &quot;logTotalFecundity ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;logTotalFecundity ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;
 )
 #run the models 
 rep_output_models_log_CD_GD &lt;- rep_output_models_log_CD_GD %&gt;%
@@ -2132,41 +2656,63 @@ rep_output_models_log_CD_GD &lt;- rep_output_models_log_CD_GD %&gt;%
 ##show results:
 rep_output_models_log_CD_GD %&gt;% mutate(tidy=map(lmer, tidy)) %&gt;% unnest(tidy) %&gt;%
   select(name, term:p.value) %&gt;% 
-  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist&quot; | term==&quot;height.cm&quot;) %&gt;%
+  filter(str_detect(term, &quot;GD&quot;) | term==&quot;Geographic_Dist_scaled&quot; | term==&quot;height.cm_scaled&quot;) %&gt;%
   drop_na(p.value)</code></pre>
-<pre><code>## # A tibble: 13 × 7
-##    name            term               estimate std.error statistic    df p.value
-##    &lt;chr&gt;           &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
-##  1 1_pop.block     height.cm           1.54e-1     0.127   1.21    61.6   0.230 
-##  2 2_WY_Recent     AvgGD_Recent_Wtr_… -4.78e-2     0.269  -0.178    3.98  0.868 
-##  3 2_WY_Recent     Geographic_Dist    -6.84e-4     0.261  -0.00262  4.02  0.998 
-##  4 2_WY_Recent     height.cm           1.98e-1     0.137   1.45    79.0   0.151 
-##  5 3_WY_Historical AvgGD_Historic_Wt…  1.99e-2     0.257   0.0773   3.87  0.942 
-##  6 3_WY_Historical Geographic_Dist    -3.44e-2     0.254  -0.135    4.04  0.899 
-##  7 3_WY_Historical height.cm           1.94e-1     0.136   1.43    75.9   0.157 
-##  8 4_GS_Recent     AvgGD_Recent_GrwS… -4.96e-1     0.163  -3.03     5.86  0.0237
-##  9 4_GS_Recent     Geographic_Dist     1.30e-1     0.136   0.954    4.70  0.386 
-## 10 4_GS_Recent     height.cm           2.29e-1     0.134   1.72    73.1   0.0903
-## 11 5_GS_Historical AvgGD_Historic_Gr… -4.63e-1     0.167  -2.78     3.71  0.0543
-## 12 5_GS_Historical Geographic_Dist     1.20e-1     0.142   0.844    4.11  0.445 
-## 13 5_GS_Historical height.cm           1.80e-1     0.128   1.41    47.3   0.166</code></pre>
+<pre><code>## # A tibble: 21 × 7
+##    name               term            estimate std.error statistic    df p.value
+##    &lt;chr&gt;              &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1 1_pop.block        height.cm_scal…  0.154       0.127    1.21   61.6   0.230 
+##  2 2_WY_Recent        AvgGD_Recent_W…  0.00259     0.218    0.0119  4.97  0.991 
+##  3 2_WY_Recent        Geographic_Dis…  0.0430      0.212    0.203   5.07  0.847 
+##  4 3_WY_Historical    AvgGD_Historic…  0.0466      0.208    0.224   5.04  0.832 
+##  5 3_WY_Historical    Geographic_Dis…  0.0221      0.204    0.108   5.10  0.918 
+##  6 4_GS_Recent        AvgGD_Recent_G… -0.372       0.131   -2.85    4.01  0.0463
+##  7 4_GS_Recent        Geographic_Dis…  0.157       0.124    1.26    5.34  0.259 
+##  8 5_GS_Historical    AvgGD_Historic… -0.402       0.122   -3.29    3.30  0.0403
+##  9 5_GS_Historical    Geographic_Dis…  0.144       0.114    1.26    5.43  0.260 
+## 10 6_WY_Recent_height AvgGD_Recent_W… -0.0478      0.269   -0.178   3.98  0.868 
+## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>rep_output_models_log_CD_GD %&gt;% mutate(rsq=map(lmer, r2)) %&gt;% 
   unnest(rsq) %&gt;% 
   unnest(rsq) %&gt;% 
   select(-f:-glance)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    name               rsq
-##    &lt;chr&gt;            &lt;dbl&gt;
-##  1 1_pop.block     0.425 
-##  2 1_pop.block     0.0185
-##  3 2_WY_Recent     0.487 
-##  4 2_WY_Recent     0.0244
-##  5 3_WY_Historical 0.486 
-##  6 3_WY_Historical 0.0252
-##  7 4_GS_Recent     0.403 
-##  8 4_GS_Recent     0.123 
-##  9 5_GS_Historical 0.413 
-## 10 5_GS_Historical 0.127</code></pre>
+<pre><code>## # A tibble: 18 × 2
+##    name                       rsq
+##    &lt;chr&gt;                    &lt;dbl&gt;
+##  1 1_pop.block            0.425  
+##  2 1_pop.block            0.0185 
+##  3 2_WY_Recent            0.416  
+##  4 2_WY_Recent            0.00150
+##  5 3_WY_Historical        0.413  
+##  6 3_WY_Historical        0.00260
+##  7 4_GS_Recent            0.389  
+##  8 4_GS_Recent            0.105  
+##  9 5_GS_Historical        0.387  
+## 10 5_GS_Historical        0.122  
+## 11 6_WY_Recent_height     0.487  
+## 12 6_WY_Recent_height     0.0244 
+## 13 7_WY_Historical_height 0.486  
+## 14 7_WY_Historical_height 0.0252 
+## 15 8_GS_Recent_height     0.403  
+## 16 8_GS_Recent_height     0.123  
+## 17 9_GS_Historical_height 0.413  
+## 18 9_GS_Historical_height 0.127</code></pre>
+<pre class="r"><code>##predictions for figures:
+GS_Recent_mod &lt;- rep_output_models_log_CD_GD %&gt;% 
+  filter(name==&quot;4_GS_Recent&quot;) %&gt;% 
+  pull(lmer) 
+
+rep_output_GD_preds &lt;- tibble(.pred=predict(GS_Recent_mod[[1]],
+                                           newdata=pred_df_gowers,
+                                           re.form= NA, type=&quot;response&quot;)) %&gt;% 
+  bind_cols(pred_df_gowers) 
+rep_output_GD_preds$GD_Recent_Wtr_Year_2023_scaled &lt;- as.vector(rep_output_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+rep_output_GD_preds$GD_Historic_GrwSsn_2023_scaled &lt;- as.vector(rep_output_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+rep_output_GD_preds$GD_Recent_Wtr_Year_2024_scaled &lt;- as.vector(rep_output_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+rep_output_GD_preds$GD_Recent_GrwSsn_2024_scaled &lt;- as.vector(rep_output_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+rep_output_GD_preds$AvgGD_Recent_Wtr_Year_scaled &lt;- as.vector(rep_output_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+rep_output_GD_preds$AvgGD_Recent_GrwSsn_scaled &lt;- as.vector(rep_output_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(rep_output_GD_preds, &quot;../Processed.Data/RepOutput_GDPreds_GSRecent.csv&quot;)</code></pre>
 </div>
 </div>
 
