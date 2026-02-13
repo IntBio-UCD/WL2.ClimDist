@@ -1110,8 +1110,8 @@ prob_fitness_SUB_fits_wl2 <- tibble(wflow=list(
   GS_Recent = {prob_fitness_SUB_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled+ Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
-  GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+ # GS_Historical = {prob_fitness_SUB_wflow_wl2 %>% 
+  #    add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent_height = {prob_fitness_SUB_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = ProbFitness ~ AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
@@ -1129,6 +1129,7 @@ name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
   mutate(fit = map(wflow, fit, data = wl2_prob_fitness_scaled))
+#convergence issues with GS_historical model 
 
 ##show results:
 prob_fitness_SUB_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
@@ -1165,22 +1166,34 @@ write_csv(prob_fitness_sub_preds, "../Processed.Data/ProbRep_SubPreds.csv")
 
 #Add in geo and Gowers clim distance
 prob_fitness_GD_wflow_wl2 <- workflow() %>%
-  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm_scaled,  block, contains("GD"), Geographic_Dist_scaled_scaled)) 
+  add_variables(outcomes = ProbFitness, predictors = c(pop, mf, height.cm_scaled,  block, contains("GD"), Geographic_Dist_scaled)) 
 prob_fitness_GD_fits_wl2 <- tibble(wflow=list(
   pop.block = {prob_fitness_GD_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = ProbFitness ~ height.cm_scaled + (1|pop/mf) + (1|block))},
   
   WY_Recent = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   WY_Historical = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Recent = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
   
   GS_Historical = {prob_fitness_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Recent_height = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  WY_Historical_height = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Recent_height = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))},
+  
+  GS_Historical_height = {prob_fitness_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = ProbFitness ~ AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
@@ -1189,7 +1202,7 @@ name=names(wflow)
 
 ##show results:
 prob_fitness_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
-  filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled_scaled" | term=="height.cm_scaled") %>%
+  filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled" | term=="height.cm_scaled") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)
 
@@ -1200,16 +1213,21 @@ prob_fitness_GD_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip))
   select(-wflow:-extracted_fit)
 
 ##predictions for figures:
-prob_fitness_GD_preds <- prob_fitness_GD_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
+probrep_GD_preds <- prob_fitness_GD_fits_wl2 %>%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
   filter(name=="WY_Recent") %>% 
-  mutate(predictions=map(extracted_fit, predict, new_data=wl2_prob_fitness_scaled)) %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %>% 
   unnest(predictions) %>% 
-  bind_cols(wl2_prob_fitness_scaled) %>% 
-  select(name, .pred, AvgGD_Recent_Wtr_Year) 
-write_csv(prob_fitness_GD_preds, "../Processed.Data/ProbRep_GDPreds.csv")
-
-prob_fitness_sub_preds
-prob_fitness_sub_preds_check
+  bind_cols(pred_df_gowers) %>% 
+  select(-wflow, -fit, -extracted_fit) 
+probrep_GD_preds$GD_Recent_Wtr_Year_2023_scaled <- as.vector(probrep_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+probrep_GD_preds$GD_Historic_GrwSsn_2023_scaled <- as.vector(probrep_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+probrep_GD_preds$GD_Recent_Wtr_Year_2024_scaled <- as.vector(probrep_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+probrep_GD_preds$GD_Recent_GrwSsn_2024_scaled <- as.vector(probrep_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+probrep_GD_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(probrep_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+probrep_GD_preds$AvgGD_Recent_GrwSsn_scaled <- as.vector(probrep_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(probrep_GD_preds, "../Processed.Data/ProbRep_GDPreds_WYRecent.csv")
 ```
 
 ## Total Fruits Models 
