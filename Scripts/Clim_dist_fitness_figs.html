@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2026-01-26" />
+<meta name="date" content="2026-02-12" />
 
 <title>Clim_dist_fitness_figs</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_figs</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2026-01-26</h4>
+<h4 class="date">2026-02-12</h4>
 
 </div>
 
@@ -470,23 +470,167 @@ sem &lt;- function(x, na.rm=FALSE) {           #for calculating standard error
 <div id="read-in-the-predictions-from-the-models-in-clim_dist_fitness_models.rmd" class="section level2">
 <h2>Read in the predictions from the models in
 “Clim_dist_fitness_models.Rmd”</h2>
-<pre class="r"><code>prob_rep_sub_preds &lt;- read_csv(&quot;../Processed.Data/ProbRep_SubPreds.csv&quot;) %&gt;% mutate(pop=NA)</code></pre>
-<pre><code>## Rows: 23 Columns: 4
+<pre class="r"><code>pred_files &lt;- dir(&quot;../Processed.Data&quot;, 
+             pattern=&quot;Preds&quot;,
+             full.names=TRUE) #list of prediction files
+pred_dat &lt;- tibble(path=pred_files, filename=basename(path))  #storing data in tibble
+pred_dat2 &lt;- pred_dat %&gt;% 
+  mutate(sheets=map(path, read_csv)) %&gt;% #read in the files 
+  select(-path)</code></pre>
+<pre><code>## Rows: 46 Columns: 16
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
-## dbl (4): .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geo...
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>prob_rep_GD_preds &lt;- read_csv(&quot;../Processed.Data/ProbRep_GDPreds.csv&quot;)</code></pre>
-<pre><code>## Rows: 1573 Columns: 3
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): name
-## dbl (2): .pred, AvgGD_Recent_Wtr_Year
+## dbl (5): .pred, Geographic_Dist, Geographic_Dist_scaled, GD_Recent_Wtr_Year_...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (7): .pred, TempDist_Recent_GrwSsn_2023, TempDist_Recent_GrwSsn_2023_sca...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (7): .pred, PPTDist_Recent_Wtr_Year_2023, PPTDist_Recent_Wtr_Year_2023_s...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (7): .pred, TempDist_Recent_Wtr_Year_2023, TempDist_Recent_Wtr_Year_2023...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (4): .pred, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, Geo...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 15
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl (7): .pred, AvgPPTDist_Recent_GrwSsn, AvgPPTDist_Recent_GrwSsn_scaled, G...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl (7): .pred, AvgTempDist_Recent_GrwSsn, AvgTempDist_Recent_GrwSsn_scaled,...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (7): .pred, TempDist_Recent_Wtr_Year_2024, TempDist_Recent_Wtr_Year_2024...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 16
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (1): name
+## dbl (15): .pred, GD_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023, GD_Recent...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): name
+## dbl (7): .pred, TempDist_Recent_Wtr_Year_2023, TempDist_Recent_Wtr_Year_2023...
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>unique(pred_dat2$filename)</code></pre>
+<pre><code>##  [1] &quot;Est_GDPreds_GrwSsnHist.csv&quot;          &quot;Est_GDPreds_WYRecent.csv&quot;           
+##  [3] &quot;Est_GeoDist_Preds.csv&quot;               &quot;Est_SubPreds_GrwSsnRecentTemp.csv&quot;  
+##  [5] &quot;Est_SubPreds_WYRecentPPT.csv&quot;        &quot;Est_SubPreds_WYRecentTemp.csv&quot;      
+##  [7] &quot;ProbRep_GDPreds_WYRecent.csv&quot;        &quot;ProbRep_SubPreds.csv&quot;               
+##  [9] &quot;RepOutput_GDPreds_GSRecent.csv&quot;      &quot;RepOutput_SubPreds_GSRecentPPT.csv&quot; 
+## [11] &quot;RepOutput_SubPreds_GSRecentTemp.csv&quot; &quot;RepSurv2_GDPreds_GrwSsnRecent.csv&quot;  
+## [13] &quot;RepSurv2_GDPreds_WYRecent.csv&quot;       &quot;RepSurv2_SubPreds_WYRecentTemp.csv&quot; 
+## [15] &quot;WintSurv_GDPreds_WYRecent.csv&quot;       &quot;Y1Surv_GDPreds_GrwSsnHist.csv&quot;      
+## [17] &quot;Y1Surv_GDPreds_WYRecent.csv&quot;         &quot;Y1Surv_SubPreds_WYRecentTemp.csv&quot;</code></pre>
+<pre class="r"><code>#pred_dat2$sheets[[1]]
+
+#prob_rep_sub_preds &lt;- read_csv(&quot;../Processed.Data/ProbRep_SubPreds.csv&quot;) %&gt;% mutate(pop=NA)</code></pre>
 </div>
 <div id="data-summaries" class="section level2">
 <h2>Data Summaries</h2>
@@ -538,7 +682,7 @@ sem &lt;- function(x, na.rm=FALSE) {           #for calculating standard error
   group_by(pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2023, GD_Historic_Wtr_Year_2023, 
            TempDist_Recent_Wtr_Year_2023, PPTDist_Recent_Wtr_Year_2023,
            TempDist_Recent_GrwSsn_2023, PPTDist_Recent_GrwSsn_2023,
-           GD_Recent_GrwSsn_2023) %&gt;% 
+           GD_Historic_GrwSsn_2023) %&gt;% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE))</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Geographic_Dist&#39;,
 ## &#39;GD_Recent_Wtr_Year_2023&#39;, &#39;GD_Historic_Wtr_Year_2023&#39;,
@@ -592,63 +736,135 @@ wl2_tot_fecundity_summary &lt;- wl2_tot_fecundity %&gt;%
   group_by(pop, elev_m, AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Historic_Wtr_Year,
            AvgTempDist_Recent_GrwSsn, AvgPPTDist_Recent_GrwSsn,
            `AvgGD_Recent_Growth Season`) %&gt;% 
-  summarise(meanTotFruit=mean(Total_Fecundity, na.rm=TRUE), semTotFruit=sem(Total_Fecundity, na.rm=TRUE))</code></pre>
+  summarise(meanTotFruit=mean(Total_Fecundity, na.rm=TRUE), semTotFruit=sem(Total_Fecundity, na.rm=TRUE)) %&gt;% 
+  mutate(RepYear=if_else(meanTotFruit==0, &quot;None&quot;,
+                         if_else(pop==&quot;TM2&quot;, &quot;Both Years&quot;, &quot;Year 2 Only&quot;)))</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
 ## &#39;AvgTempDist_Recent_Wtr_Year&#39;, &#39;AvgPPTDist_Historic_Wtr_Year&#39;,
 ## &#39;AvgTempDist_Recent_GrwSsn&#39;, &#39;AvgPPTDist_Recent_GrwSsn&#39;. You can override using
 ## the `.groups` argument.</code></pre>
-<pre class="r"><code>wl2_tot_fitness_summary &lt;- wl2_tot_fitness %&gt;% 
+<pre class="r"><code>wl2_tot_fecundity_summary$RepYear &lt;- factor(wl2_tot_fecundity_summary$RepYear,
+                                               levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))
+
+wl2_tot_fitness_summary &lt;- wl2_tot_fitness %&gt;% 
   group_by(pop, elev_m, AvgGD_Recent_Water.Year) %&gt;% 
-  summarise(meanTotFit=mean(Total_Fitness, na.rm=TRUE), semTotFit=sem(Total_Fitness, na.rm=TRUE))</code></pre>
+  summarise(meanTotFit=mean(Total_Fitness, na.rm=TRUE), semTotFit=sem(Total_Fitness, na.rm=TRUE)) %&gt;%
+  mutate(RepYear=if_else(meanTotFit==0, &quot;None&quot;,
+                         if_else(pop==&quot;TM2&quot;, &quot;Both Years&quot;, &quot;Year 2 Only&quot;)))</code></pre>
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
 ## `.groups` argument.</code></pre>
+<pre class="r"><code>wl2_tot_fitness_summary$RepYear &lt;- factor(wl2_tot_fitness_summary$RepYear,
+                                               levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))</code></pre>
 </div>
 </div>
-<div id="figure-4-temp-and-ppt-recent-water-climate-distance" class="section level2">
-<h2>Figure 4: Temp and PPT recent water climate distance</h2>
-<pre class="r"><code>WYtemp_probfit &lt;- prob_fitness_summary %&gt;% 
+<div id="figure-4-temp-recent-water-climate-distance" class="section level2">
+<h2>Figure 4: Temp recent water climate distance</h2>
+<pre class="r"><code>WYtemp_y1surv &lt;- y1surv_summary %&gt;% 
+  ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[18]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 1.635292, y= 0.88, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Y1 Survival&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, colour=&quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/Y1Surv_TempDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+WYtemp_repsurv2 &lt;- wl2_surv_to_bud_y2_summary %&gt;% 
+  ggplot(aes(x=TempDist_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[14]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 0.2, y= 0.8333333, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, colour = &quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/RepSurv2_TempDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+WYtemp_probfit &lt;- prob_fitness_summary %&gt;% 
   ggplot(aes(x=AvgTempDist_Recent_Wtr_Year, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[8]] %&gt;% mutate(pop=NA), aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.6194583, y= 0.095, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
-  geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y=&quot;Probability of \n Successfully Reproducing&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, 
        color=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
-ggsave(&quot;../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr_Preds.png&quot;,
+ggsave(&quot;../Figures/Indiv_Fit_Comps/ProbFit_TempDist_Recent_WtrYr.png&quot;,
        width = 12, height = 6, units = &quot;in&quot;)
 
 WYtemp_totfruit &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=AvgTempDist_Recent_Wtr_Year, y=meanTotFruit, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +  
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0,linewidth = 2) +
   annotate(&quot;text&quot;, x = 1.3, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, colour = &quot;Elevation (m)&quot;) +
+  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, 
+       colour = &quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
 ggsave(&quot;../Figures/Indiv_Fit_Comps/TotFruit_TempDist_Recent_WtrYr.png&quot;,
        width = 12, height = 6, units = &quot;in&quot;)
 
-fig4_sub &lt;- ggarrange(WYtemp_probfit, WYtemp_totfruit,
-                        labels = c(&quot;A)&quot;, &quot;B)&quot;), 
+fig4_sub &lt;- ggarrange(WYtemp_y1surv, WYtemp_repsurv2,
+                      WYtemp_probfit, WYtemp_totfruit,
+                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;),  
                         font.label = list(size=30, face = &quot;plain&quot;), 
-                        ncol=2, nrow=1) 
-ggsave(&quot;../Figures/Figure4_TmpPPT.png&quot;, width = 26, height = 9, units = &quot;in&quot;)</code></pre>
+                        ncol=2, nrow=2) 
+ggsave(&quot;../Figures/Figure4_TmpPPT.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
 <div id="figure-5-gowers-recent-water-year-climate-distance" class="section level2">
 <h2>Figure 5: Gower’s recent water year climate distance</h2>
-<pre class="r"><code>probfit_gower &lt;- prob_fitness_summary %&gt;% 
+<pre class="r"><code>wintersurv_gower &lt;- wintersurv_summary %&gt;% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[15]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 0.1453708, y= 0.24, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Winter Survival&quot;, x=&quot;Recent Water Year Climate Dist&quot;, colour=&quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+repsurv2_gower &lt;- wl2_surv_to_bud_y2_summary %&gt;% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[13]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 0.17, y= 0.8333333, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year Climate Dist&quot;, colour = &quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/RepSurv2_ClimDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+probfit_gower &lt;- prob_fitness_summary %&gt;% 
   ggplot(aes(x=AvgGD_Recent_Water_Yr, y=meanProbFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[7]] %&gt;% rename(AvgGD_Recent_Water_Yr=AvgGD_Recent_Wtr_Year) %&gt;% mutate(pop=NA), aes(x=AvgGD_Recent_Water_Yr, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.2532683, y= 0.095, label = &quot;WL2&quot;,  
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -662,30 +878,48 @@ ggsave(&quot;../Figures/Indiv_Fit_Comps/ProbFit_ClimDist_Recent_WtrYr.png&quot;,
 tot_fit_gower &lt;- wl2_tot_fitness_summary %&gt;% 
   ggplot(aes(x=AvgGD_Recent_Water.Year, y=meanTotFit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=0,linewidth = 2) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y=&quot;Total Fitness&quot;, x=&quot;Recent Water Year Climate Dist&quot;, 
-       color=&quot;Elevation (m)&quot;) +
-  annotate(&quot;text&quot;, x = 0.2532683, y= 2.4, label = &quot;WL2&quot;, 
+       color=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
+  annotate(&quot;text&quot;, x = 0.2532683, y= 2.3, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/TotalFitness_GD_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
 
-fig5_gower &lt;- ggarrange(probfit_gower, tot_fit_gower, 
-                        labels = c(&quot;A)&quot;, &quot;B)&quot;), 
+fig5_gower &lt;- ggarrange(wintersurv_gower, repsurv2_gower,
+                        probfit_gower, tot_fit_gower, 
+                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
                         font.label = list(size=30, face = &quot;plain&quot;), 
-                        ncol=2, nrow=1) 
-ggsave(&quot;../Figures/Figure5_WtrYrGowers.png&quot;, width = 26, height = 9, units = &quot;in&quot;)</code></pre>
+                        ncol=2, nrow=2) 
+ggsave(&quot;../Figures/Figure5_WtrYrGowers.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
-<div id="figure-s5-additonal-temp-and-ppt-recent-water-yar-climate-distance" class="section level2">
-<h2>Figure S5: Additonal Temp and PPT recent water yar climate
-distance</h2>
-<pre class="r"><code>WYppt_est &lt;- est_summary %&gt;% 
+<div id="figure-s5-additonal-temp-and-ppt-water-year-climate-distance" class="section level2">
+<h2>Figure S5: Additonal Temp and PPT water year climate distance</h2>
+<pre class="r"><code>WYtemp_est &lt;- est_summary %&gt;% 
+  ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[6]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 1.6352917, y= 0.65, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Establishment&quot;, x=&quot;Recent Water Year  Temp Dist (°C)&quot;, color=&quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/Est_TempDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+WYppt_est &lt;- est_summary %&gt;% 
   ggplot(aes(x=PPTDist_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[5]] %&gt;% mutate(pop=NA), aes(x=PPTDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = -1120, y= 0.5714286, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -695,49 +929,22 @@ distance</h2>
 ggsave(&quot;../Figures/Indiv_Fit_Comps/Est_PPTDist_Recent_WtrYr.png&quot;,
        width = 12, height = 6, units = &quot;in&quot;)
 
-WYtemp_y1surv &lt;- y1surv_summary %&gt;% 
-  ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  annotate(&quot;text&quot;, x = 1.635292, y= 0.88, label = &quot;WL2&quot;, 
-           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Y1 Survival&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, colour=&quot;Elevation (m)&quot;) +
-  theme(text=element_text(size=30))
-ggsave(&quot;../Figures/Indiv_Fit_Comps/Y1Surv_TempDist_Recent_WtrYr.png&quot;,
-       width = 12, height = 6, units = &quot;in&quot;)
-
 WYppt_totfruit &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=AvgPPTDist_Historic_Wtr_Year, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
   annotate(&quot;text&quot;, x = -545, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Historic Water Year PPT Dist (mm)&quot;, colour=&quot;Elevation (m)&quot;) +
+  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Historic Water Year PPT Dist (mm)&quot;,
+       colour=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
-
-WYtemp_repsurvy2 &lt;- wl2_surv_to_bud_y2_summary %&gt;% 
-  ggplot(aes(x=TempDist_Recent_Wtr_Year_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  annotate(&quot;text&quot;, x = 0.4, y= 0.8333333, label = &quot;WL2&quot;, 
-           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
-  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Water Year Temp Dist (°C)&quot;, colour = &quot;Elevation (m)&quot;) +
-  theme(text=element_text(size=30))
-ggsave(&quot;../Figures/Indiv_Fit_Comps/RepSurv2_TempDist_Recent_WtrYr.png&quot;,
-       width = 12, height = 6, units = &quot;in&quot;)
   
-figS5_sub &lt;- ggarrange(WYtemp_y1surv, WYtemp_repsurvy2,
-                        WYppt_est, WYppt_totfruit,
-                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
+figS5_sub &lt;- ggarrange(WYtemp_est, WYppt_est,
+                       WYppt_totfruit,
+                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;), 
                         font.label = list(size=30, face = &quot;plain&quot;), 
                         ncol=2, nrow=2) 
 ggsave(&quot;../Figures/FigureS5_TmpPPT.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
@@ -745,11 +952,27 @@ ggsave(&quot;../Figures/FigureS5_TmpPPT.png&quot;, width = 26, height = 18, unit
 <div id="figure-s6-additional-gowers-recent-water-year-climate-distance" class="section level2">
 <h2>Figure S6: Additional Gower’s recent water year climate
 distance</h2>
-<pre class="r"><code>y1surv_gower &lt;- y1surv_summary %&gt;% 
+<pre class="r"><code>est_gower &lt;- est_summary %&gt;% 
+  ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanEst, group = pop, color=elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[2]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 0.3611659, y= 0.65, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0)) +
+  labs(y=&quot;Establishment&quot;, x=&quot;Recent Water Year Climate Dist&quot;, color=&quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+ggsave(&quot;../Figures/Indiv_Fit_Comps/Est_ClimDist_Recent_WtrYr.png&quot;,
+       width = 12, height = 6, units = &quot;in&quot;)
+
+y1surv_gower &lt;- y1surv_summary %&gt;% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[17]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.38, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -759,21 +982,8 @@ distance</h2>
 ggsave(&quot;../Figures/Indiv_Fit_Comps/Y1Surv_ClimDist_Recent_WtrYr.png&quot;,
        width = 12, height = 6, units = &quot;in&quot;)
 
-wintersurv_gower &lt;- wintersurv_summary %&gt;% 
-  ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
-  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
-  geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
-  annotate(&quot;text&quot;, x = 0.1453708, y= 0.24, label = &quot;WL2&quot;, 
-           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
-  theme_classic() + 
-  scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Winter Survival&quot;, x=&quot;Recent Water Year Climate Dist&quot;, colour=&quot;Elevation (m)&quot;) +
-  theme(text=element_text(size=30))
-ggsave(&quot;../Figures/Indiv_Fit_Comps/WintSurv_ClimDist_Recent_WtrYr.png&quot;,
-       width = 12, height = 6, units = &quot;in&quot;)
 
-figS6_gower &lt;- ggarrange(y1surv_gower, wintersurv_gower,
+figS6_gower &lt;- ggarrange(est_gower, y1surv_gower,
                         labels = c(&quot;A)&quot;, &quot;B)&quot;), 
                         font.label = list(size=30, face = &quot;plain&quot;), 
                         ncol=2, nrow=1) 
@@ -786,6 +996,7 @@ ggsave(&quot;../Figures/FigureS6_WTRYRGowers.png&quot;, width = 26, height = 9, 
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[4]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_GrwSsn_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.11881672, y= 0.65, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -810,25 +1021,30 @@ est_ppt &lt;- est_summary %&gt;%
 totrep_temp &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=AvgTempDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[11]] %&gt;% mutate(pop=NA, .pred=exp(.pred)), 
+            aes(x=AvgTempDist_Recent_GrwSsn, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = -1.6, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season Temp Dist (°C)&quot;, colour=&quot;Elevation (m)&quot;) +
+  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season Temp Dist (°C)&quot;,
+       colour=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
 
 totrep_ppt &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=AvgPPTDist_Recent_GrwSsn, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[10]] %&gt;% mutate(pop=NA, .pred=exp(.pred)), aes(x=AvgPPTDist_Recent_GrwSsn, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 150, y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season PPT Dist (mm)&quot;, colour=&quot;Elevation (m)&quot;) +
+  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season PPT Dist (mm)&quot;,
+       colour=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
 
 figS7_sub &lt;- ggarrange(est_temp, est_ppt,
@@ -841,15 +1057,16 @@ ggsave(&quot;../Figures/FigureS7_GrwSsnTmpPPT.png&quot;, width = 26, height = 18
 <div id="figure-s8-gowers-growth-season-climate-distance-effects" class="section level2">
 <h2>Figure S8: Gower’s growth season climate distance effects</h2>
 <pre class="r"><code>est_gowers &lt;- est_summary %&gt;% 
-  ggplot(aes(x=GD_Recent_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
+  ggplot(aes(x=GD_Historic_GrwSsn_2023, y=meanEst, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[1]] %&gt;% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.2450035, y= 0.65, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Establishment&quot;, x=&quot;Recent Growth Season Climate Dist&quot;, 
+  labs(y=&quot;Establishment&quot;, x=&quot;Historic Growth Season Climate Dist&quot;, 
        color=&quot;Elevation (m)&quot;) +
   theme(text=element_text(size=30))
 
@@ -858,6 +1075,7 @@ y1_surv_gowers &lt;- y1surv_summary %&gt;%
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[16]] %&gt;% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.228, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -865,21 +1083,37 @@ y1_surv_gowers &lt;- y1surv_summary %&gt;%
   labs(y=&quot;Y1 Survival&quot;, x=&quot;Historic Growth Season Climate Dist&quot;, colour=&quot;Elevation (m)&quot;) +
   theme(text=element_text(size=30))
 
+repsurv2_gower &lt;- wl2_surv_to_bud_y2_summary %&gt;% 
+  ggplot(aes(x=GD_Recent_GrwSsn_2024, y=meanSurvtoBudY2, group = pop, colour = elev_m)) +
+  scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
+  geom_point(size=6) + 
+  geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[12]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_GrwSsn_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  annotate(&quot;text&quot;, x = 0.26, y= 0.8333333, label = &quot;WL2&quot;, 
+           colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
+  theme_classic() + 
+  scale_y_continuous(expand = c(0.01, 0), limits = c(0.4,1.05)) +
+  labs(y=&quot;Survival to Budding Y2&quot;, x=&quot;Recent Growth Season Climate Dist&quot;, colour = &quot;Elevation (m)&quot;) +
+  theme(text=element_text(size=30))
+
 totrep_gowers &lt;- wl2_tot_fecundity_summary %&gt;% 
   ggplot(aes(x=`AvgGD_Recent_Growth Season`, y=meanTotFruit, group = pop, color=elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
-  geom_point(size=6) + 
+  geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[9]] %&gt;% rename(`AvgGD_Recent_Growth Season`=AvgGD_Recent_GrwSsn) %&gt;% mutate(pop=NA, .pred=exp(.pred)), 
+            aes(x=`AvgGD_Recent_Growth Season`, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) +
   annotate(&quot;text&quot;, x = 0.235    , y= 22.40000, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
-  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season Climate Dist&quot;, colour=&quot;Elevation (m)&quot;) +
+  labs(y=&quot;Total Fruit Number&quot;, x=&quot;Recent Growth Season Climate Dist&quot;,
+       colour=&quot;Elevation (m)&quot;, shape=&quot;Rep Year(s)&quot;) +
   theme(text=element_text(size=30))
 
 figS8_gower &lt;- ggarrange(est_gowers, y1_surv_gowers, 
-                        totrep_gowers,
-                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;), 
+                        repsurv2_gower, totrep_gowers,
+                        labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
                         font.label = list(size=30, face = &quot;plain&quot;), 
                         ncol=2, nrow=2) 
 ggsave(&quot;../Figures/FigureS8_GRWSSNGowers.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
@@ -891,6 +1125,7 @@ ggsave(&quot;../Figures/FigureS8_GRWSSNGowers.png&quot;, width = 26, height = 18
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[3]] %&gt;% mutate(pop=NA), aes(x=Geographic_Dist, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 136.2622, y=0.50, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 

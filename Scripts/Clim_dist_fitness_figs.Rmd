@@ -39,8 +39,17 @@ wl2_tot_fitness <- read.csv("../Processed.Data/WL2_Total_Fitness.csv")
 
 ## Read in the predictions from the models in "Clim_dist_fitness_models.Rmd"
 ```{r}
-prob_rep_sub_preds <- read_csv("../Processed.Data/ProbRep_SubPreds.csv") %>% mutate(pop=NA)
-#prob_rep_GD_preds <- read_csv("../Processed.Data/ProbRep_GDPreds.csv")
+pred_files <- dir("../Processed.Data", 
+             pattern="Preds",
+             full.names=TRUE) #list of prediction files
+pred_dat <- tibble(path=pred_files, filename=basename(path))  #storing data in tibble
+pred_dat2 <- pred_dat %>% 
+  mutate(sheets=map(path, read_csv)) %>% #read in the files 
+  select(-path)
+unique(pred_dat2$filename)
+#pred_dat2$sheets[[1]]
+
+#prob_rep_sub_preds <- read_csv("../Processed.Data/ProbRep_SubPreds.csv") %>% mutate(pop=NA)
 ```
 
 
@@ -130,6 +139,7 @@ WYtemp_y1surv <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[18]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 1.635292, y= 0.88, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -144,6 +154,7 @@ WYtemp_repsurv2 <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[14]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.2, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -158,9 +169,9 @@ WYtemp_probfit <- prob_fitness_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[8]] %>% mutate(pop=NA), aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.6194583, y= 0.095, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
- geom_line(data=prob_rep_sub_preds, aes(x=AvgTempDist_Recent_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Probability of \n Successfully Reproducing", x="Recent Water Year Temp Dist (°C)", 
@@ -199,6 +210,7 @@ wintersurv_gower <- wintersurv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[15]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.1453708, y= 0.24, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -213,6 +225,7 @@ repsurv2_gower <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[13]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.17, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -227,6 +240,7 @@ probfit_gower <- prob_fitness_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanProbFit-semEst,ymax=meanProbFit+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[7]] %>% rename(AvgGD_Recent_Water_Yr=AvgGD_Recent_Wtr_Year) %>% mutate(pop=NA), aes(x=AvgGD_Recent_Water_Yr, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.2532683, y= 0.095, label = "WL2", 	
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -267,6 +281,7 @@ WYtemp_est <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[6]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 1.6352917, y= 0.65, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -281,6 +296,7 @@ WYppt_est <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[5]] %>% mutate(pop=NA), aes(x=PPTDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = -1120, y= 0.5714286, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -318,6 +334,7 @@ est_gower <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[2]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.3611659, y= 0.65, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -332,6 +349,7 @@ y1surv_gower <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[17]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.38, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -356,6 +374,7 @@ est_temp <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[4]] %>% mutate(pop=NA), aes(x=TempDist_Recent_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.11881672, y= 0.65, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -382,6 +401,8 @@ totrep_temp <- wl2_tot_fecundity_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[11]] %>% mutate(pop=NA, .pred=exp(.pred)), 
+            aes(x=AvgTempDist_Recent_GrwSsn, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = -1.6, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -395,6 +416,7 @@ totrep_ppt <- wl2_tot_fecundity_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[10]] %>% mutate(pop=NA, .pred=exp(.pred)), aes(x=AvgPPTDist_Recent_GrwSsn, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 150, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -418,6 +440,7 @@ est_gowers <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[1]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.2450035, y= 0.65, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -431,6 +454,7 @@ y1_surv_gowers <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[16]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.228, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -443,6 +467,7 @@ repsurv2_gower <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[12]] %>% mutate(pop=NA), aes(x=GD_Recent_GrwSsn_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.26, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -455,6 +480,8 @@ totrep_gowers <- wl2_tot_fecundity_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[9]] %>% rename(`AvgGD_Recent_Growth Season`=AvgGD_Recent_GrwSsn) %>% mutate(pop=NA, .pred=exp(.pred)), 
+            aes(x=`AvgGD_Recent_Growth Season`, y=.pred), linewidth=2, colour="black", alpha=0.5) +
   annotate("text", x = 0.235	, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -479,6 +506,7 @@ est_geo <- est_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanEst-semEst,ymax=meanEst+semEst),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[3]] %>% mutate(pop=NA), aes(x=Geographic_Dist, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 136.2622, y=0.50, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
