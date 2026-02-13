@@ -942,10 +942,14 @@ fruits_modelslog %>% mutate(tidy=map(lmer, tidy, effects = "ran_pars", scales = 
 fruits_models_log_CD_GD_sub <- tribble(
   ~name,          ~f,
   "1_pop.block",      "logFruits ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "logFruits ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "logFruits ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "logFruits ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "logFruits ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "2_WY_Recent",      "logFruits ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "logFruits ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "logFruits ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "logFruits ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "6_WY_Recent_height",      "logFruits ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "7_WY_Historical_height",  "logFruits ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "8_GS_Recent_height",      "logFruits ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
+  "9_GS_Historical_height",  "logFruits ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
 )
 #run the models 
 fruits_models_log_CD_GD_sub <- fruits_models_log_CD_GD_sub %>%
@@ -972,10 +976,14 @@ fruits_models_log_CD_GD_sub %>% mutate(rsq=map(lmer, r2)) %>%
 fruits_models_log_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "logFruits ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "logFruits ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "logFruits ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "logFruits ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "logFruits ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "2_WY_Recent",      "logFruits ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "logFruits ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "logFruits ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "logFruits ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "6_WY_Recent_height",      "logFruits ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "7_WY_Historical_height",  "logFruits ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "8_GS_Recent_height",      "logFruits ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
+  "9_GS_Historical_height",  "logFruits ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
 )
 #run the models 
 fruits_models_log_CD_GD <- fruits_models_log_CD_GD %>%
@@ -1014,11 +1022,11 @@ FrFlN_modelslog %>% mutate(tidy=map(lmer, tidy, effects = "ran_pars", scales = "
 #Add in Geo and tmp/ppt dist
 FrFlN_models_log_CD_GD_sub <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFrFLs ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "logFrFLs ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "logFrFLs ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "logFrFLs ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "logFrFLs ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFrFLs ~  (1|pop/mf) + (1|block)", 
+  "2_WY_Recent",      "logFrFLs ~  TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "logFrFLs ~  TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "logFrFLs ~  TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "logFrFLs ~  TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)"
 )
 #run the models 
 FrFlN_models_log_CD_GD_sub <- FrFlN_models_log_CD_GD_sub %>%
@@ -1029,7 +1037,7 @@ FrFlN_models_log_CD_GD_sub <- FrFlN_models_log_CD_GD_sub %>%
 ##show results:
 FrFlN_models_log_CD_GD_sub %>% mutate(tidy=map(lmer, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
-  filter(str_detect(term, "Dist") | term=="height.cm_scaled") %>%
+  filter(str_detect(term, "Dist")) %>%
   drop_na(p.value)
 
 FrFlN_models_log_CD_GD_sub %>% mutate(rsq=map(lmer, r2)) %>% 
@@ -1041,11 +1049,11 @@ FrFlN_models_log_CD_GD_sub %>% mutate(rsq=map(lmer, r2)) %>%
 #Add in Geo and Gowers clim dist
 FrFlN_models_log_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "logFrFLs ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "logFrFLs ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "logFrFLs ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "logFrFLs ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "logFrFLs ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "logFrFLs ~  (1|pop/mf) + (1|block)", 
+  "2_WY_Recent",      "logFrFLs ~  GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "logFrFLs ~  GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "logFrFLs ~  GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "logFrFLs ~  GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)"
 )
 #run the models 
 FrFlN_models_log_CD_GD <- FrFlN_models_log_CD_GD %>%
