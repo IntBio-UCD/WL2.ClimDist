@@ -413,7 +413,7 @@ library(tidymodels) #model workflows </code></pre>
 ## ✖ recipes::step()   masks lmerTest::step(), stats::step()
 ## ✖ Matrix::unpack()  masks tidyr::unpack()
 ## ✖ recipes::update() masks Matrix::update(), stats::update()
-## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
+## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
 <pre class="r"><code>library(multilevelmod)
 library(performance) #for calculating rsq for glmmerMod objects</code></pre>
 <pre><code>## 
@@ -741,7 +741,7 @@ pred_df_recent_grwssn_avgppt &lt;- tibble(AvgPPTDist_Recent_GrwSsn = seq(from = 
   summarise(GD_Recent_Wtr_Year_2023=mean(GD_Recent_Wtr_Year_2023),
             GD_Recent_Wtr_Year_2023_scaled=mean(GD_Recent_Wtr_Year_2023_scaled))
 
-pred_df_geo &lt;- tibble(Geographic_Dist = seq(from = 0.35, to=0.70, length.out=46)) %&gt;%
+pred_df_geo &lt;- tibble(Geographic_Dist = seq(from = 136, to=317601, length.out=46)) %&gt;%
   mutate(Geographic_Dist_scaled = scale(Geographic_Dist)) %&gt;% 
   bind_cols(climdist_fixed)</code></pre>
 </div>

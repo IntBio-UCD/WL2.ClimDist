@@ -267,7 +267,7 @@ climdist_fixed <- wl2_establishment_scaled %>%
   summarise(GD_Recent_Wtr_Year_2023=mean(GD_Recent_Wtr_Year_2023),
             GD_Recent_Wtr_Year_2023_scaled=mean(GD_Recent_Wtr_Year_2023_scaled))
 
-pred_df_geo <- tibble(Geographic_Dist = seq(from = 0.35, to=0.70, length.out=46)) %>%
+pred_df_geo <- tibble(Geographic_Dist = seq(from = 136, to=317601, length.out=46)) %>%
   mutate(Geographic_Dist_scaled = scale(Geographic_Dist)) %>% 
   bind_cols(climdist_fixed)
 ```
