@@ -214,11 +214,13 @@ geo_fixed <- wl2_establishment_scaled %>%
 pred_df_gowers <- tibble(GD_Recent_Wtr_Year_2023 = seq(from = 0.35, to=0.70, length.out=46),
                          GD_Historic_GrwSsn_2023 = seq(from = 0.22, to=0.54, length.out=46),
                          GD_Recent_Wtr_Year_2024 = seq(from = 0.14, to=0.58, length.out=46),
+                         GD_Recent_GrwSsn_2024 = seq(from = 0.15, to=0.50, length.out=46),
                          AvgGD_Recent_Wtr_Year = seq(from = 0.25, to=0.64, length.out=46),
                          AvgGD_Recent_GrwSsn = seq(from = 0.20, to=0.47, length.out=46)
                          ) %>% 
   mutate(across(c("GD_Recent_Wtr_Year_2023", "GD_Historic_GrwSsn_2023",
-                  "GD_Recent_Wtr_Year_2024", "AvgGD_Recent_Wtr_Year", "AvgGD_Recent_GrwSsn"),
+                  "GD_Recent_Wtr_Year_2024", "GD_Recent_GrwSsn_2024",
+                  "AvgGD_Recent_Wtr_Year", "AvgGD_Recent_GrwSsn"),
                 scale, .names = "{.col}_scaled")) %>% 
   bind_cols(geo_fixed)
 ```
@@ -450,6 +452,7 @@ est_GD_preds <- surv_GD_fits_wl2 %>%
 est_GD_preds$GD_Recent_Wtr_Year_2023_scaled <- as.vector(est_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
 est_GD_preds$GD_Historic_GrwSsn_2023_scaled <- as.vector(est_GD_preds$GD_Historic_GrwSsn_2023_scaled)
 est_GD_preds$GD_Recent_Wtr_Year_2024_scaled <- as.vector(est_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+est_GD_preds$GD_Recent_GrwSsn_2024_scaled <- as.vector(est_GD_preds$GD_Recent_GrwSsn_2024_scaled)
 est_GD_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(est_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
 est_GD_preds$AvgGD_Recent_GrwSsn_scaled <- as.vector(est_GD_preds$AvgGD_Recent_GrwSsn_scaled)
 write_csv(est_GD_preds, "../Processed.Data/Est_GDPreds_WYRecent.csv")
@@ -476,6 +479,7 @@ est_GD_preds3 <- surv_GD_fits_wl2 %>%
 est_GD_preds3$GD_Recent_Wtr_Year_2023_scaled <- as.vector(est_GD_preds3$GD_Recent_Wtr_Year_2023_scaled)
 est_GD_preds3$GD_Historic_GrwSsn_2023_scaled <- as.vector(est_GD_preds3$GD_Historic_GrwSsn_2023_scaled)
 est_GD_preds3$GD_Recent_Wtr_Year_2024_scaled <- as.vector(est_GD_preds3$GD_Recent_Wtr_Year_2024_scaled)
+est_GD_preds3$GD_Recent_GrwSsn_2024_scaled <- as.vector(est_GD_preds3$GD_Recent_GrwSsn_2024_scaled)
 est_GD_preds3$AvgGD_Recent_Wtr_Year_scaled <- as.vector(est_GD_preds3$AvgGD_Recent_Wtr_Year_scaled)
 est_GD_preds3$AvgGD_Recent_GrwSsn_scaled <- as.vector(est_GD_preds3$AvgGD_Recent_GrwSsn_scaled)
 write_csv(est_GD_preds3, "../Processed.Data/Est_GDPreds_GrwSsnHist.csv")
@@ -622,6 +626,7 @@ y1surv_GD_preds <- surv_GD_fits_wl2 %>%
 y1surv_GD_preds$GD_Recent_Wtr_Year_2023_scaled <- as.vector(y1surv_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
 y1surv_GD_preds$GD_Historic_GrwSsn_2023_scaled <- as.vector(y1surv_GD_preds$GD_Historic_GrwSsn_2023_scaled)
 y1surv_GD_preds$GD_Recent_Wtr_Year_2024_scaled <- as.vector(y1surv_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+y1surv_GD_preds$GD_Recent_GrwSsn_2024_scaled <- as.vector(y1surv_GD_preds$GD_Recent_GrwSsn_2024_scaled)
 y1surv_GD_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(y1surv_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
 y1surv_GD_preds$AvgGD_Recent_GrwSsn_scaled <- as.vector(y1surv_GD_preds$AvgGD_Recent_GrwSsn_scaled)
 write_csv(y1surv_GD_preds, "../Processed.Data/Y1Surv_GDPreds_WYRecent.csv")
@@ -637,6 +642,7 @@ y1surv_GD_preds2 <- surv_GD_fits_wl2 %>%
 y1surv_GD_preds2$GD_Recent_Wtr_Year_2023_scaled <- as.vector(y1surv_GD_preds2$GD_Recent_Wtr_Year_2023_scaled)
 y1surv_GD_preds2$GD_Historic_GrwSsn_2023_scaled <- as.vector(y1surv_GD_preds2$GD_Historic_GrwSsn_2023_scaled)
 y1surv_GD_preds2$GD_Recent_Wtr_Year_2024_scaled <- as.vector(y1surv_GD_preds2$GD_Recent_Wtr_Year_2024_scaled)
+y1surv_GD_preds2$GD_Recent_GrwSsn_2024_scaled <- as.vector(y1surv_GD_preds2$GD_Recent_GrwSsn_2024_scaled)
 y1surv_GD_preds2$AvgGD_Recent_Wtr_Year_scaled <- as.vector(y1surv_GD_preds2$AvgGD_Recent_Wtr_Year_scaled)
 y1surv_GD_preds2$AvgGD_Recent_GrwSsn_scaled <- as.vector(y1surv_GD_preds2$AvgGD_Recent_GrwSsn_scaled)
 write_csv(y1surv_GD_preds2, "../Processed.Data/Y1Surv_GDPreds_GrwSsnHist.csv")
@@ -747,6 +753,7 @@ wintsurv_GD_preds <- surv_GD_fits_wl2 %>%
 wintsurv_GD_preds$GD_Recent_Wtr_Year_2023_scaled <- as.vector(wintsurv_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
 wintsurv_GD_preds$GD_Historic_GrwSsn_2023_scaled <- as.vector(wintsurv_GD_preds$GD_Historic_GrwSsn_2023_scaled)
 wintsurv_GD_preds$GD_Recent_Wtr_Year_2024_scaled <- as.vector(wintsurv_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+wintsurv_GD_preds$GD_Recent_GrwSsn_2024_scaled <- as.vector(wintsurv_GD_preds$GD_Recent_GrwSsn_2024_scaled)
 wintsurv_GD_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(wintsurv_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
 wintsurv_GD_preds$AvgGD_Recent_GrwSsn_scaled <- as.vector(wintsurv_GD_preds$AvgGD_Recent_GrwSsn_scaled)
 write_csv(wintsurv_GD_preds, "../Processed.Data/WintSurv_GDPreds_WYRecent.csv")
@@ -780,21 +787,34 @@ surv_GD_fits_wl2_sub <- tibble(wflow=list(
       add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2_sub %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_Wtr_Year_2024_scaled + PPTDist_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+ # WY_Historical_height = {surv_GD_wflow_wl2_sub %>% 
+  #    add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
+  
+  GS_Recent_height = {surv_GD_wflow_wl2_sub %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Recent_GrwSsn_2024_scaled + PPTDist_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_wl2_sub %>% 
       add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ TempDist_Historic_GrwSsn_2024_scaled + PPTDist_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
 ) %>% 
   select(name,wflow) %>%
   mutate(fit = map(wflow, fit, data = wl2_surv_to_rep_y2_scaled))
+#mod_test <- glmer(SurvtoRep_y2 ~ TempDist_Historic_Wtr_Year_2024_scaled + PPTDist_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block), family = "binomial", data=wl2_surv_to_rep_y2_scaled) #convergence issues with WY_Historical_height model 
 
 ##show results 
 surv_GD_fits_wl2_sub %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
@@ -808,6 +828,18 @@ surv_GD_fits_wl2_sub %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
   unnest(rsq) %>% 
   select(-wflow:-extracted_fit)
 
+##predictions for figures:
+repsurv2_sub_preds <- surv_GD_fits_wl2_sub %>%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
+  filter(name=="WY_Recent") %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_recent_wtr_yr_temp_2024)) %>% 
+  unnest(predictions) %>% 
+  bind_cols(pred_df_recent_wtr_yr_temp_2024) %>% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_sub_preds$TempDist_Recent_Wtr_Year_2024_scaled <- as.vector(repsurv2_sub_preds$TempDist_Recent_Wtr_Year_2024_scaled)
+write_csv(repsurv2_sub_preds, "../Processed.Data/RepSurv2_SubPreds_WYRecentTemp.csv")
+
 #Add in Geo and Gowers clim dist
 surv_GD_wflow_wl2 <- workflow() %>%
   add_variables(outcomes = SurvtoRep_y2, predictors = c(pop, mf, height.cm_scaled,  block, contains("GD"), Geographic_Dist_scaled)) 
@@ -816,15 +848,27 @@ surv_GD_fits_wl2 <- tibble(wflow=list(
       add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ height.cm_scaled + (1|pop) + (1|block))},
   
   WY_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   WY_Historical = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Recent = {surv_GD_wflow_wl2 %>% 
-      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
   
   GS_Historical = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + (1|pop) + (1|block))},
+  
+  WY_Recent_height = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  WY_Historical_height = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_Wtr_Year_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Recent_height = {surv_GD_wflow_wl2 %>% 
+      add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Recent_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))},
+  
+  GS_Historical_height = {surv_GD_wflow_wl2 %>% 
       add_model(glmer.model_binomial, formula = SurvtoRep_y2 ~ GD_Historic_GrwSsn_2024_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block))}
 ),
 name=names(wflow)
@@ -837,13 +881,45 @@ surv_GD_fits_wl2 %>% mutate(tidy=map(fit, tidy)) %>% unnest(tidy) %>%
   filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled" | term=="height.cm_scaled") %>%
   drop_na(p.value) %>%
   select(-wflow:-group)
-# recent water year = marginally sig, historical water year = sig, but historical water year had a singular boundary warning 
 
 surv_GD_fits_wl2 %>% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>% 
   mutate(rsq=map(extracted_fit, r2)) %>% 
   unnest(rsq) %>% 
   unnest(rsq) %>% 
   select(-wflow:-extracted_fit)
+
+##predictions for figures:
+repsurv2_GD_preds <- surv_GD_fits_wl2 %>%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
+  filter(name=="WY_Recent") %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %>% 
+  unnest(predictions) %>% 
+  bind_cols(pred_df_gowers) %>% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_GD_preds$GD_Recent_Wtr_Year_2023_scaled <- as.vector(repsurv2_GD_preds$GD_Recent_Wtr_Year_2023_scaled)
+repsurv2_GD_preds$GD_Historic_GrwSsn_2023_scaled <- as.vector(repsurv2_GD_preds$GD_Historic_GrwSsn_2023_scaled)
+repsurv2_GD_preds$GD_Recent_Wtr_Year_2024_scaled <- as.vector(repsurv2_GD_preds$GD_Recent_Wtr_Year_2024_scaled)
+repsurv2_GD_preds$GD_Recent_GrwSsn_2024_scaled <- as.vector(repsurv2_GD_preds$GD_Recent_GrwSsn_2024_scaled)
+repsurv2_GD_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(repsurv2_GD_preds$AvgGD_Recent_Wtr_Year_scaled)
+repsurv2_GD_preds$AvgGD_Recent_GrwSsn_scaled <- as.vector(repsurv2_GD_preds$AvgGD_Recent_GrwSsn_scaled)
+write_csv(repsurv2_GD_preds, "../Processed.Data/RepSurv2_GDPreds_WYRecent.csv")
+
+repsurv2_GD_preds2 <- surv_GD_fits_wl2 %>%
+  mutate(extracted_fit=map(fit, extract_fit_parsnip)) %>%
+  filter(name=="GS_Recent") %>% 
+  mutate(predictions=map(extracted_fit, predict, 
+                         new_data=pred_df_gowers)) %>% 
+  unnest(predictions) %>% 
+  bind_cols(pred_df_gowers) %>% 
+  select(-wflow, -fit, -extracted_fit) 
+repsurv2_GD_preds2$GD_Recent_Wtr_Year_2023_scaled <- as.vector(repsurv2_GD_preds2$GD_Recent_Wtr_Year_2023_scaled)
+repsurv2_GD_preds2$GD_Historic_GrwSsn_2023_scaled <- as.vector(repsurv2_GD_preds2$GD_Historic_GrwSsn_2023_scaled)
+repsurv2_GD_preds2$GD_Recent_Wtr_Year_2024_scaled <- as.vector(repsurv2_GD_preds2$GD_Recent_Wtr_Year_2024_scaled)
+repsurv2_GD_preds2$GD_Recent_GrwSsn_2024_scaled <- as.vector(repsurv2_GD_preds2$GD_Recent_GrwSsn_2024_scaled)
+repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled <- as.vector(repsurv2_GD_preds2$AvgGD_Recent_Wtr_Year_scaled)
+repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled <- as.vector(repsurv2_GD_preds2$AvgGD_Recent_GrwSsn_scaled)
+write_csv(repsurv2_GD_preds2, "../Processed.Data/RepSurv2_GDPreds_GrwSsnRecent.csv")
 ```
 
 ## Fruit N Y2 Models
