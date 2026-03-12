@@ -362,8 +362,8 @@ home_sites_pca_allclim_wtryr$data <- rbind(home_sites_pca_allclim_wtryr$data,
 WL2_label_wtryr <- data.frame(
   label = c("WL2 \n 2023", "WL2 \n 2024"),
   Season   = c("Water Year", "Water Year"),
-  x     = c(-6.0, -1.5),
-  y     = c(5.6, 2.5),
+  x     = c(-4.5, -1.5),
+  y     = c(6.5, 2.5),
   timeframe = NA
 )
 
