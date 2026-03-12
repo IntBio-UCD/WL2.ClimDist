@@ -127,6 +127,10 @@ wl2_tot_fitness_summary <- wl2_tot_fitness %>%
                          if_else(pop=="TM2", "Both Years", "Year 2 Only")))
 wl2_tot_fitness_summary$RepYear <- factor(wl2_tot_fitness_summary$RepYear,
                                                levels = c('None','Year 2 Only', 'Both Years'))
+
+#check how many pops had lower survival than WL2 in year 1 
+est_summary %>% arrange(meanEst)
+y1surv_summary %>% arrange(meanY1Surv)
 ```
 
 ## Figure 4: Temp recent water climate distance

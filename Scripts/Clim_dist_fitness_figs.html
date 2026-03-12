@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2026-02-13" />
+<meta name="date" content="2026-03-12" />
 
 <title>Clim_dist_fitness_figs</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_figs</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2026-02-13</h4>
+<h4 class="date">2026-03-12</h4>
 
 </div>
 
@@ -760,7 +760,53 @@ wl2_tot_fitness_summary &lt;- wl2_tot_fitness %&gt;%
 <pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
 ## `.groups` argument.</code></pre>
 <pre class="r"><code>wl2_tot_fitness_summary$RepYear &lt;- factor(wl2_tot_fitness_summary$RepYear,
-                                               levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))</code></pre>
+                                               levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))
+
+#check how many pops had lower survival than WL2 in year 1 
+est_summary %&gt;% arrange(meanEst)</code></pre>
+<pre><code>## # A tibble: 23 × 12
+## # Groups:   pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2023,
+## #   GD_Historic_Wtr_Year_2023, TempDist_Recent_Wtr_Year_2023,
+## #   PPTDist_Recent_Wtr_Year_2023, TempDist_Recent_GrwSsn_2023,
+## #   PPTDist_Recent_GrwSsn_2023 [23]
+##    pop   elev_m Geographic_Dist GD_Recent_Wtr_Year_2023 GD_Historic_Wtr_Year_2…¹
+##    &lt;chr&gt;  &lt;dbl&gt;           &lt;dbl&gt;                   &lt;dbl&gt;                    &lt;dbl&gt;
+##  1 WV      749.         317600.                   0.485                    0.500
+##  2 LV1    2593.         212682.                   0.383                    0.450
+##  3 LVTR1  2741.         213038.                   0.394                    0.456
+##  4 WR     1158           74992.                   0.380                    0.377
+##  5 YO8    2591.         131232.                   0.419                    0.487
+##  6 LV3    2354.         213902.                   0.379                    0.454
+##  7 SQ2    1934.         270846.                   0.405                    0.416
+##  8 FR      787          154694.                   0.555                    0.552
+##  9 YO11   2872.         132940.                   0.517                    0.622
+## 10 CP3    2266.          19415.                   0.350                    0.442
+## # ℹ 13 more rows
+## # ℹ abbreviated name: ¹​GD_Historic_Wtr_Year_2023
+## # ℹ 7 more variables: TempDist_Recent_Wtr_Year_2023 &lt;dbl&gt;,
+## #   PPTDist_Recent_Wtr_Year_2023 &lt;dbl&gt;, TempDist_Recent_GrwSsn_2023 &lt;dbl&gt;,
+## #   PPTDist_Recent_GrwSsn_2023 &lt;dbl&gt;, GD_Historic_GrwSsn_2023 &lt;dbl&gt;,
+## #   meanEst &lt;dbl&gt;, semEst &lt;dbl&gt;</code></pre>
+<pre class="r"><code>y1surv_summary %&gt;% arrange(meanY1Surv)</code></pre>
+<pre><code>## # A tibble: 22 × 9
+## # Groups:   pop, elev_m, GD_Recent_GrwSsn_2023, GD_Recent_Wtr_Year_2023,
+## #   PPTDist_Recent_GrwSsn_2023, TempDist_Recent_Wtr_Year_2023 [22]
+##    pop   elev_m GD_Recent_GrwSsn_2023 GD_Recent_Wtr_Year_2023
+##    &lt;chr&gt;  &lt;dbl&gt;                 &lt;dbl&gt;                   &lt;dbl&gt;
+##  1 LVTR1  2741.                 0.428                   0.394
+##  2 LV1    2593.                 0.413                   0.383
+##  3 YO11   2872.                 0.407                   0.517
+##  4 WR     1158                  0.395                   0.380
+##  5 FR      787                  0.368                   0.555
+##  6 YO8    2591.                 0.365                   0.419
+##  7 LV3    2354.                 0.409                   0.379
+##  8 CP2    2244.                 0.279                   0.360
+##  9 WL1    1614.                 0.286                   0.395
+## 10 CP3    2266.                 0.269                   0.350
+## # ℹ 12 more rows
+## # ℹ 5 more variables: PPTDist_Recent_GrwSsn_2023 &lt;dbl&gt;,
+## #   TempDist_Recent_Wtr_Year_2023 &lt;dbl&gt;, GD_Historic_GrwSsn_2023 &lt;dbl&gt;,
+## #   meanY1Surv &lt;dbl&gt;, semSurv &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <div id="figure-4-temp-recent-water-climate-distance" class="section level2">
