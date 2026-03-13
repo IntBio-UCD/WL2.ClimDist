@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2026-02-13" />
+<meta name="date" content="2026-03-13" />
 
 <title>Clim_dist_fitness_models</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_models</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2026-02-13</h4>
+<h4 class="date">2026-03-13</h4>
 
 </div>
 
@@ -413,7 +413,7 @@ library(tidymodels) #model workflows </code></pre>
 ## ✖ recipes::step()   masks lmerTest::step(), stats::step()
 ## ✖ Matrix::unpack()  masks tidyr::unpack()
 ## ✖ recipes::update() masks Matrix::update(), stats::update()
-## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+## • Use tidymodels_prefer() to resolve common conflicts.</code></pre>
 <pre class="r"><code>library(multilevelmod)
 library(performance) #for calculating rsq for glmmerMod objects</code></pre>
 <pre><code>## 
@@ -677,7 +677,19 @@ pred_df_recent_wtr_yr_avgtemp &lt;- tibble(AvgTempDist_Recent_Wtr_Year = seq(fro
 
 pred_df_recent_wtr_yr_ppt_2023 &lt;- tibble(PPTDist_Recent_Wtr_Year_2023 = seq(from = -1903, to=-671, length.out=46)) %&gt;% 
   mutate(PPTDist_Recent_Wtr_Year_2023_scaled = scale(PPTDist_Recent_Wtr_Year_2023)) %&gt;% 
-  bind_cols(geo_temp_fixed_2023) </code></pre>
+  bind_cols(geo_temp_fixed_2023) 
+
+geo_temp_fixed_avg &lt;-wl2_rep_output_scaled %&gt;% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgTempDist_Historic_Wtr_Year=mean(AvgTempDist_Historic_Wtr_Year),
+            AvgTempDist_Historic_Wtr_Year_scaled=mean(AvgTempDist_Historic_Wtr_Year_scaled),
+            height.cm=mean(height.cm),
+            height.cm_scaled=mean(height.cm_scaled))
+
+pred_df_historic_wtr_yr_ppt_avg &lt;- tibble(AvgPPTDist_Historic_Wtr_Year = seq(from = -1259.3, to=-582)) %&gt;% 
+  mutate(AvgPPTDist_Historic_Wtr_Year_scaled=scale(AvgPPTDist_Historic_Wtr_Year)) %&gt;% 
+  bind_cols(geo_temp_fixed_avg)</code></pre>
 </div>
 <div id="geo-fixed-for-clim-dist" class="section level3">
 <h3>Geo fixed for Clim Dist</h3>
@@ -2651,6 +2663,16 @@ rep_output_sub_preds2 &lt;- tibble(.pred=predict(GS_Recent_mod[[1]],
   bind_cols(pred_df_recent_grwssn_avgppt) 
 rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled &lt;- as.vector(rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled)
 write_csv(rep_output_sub_preds2, &quot;../Processed.Data/RepOutput_SubPreds_GSRecentPPT.csv&quot;)
+
+Wtryr_Hist_mod &lt;- rep_output_SUB_models_log_CD_GD %&gt;% 
+  filter(name==&quot;7_WY_Historical_height&quot;) %&gt;% 
+  pull(lmer) 
+rep_output_sub_preds3 &lt;- tibble(.pred=predict(Wtryr_Hist_mod[[1]],
+                                              newdata=pred_df_historic_wtr_yr_ppt_avg,
+                                              re.form = NA, type=&quot;response&quot;)) %&gt;% 
+  bind_cols(pred_df_historic_wtr_yr_ppt_avg)
+rep_output_sub_preds3$AvgPPTDist_Historic_Wtr_Year_scaled &lt;- as.vector(rep_output_sub_preds3$AvgPPTDist_Historic_Wtr_Year_scaled)
+write_csv(rep_output_sub_preds3, &quot;../Processed.Data/RepOutput_SubPreds_WtrYrHistPPT.csv&quot;)
 
 #Add in Geo and Gowers clim dist
 rep_output_models_log_CD_GD &lt;- tribble(

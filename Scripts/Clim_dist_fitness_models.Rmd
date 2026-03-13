@@ -200,6 +200,18 @@ geo_temp_fixed_2023 <- wl2_establishment_scaled %>%
 pred_df_recent_wtr_yr_ppt_2023 <- tibble(PPTDist_Recent_Wtr_Year_2023 = seq(from = -1903, to=-671, length.out=46)) %>% 
   mutate(PPTDist_Recent_Wtr_Year_2023_scaled = scale(PPTDist_Recent_Wtr_Year_2023)) %>% 
   bind_cols(geo_temp_fixed_2023) 
+
+geo_temp_fixed_avg <-wl2_rep_output_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled),
+            AvgTempDist_Historic_Wtr_Year=mean(AvgTempDist_Historic_Wtr_Year),
+            AvgTempDist_Historic_Wtr_Year_scaled=mean(AvgTempDist_Historic_Wtr_Year_scaled),
+            height.cm=mean(height.cm),
+            height.cm_scaled=mean(height.cm_scaled))
+
+pred_df_historic_wtr_yr_ppt_avg <- tibble(AvgPPTDist_Historic_Wtr_Year = seq(from = -1259.3, to=-582)) %>% 
+  mutate(AvgPPTDist_Historic_Wtr_Year_scaled=scale(AvgPPTDist_Historic_Wtr_Year)) %>% 
+  bind_cols(geo_temp_fixed_avg)
 ```
 
 ### Geo fixed for Clim Dist
@@ -1312,6 +1324,16 @@ rep_output_sub_preds2 <- tibble(.pred=predict(GS_Recent_mod[[1]],
   bind_cols(pred_df_recent_grwssn_avgppt) 
 rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled <- as.vector(rep_output_sub_preds2$AvgPPTDist_Recent_GrwSsn_scaled)
 write_csv(rep_output_sub_preds2, "../Processed.Data/RepOutput_SubPreds_GSRecentPPT.csv")
+
+Wtryr_Hist_mod <- rep_output_SUB_models_log_CD_GD %>% 
+  filter(name=="7_WY_Historical_height") %>% 
+  pull(lmer) 
+rep_output_sub_preds3 <- tibble(.pred=predict(Wtryr_Hist_mod[[1]],
+                                              newdata=pred_df_historic_wtr_yr_ppt_avg,
+                                              re.form = NA, type="response")) %>% 
+  bind_cols(pred_df_historic_wtr_yr_ppt_avg)
+rep_output_sub_preds3$AvgPPTDist_Historic_Wtr_Year_scaled <- as.vector(rep_output_sub_preds3$AvgPPTDist_Historic_Wtr_Year_scaled)
+write_csv(rep_output_sub_preds3, "../Processed.Data/RepOutput_SubPreds_WtrYrHistPPT.csv")
 
 #Add in Geo and Gowers clim dist
 rep_output_models_log_CD_GD <- tribble(
