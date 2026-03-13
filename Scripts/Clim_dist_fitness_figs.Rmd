@@ -140,7 +140,7 @@ WYtemp_y1surv <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[19]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[20]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 1.635292, y= 0.88, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -155,7 +155,7 @@ WYtemp_repsurv2 <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[15]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[16]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.2, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -211,7 +211,7 @@ wintersurv_gower <- wintersurv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[16]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[17]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.1453708, y= 0.24, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -226,7 +226,7 @@ repsurv2_gower <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[13]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[14]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.17, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -312,6 +312,8 @@ WYppt_totfruit <- wl2_tot_fecundity_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) +
   geom_errorbar(aes(ymin=meanTotFruit-semTotFruit,ymax=meanTotFruit+semTotFruit),width=0, linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[12]] %>% mutate(pop=NA, .pred=exp(.pred)), 
+            aes(x=AvgPPTDist_Historic_Wtr_Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = -545, y= 22.40000, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -350,7 +352,7 @@ y1surv_gower <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[18]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[19]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.38, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -455,7 +457,7 @@ y1_surv_gowers <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[17]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[18]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.228, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -468,7 +470,7 @@ repsurv2_gower <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[12]] %>% mutate(pop=NA), aes(x=GD_Recent_GrwSsn_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[13]] %>% mutate(pop=NA), aes(x=GD_Recent_GrwSsn_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.26, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -521,7 +523,7 @@ repsurv2_geo <- wl2_surv_to_bud_y2_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanSurvtoBudY2-semEst,ymax=meanSurvtoBudY2+semEst),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[14]] %>% filter(Geographic_Dist<159627) %>% mutate(pop=NA), aes(x=Geographic_Dist, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[15]] %>% filter(Geographic_Dist<159627) %>% mutate(pop=NA), aes(x=Geographic_Dist, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 9000, y= 0.8333333, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
