@@ -18,19 +18,10 @@ Calculated at the individual level
 ## Libraries
 ```{r}
 library(tidyverse)
-library(lmerTest) #mixed models
-library(broom.mixed) #tidy model
-library(emmeans) #for pairwise tests
+library(broom.mixed) #tidy models
 library(performance) #for calculating rsq 
-
-phi_function <- function(model) {
-    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
-    return(phi)
-} #function for calculating the overdispersion paramter (for quasi-poisson)
-
-sem <- function(x, na.rm=FALSE) {           #for calculating standard error
-  sd(x,na.rm=na.rm)/sqrt(length(na.omit(x)))
-} 
+library(glmmTMB) #for zero-inflated models 
+library(bbmle) #for AICtab 
 ```
 
 ## Read in Fitness Data
@@ -92,6 +83,7 @@ wl2_total_fitness %>%
 wl2_total_fitness %>% 
   ggplot(aes(x=Total_Fitness)) +
   geom_histogram()
+#Highly zero-inflated
 ```
 
 ## Try transformations
@@ -115,6 +107,7 @@ wl2_total_fitness_transformations %>%
 ## Scale predictors
 ```{r}
 wl2_total_fitness_scaled <- wl2_total_fitness %>% 
+  filter(pop!="SQ1", pop!="WR") %>% 
   rename(AvgGD_Recent_Wtr_Year=`AvgGD_Recent_Water Year`,
          AvgGD_Recent_GrwSsn=`AvgGD_Recent_Growth Season`,
          AvgGD_Historic_Wtr_Year=`AvgGD_Historic_Water Year`,
@@ -128,200 +121,97 @@ wl2_total_fitness_scaled <- wl2_total_fitness %>%
               "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
 ```
 
-## Plot group means and variances to facilitate choosing the right error distribution
+## Basic model
+Use glmmTMB to try different zero-inflated models 
 ```{r}
-wl2_total_fitness %>% 
-  group_by(pop) %>% 
-  summarise(GroupMeans=mean(Total_Fitness), GroupVars=var(Total_Fitness)) %>% 
-  ggplot(aes(x=GroupMeans, y=GroupVars)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope=1, colour="blue")
-```
-Based on this website, quasipoisson might work. https://r.qcbs.ca/workshop07/book-en/choose-an-error-distribution.html 
+total_fit_zero_poisson <- glmmTMB(Total_Fitness ~ height.cm_scaled + (1|pop/mf) + (1|block),
+                                     data=wl2_total_fitness_scaled,
+                                     ziformula=~1, #zeroinflation parameter applying to all observations
+                                     family=poisson)
 
-## Try models with poisson and quasi-poisson 
+total_fit_zero_negbinom <- update(total_fit_zero_poisson, family=nbinom2)
 
-### Basic model - Poisson and Quasi-Poisson 
-```{r}
-total_fecund_poisson <- glmer(Total_Fitness ~ height.cm + (1|pop/mf) + (1|block), 
-                              family = poisson,
-                              data=wl2_total_fitness_scaled)
-summary(total_fecund_poisson)
+total_fit_zero_negbinom1 <- update(total_fit_zero_poisson, family=nbinom1)
 
-plot(total_fecund_poisson, which = 1) #residuals plot 
-#doesn't look great
-deviance(total_fecund_poisson)/df.residual(total_fecund_poisson) #check for overdispersion (caused by excess of 0s)
+AICctab(total_fit_zero_poisson, total_fit_zero_negbinom, total_fit_zero_negbinom1)
+#best fit is negbinom1
 
-##try quasi-poisson model to deal with the above (and based on the above plot)
-##Can't directly use quasi families with glmer so have to use Ben Bolker's quasi-likelihood adjustment function:
-#https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#fitting-models-with-overdispersion
-#also got help from: https://stackoverflow.com/questions/68915173/how-do-i-fit-a-quasi-poisson-model-with-lme4-or-glmmtmb
-quasi_table <- function(model,ctab=coef(summary(model))) {
-    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) #overdispersion parameter
-    qctab <- within(as.data.frame(ctab),
-    {   `Std. Error` <- `Std. Error`*sqrt(phi)
-        `z value` <- Estimate/`Std. Error`
-        `Pr(>|z|)` <- 2*pnorm(abs(`z value`), lower.tail=FALSE)
-    })
-    return(qctab)
-}
-printCoefmat(quasi_table(total_fecund_poisson),digits=2)
-#As specified, the estimates are identical; the standard errors and p-values have been appropriately inflated, the z-values have been appropriately deflated.
+#diagnostics 
+deviance(total_fit_zero_negbinom1)/df.residual(total_fit_zero_negbinom1) #check for overdispersion - less than 1 which is good 
+plot(residuals(total_fit_zero_negbinom1)) #not perfect, but probably fine 
+
+#results
+summary(total_fit_zero_negbinom1)
+check_singularity(total_fit_zero_negbinom1)
+r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of singularity 
 ```
 
-### Temp/ppt dist
+## Temp/ppt dist
 ```{r}
-total_fecund_SUB_models_CD_GD <- tribble(
+total_fit_SUB_CD_models <- tribble(
   ~name,          ~f,
   "1_pop.block",      "Total_Fitness ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
   "2_WY_Recent",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
   "4_GS_Recent",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
   "5_GS_Historical",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
   "6_WY_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
   "7_WY_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)" ,
-  "8_GS_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)", 
-  "9_GS_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)"
+  "8_GS_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
+  "9_GS_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
 )
 
 #run the models 
-total_fecund_SUB_models_CD_GD <- total_fecund_SUB_models_CD_GD %>%
-  mutate(glmer = map(f, ~ glmer(as.formula(.), 
-                            family = poisson,
+total_fit_SUB_CD_models <- total_fit_SUB_CD_models %>%
+  mutate(glmmTMB = map(f, ~ glmmTMB(as.formula(.), 
+                            family = nbinom1, ziformula=~1,
                             data = wl2_total_fitness_scaled)))
-#convergence warnings for 3_WY_Historical, 8_GS_Recent_height, and 9_GS_Historical_height models with mf included
 
 #show results:
-total_fecund_SUB_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
+total_fit_SUB_CD_models %>% mutate(tidy=map(glmmTMB, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
-  filter(str_detect(term, "Dist") | term=="height.cm") %>%
+  filter(str_detect(term, "scaled")) %>%
   drop_na(p.value)
 
-#quasi-poisson correction:
-total_fecund_SUB_models_CD_GD %>% 
-  mutate(phi=map(glmer, phi_function)) %>% 
-  mutate(tidy=map(glmer, tidy)) %>% 
-  unnest(tidy) %>% 
-  unnest(phi) %>% 
-  transmute(term = term, estimate = estimate,
-                std.error = std.error * sqrt(phi),
-                statistic = estimate/std.error,
-                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "Dist") | term=="height.cm_scaled") %>%
-  drop_na(p.value) 
-
-total_fecund_SUB_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
+total_fit_SUB_CD_models %>% 
+  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+         singularity=map(glmmTMB, check_singularity)) %>% 
+  unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
-  unnest(rsq) %>% 
-  select(-f:-glmer)
+  select(-f:-glmmTMB)
 ```
 
-### Add in Gowers climate distance
-No Height
+## Gowers dist
 ```{r}
-total_fecund_models_CD_GD <- tribble(
+total_fit_models_CD_GD <- tribble(
   ~name,          ~f,
   "1_pop.block",      "Total_Fitness ~  (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)"
+  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
+  "6_WY_Recent_height",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "7_WY_Historical_height",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
+  "8_GS_Recent_height",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
+  "9_GS_Historical_height",  "Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
 )
+
 #run the models 
-total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
-  mutate(glmer = map(f, ~ glmer(as.formula(.), 
-                            family = poisson,
+total_fit_models_CD_GD <- total_fit_models_CD_GD %>%
+  mutate(glmmTMB = map(f, ~ glmmTMB(as.formula(.), 
+                            family = nbinom1, ziformula=~1,
                             data = wl2_total_fitness_scaled)))
-#investigate convergence warnings  
-#convergence issues with water year models when mf included 
 
 #show results:
-total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
+total_fit_models_CD_GD %>% mutate(tidy=map(glmmTMB, tidy)) %>% unnest(tidy) %>%
   select(name, term:p.value) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled") %>%
-  drop_na(p.value) #recent water year sig
+  filter(str_detect(term, "scaled")) %>%
+  drop_na(p.value) 
 
-#quasi-poisson correction:
-total_fecund_models_CD_GD %>% 
-  mutate(phi=map(glmer, phi_function)) %>% 
-  mutate(tidy=map(glmer, tidy)) %>% 
-  unnest(tidy) %>% 
-  unnest(phi) %>% 
-  transmute(term = term, estimate = estimate, 
-                std.error = std.error * sqrt(phi),
-                statistic = estimate/std.error,
-                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled" | term=="height.cm") %>%
-  drop_na(p.value) #after correction, no clim dist sig
-```
-
-Height 
-```{r}
-total_fecund_models_CD_GD <- tribble(
-  ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  height.cm + (1|pop) + (1|block)", 
-  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
-)
-#run the models 
-total_fecund_models_CD_GD <- total_fecund_models_CD_GD %>%
-  mutate(glmer = map(f, ~ glmer(as.formula(.), 
-                            family = poisson,
-                            data = wl2_total_fitness_scaled)))
-#convergence issues with mf included 
-
-#show results:
-total_fecund_models_CD_GD %>% mutate(tidy=map(glmer, tidy)) %>% unnest(tidy) %>%
-  select(name, term:p.value) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist" | term=="height.cm") %>%
-  drop_na(p.value)
-
-#quasi-poisson correction:
-total_fecund_models_CD_GD %>% 
-  mutate(phi=map(glmer, phi_function)) %>% 
-  mutate(tidy=map(glmer, tidy)) %>% 
-  unnest(tidy) %>% 
-  unnest(phi) %>% 
-  transmute(term = term, estimate = estimate, 
-                std.error = std.error * sqrt(phi),
-                statistic = estimate/std.error,
-                p.value = 2*pnorm(abs(statistic), lower.tail=FALSE)) %>% 
-  filter(str_detect(term, "GD") | term=="Geographic_Dist_scaled" | term=="height.cm_scaled") %>%
-  drop_na(p.value) #after correction, no clim dist sig
-
-total_fecund_models_CD_GD %>% mutate(rsq=map(glmer, r2)) %>% 
+total_fit_models_CD_GD %>% 
+  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+         singularity=map(glmmTMB, check_singularity)) %>% 
+  unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
-  unnest(rsq) %>% 
-  select(-f:-glmer)
-
-#pairwise test between WL2 and BH (the pop with the highest total fitness):
-wtr_yr_recent_mod <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block), 
-                           family = poisson, data = wl2_total_fitness_scaled)
-#get min and max GD
-min(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year_scaled) 
-max(wl2_total_fitness_scaled$AvgGD_Recent_Wtr_Year_scaled)
-minmaxGD = list(AvgGD_Recent_Wtr_Year_scaled = c(-1.358033, 2.153113))
-
-# Calculate EMMs at the min and max GD
-emm_results <- emmeans(wtr_yr_recent_mod, ~ AvgGD_Recent_Wtr_Year_scaled, at = minmaxGD)
-# View the results
-summary(emm_results)
-
-# Perform pairwise comparison
-pairs(emm_results) 
-#P=0.0302
-#but this is based off the poisson model, not the quasi-poisson...
+  select(-f:-glmmTMB)
 ```
-
-## Try independent model with just BH and WL2
-```{r}
-wl2_total_fitness_scaled_ind <- wl2_total_fitness_scaled %>% 
-  filter(pop=="BH" | pop=="WL2")
-
-wtr_yr_recent_mod_ind <- glmer(Total_Fitness ~  AvgTempDist_Recent_Wtr_Year + height.cm + (1|block), 
-                               family = poisson, data = wl2_total_fitness_scaled_ind)
-summary(wtr_yr_recent_mod_ind)
-```
-
