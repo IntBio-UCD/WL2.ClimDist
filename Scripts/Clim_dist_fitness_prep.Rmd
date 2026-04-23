@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Code for prepping fitness to relate to clmate distance (Figure 4-5; S4-S7; Table 2-3)
+# Code for prepping fitness to relate to clmate distance (Figure 3-4; S5-S9; Table 2-3)
 
 ## Libraries
 ```{r}
