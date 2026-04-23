@@ -357,8 +357,8 @@ display: none;
 </div>
 
 
-<div id="code-for-figures-relating-climate-distance-to-fitness-figure-4-5-s5-s9" class="section level1">
-<h1>Code for figures relating climate distance to fitness (Figure 4-5;
+<div id="code-for-figures-relating-climate-distance-to-fitness-figure-3-4-s5-s9" class="section level1">
+<h1>Code for figures relating climate distance to fitness (Figure 3-4;
 S5-S9)</h1>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
@@ -881,8 +881,8 @@ est_summary %&gt;% arrange(meanEst)</code></pre>
 ## #   meanY1Surv &lt;dbl&gt;, semSurv &lt;dbl&gt;</code></pre>
 </div>
 </div>
-<div id="figure-4-temp-recent-water-climate-distance" class="section level2">
-<h2>Figure 4: Temp recent water climate distance</h2>
+<div id="figure-3-temp-recent-water-climate-distance" class="section level2">
+<h2>Figure 3: Temp recent water climate distance</h2>
 <pre class="r"><code>WYtemp_y1surv &lt;- y1surv_summary %&gt;% 
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
@@ -949,10 +949,10 @@ fig4_sub &lt;- ggarrange(WYtemp_y1surv, WYtemp_repsurv2,
                         labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;),  
                         font.label = list(size=30, face = &quot;plain&quot;), 
                         ncol=2, nrow=2) 
-ggsave(&quot;../Figures/Figure4_TmpPPT.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
+ggsave(&quot;../Figures/Figure3_TmpPPT.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
-<div id="figure-5-gowers-recent-water-year-climate-distance" class="section level2">
-<h2>Figure 5: Gower’s recent water year climate distance</h2>
+<div id="figure-4-gowers-recent-water-year-climate-distance" class="section level2">
+<h2>Figure 4: Gower’s recent water year climate distance</h2>
 <pre class="r"><code>wintersurv_gower &lt;- wintersurv_summary %&gt;% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
@@ -1020,7 +1020,7 @@ fig5_gower &lt;- ggarrange(wintersurv_gower, repsurv2_gower,
                         labels = c(&quot;A)&quot;, &quot;B)&quot;, &quot;C)&quot;, &quot;D)&quot;), 
                         font.label = list(size=30, face = &quot;plain&quot;), 
                         ncol=2, nrow=2) 
-ggsave(&quot;../Figures/Figure5_WtrYrGowers.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
+ggsave(&quot;../Figures/Figure4_WtrYrGowers.png&quot;, width = 26, height = 18, units = &quot;in&quot;)</code></pre>
 </div>
 <div id="figure-s5-additonal-temp-and-ppt-water-year-climate-distance" class="section level2">
 <h2>Figure S5: Additonal Temp and PPT water year climate distance</h2>
