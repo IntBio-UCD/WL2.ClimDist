@@ -244,6 +244,17 @@ total_fit_models_CD_GD %>%
   unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
   select(-f:-glmmTMB)
+
+##predictions for figures:
+WY_Recent_mod <- total_fit_models_CD_GD %>% 
+  filter(name=="2_WY_Recent") %>% 
+  pull(glmmTMB) 
+totalfitness_preds <- tibble(.pred=predict(WY_Recent_mod[[1]],
+                                           newdata=pred_df_gowers,
+                                           re.form= NA, type="response")) %>% 
+  bind_cols(pred_df_gowers) 
+totalfitness_preds$AvgGD_Recent_Wtr_Year_scaled <- as.vector(totalfitness_preds$AvgGD_Recent_Wtr_Year_scaled)
+write_csv(totalfitness_preds, "../Processed.Data/TotalFitness_GDPreds_WYRecent.csv")
 ```
 
 ## Quasi-Poisson
