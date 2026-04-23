@@ -118,7 +118,19 @@ wl2_total_fitness_scaled <- wl2_total_fitness %>%
               "AvgTempDist_Recent_GrwSsn", "AvgTempDist_Recent_Wtr_Year",
               "AvgPPTDist_Historic_GrwSsn", "AvgPPTDist_Historic_Wtr_Year",
               "AvgPPTDist_Recent_GrwSsn", "AvgPPTDist_Recent_Wtr_Year",
-              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled"))
+              "Geographic_Dist", "height.cm"), scale, .names = "{.col}_scaled")) %>% 
+  arrange(Total_Fitness)
+```
+
+## Geo fixed for Clim Dist Predictions 
+```{r}
+geo_fixed <- wl2_total_fitness_scaled %>% 
+  summarise(Geographic_Dist=mean(Geographic_Dist),
+            Geographic_Dist_scaled=mean(Geographic_Dist_scaled))
+
+pred_df_gowers <- tibble(AvgGD_Recent_Wtr_Year = seq(from = 0.25, to=0.64, length.out=46)) %>% 
+  mutate(AvgGD_Recent_Wtr_Year_scaled=scale(AvgGD_Recent_Wtr_Year)) %>% 
+  bind_cols(geo_fixed)
 ```
 
 ## Basic model
@@ -138,12 +150,30 @@ AICctab(total_fit_zero_poisson, total_fit_zero_negbinom, total_fit_zero_negbinom
 
 #diagnostics 
 deviance(total_fit_zero_negbinom1)/df.residual(total_fit_zero_negbinom1) #check for overdispersion - less than 1 which is good 
-plot(residuals(total_fit_zero_negbinom1)) #not perfect, but probably fine 
+plot(predict(total_fit_zero_negbinom1, type="response"), residuals(total_fit_zero_negbinom1),
+     main="glmmTMB-negbinom", xlab="Fitted", ylab="Residuals") #residuals plot
+#not perfect, but probably fine?
+plot(residuals(total_fit_zero_negbinom1)) #index plot 
 
 #results
 summary(total_fit_zero_negbinom1)
 check_singularity(total_fit_zero_negbinom1)
 r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of singularity 
+```
+
+### Predicted vs. Observed
+```{r}
+negbinom_preds <- tibble(.pred=predict(total_fit_zero_negbinom1,
+                                       newdata=wl2_total_fitness_scaled,
+                                       type="response")) %>% 
+  bind_cols(wl2_total_fitness_scaled) %>% 
+  select(.pred, Total_Fitness)
+
+negbinom_preds %>% 
+  ggplot(aes(.pred, Total_Fitness)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  labs(y="Observed", x="Predicted", title="glmmTMB-negbinom")
 ```
 
 ## Temp/ppt dist
@@ -214,4 +244,40 @@ total_fit_models_CD_GD %>%
   unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
   select(-f:-glmmTMB)
+```
+
+## Quasi-Poisson
+Since the quasi part is based on the a p-value correction for overdispersion (doesn't change the model estimates), we can use the poisson model for all the diagnostics
+```{r}
+library(lmerTest)
+
+total_fit_poisson <- glmer(Total_Fitness ~ height.cm_scaled + (1|pop/mf) + (1|block), 
+                              family = poisson,
+                              data=wl2_total_fitness_scaled)
+
+#diagnostics 
+deviance(total_fit_poisson)/df.residual(total_fit_poisson) #check for overdispersion (caused by excess of 0s) - over 1 which is not good 
+plot(total_fit_poisson, which = 1) #residuals plot (residuals vs predicted)
+plot(predict(total_fit_poisson, type="response"), residuals(total_fit_poisson),
+     main="poisson", xlab="Fitted", ylab="Residuals")  #same plot 
+#doesn't look great
+plot(residuals(total_fit_poisson)) #index plot 
+
+#results
+r2(total_fit_poisson) #marginal r2 = 0 
+```
+
+### Predicted vs. Observed
+```{r}
+poisson_preds <- tibble(.pred=predict(total_fit_poisson,
+                                       newdata=wl2_total_fitness_scaled,
+                                       type="response")) %>% 
+  bind_cols(wl2_total_fitness_scaled) %>% 
+  select(.pred, Total_Fitness)
+
+poisson_preds %>% 
+  ggplot(aes(.pred, Total_Fitness)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  labs(y="Observed", x="Predicted", title="poisson")
 ```
