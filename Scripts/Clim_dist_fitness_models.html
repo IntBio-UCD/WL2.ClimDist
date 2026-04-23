@@ -1279,7 +1279,7 @@ surv_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) %&gt;%
 ##  7 GS_Recent        Geographic_Dist_scaled   -0.184      0.281    -0.654 5.13e-1
 ##  8 GS_Historical    GD_Historic_GrwSsn_202…  -0.664      0.257    -2.59  9.72e-3
 ##  9 GS_Historical    Geographic_Dist_scaled   -0.0932     0.261    -0.356 7.21e-1
-## 10 WY_Recent_height GD_Recent_Wtr_Year_202…   1.22       0.324     3.78  1.60e-4
+## 10 WY_Recent_height GD_Recent_Wtr_Year_202…   1.22       0.323     3.79  1.49e-4
 ## # ℹ 11 more rows</code></pre>
 <pre class="r"><code>surv_GD_fits_wl2 %&gt;% mutate(extracted_fit=map(fit, extract_fit_parsnip)) %&gt;% 
   mutate(rsq=map(extracted_fit, r2)) %&gt;% 
@@ -2470,7 +2470,7 @@ prob_fitness_GD_fits_wl2 %&gt;% mutate(tidy=map(fit, tidy)) %&gt;% unnest(tidy) 
 ##    &lt;chr&gt;            &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
 ##  1 pop.block        height.cm_scaled           0.285     0.159     1.79   0.0740
 ##  2 WY_Recent        AvgGD_Recent_Wtr_Year_…    1.64      0.642     2.55   0.0107
-##  3 WY_Recent        Geographic_Dist_scaled    -0.636     0.626    -1.02   0.309 
+##  3 WY_Recent        Geographic_Dist_scaled    -0.637     0.626    -1.02   0.309 
 ##  4 WY_Historical    AvgGD_Historic_Wtr_Yea…    1.12      0.679     1.65   0.0997
 ##  5 WY_Historical    Geographic_Dist_scaled    -0.634     0.688    -0.921  0.357 
 ##  6 GS_Recent        AvgGD_Recent_GrwSsn_sc…    0.100     0.791     0.127  0.899 
