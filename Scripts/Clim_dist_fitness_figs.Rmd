@@ -133,14 +133,14 @@ est_summary %>% arrange(meanEst)
 y1surv_summary %>% arrange(meanY1Surv)
 ```
 
-## Figure 4: Temp recent water climate distance
+## Figure 3: Temp recent water climate distance
 ```{r}
 WYtemp_y1surv <- y1surv_summary %>% 
   ggplot(aes(x=TempDist_Recent_Wtr_Year_2023, y=meanY1Surv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[20]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[21]] %>% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 1.635292, y= 0.88, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -201,17 +201,17 @@ fig4_sub <- ggarrange(WYtemp_y1surv, WYtemp_repsurv2,
                         labels = c("A)", "B)", "C)", "D)"),  
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/Figure4_TmpPPT.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/Figure3_TmpPPT.png", width = 26, height = 18, units = "in")
 ```
 
-## Figure 5: Gower's recent water year climate distance
+## Figure 4: Gower's recent water year climate distance
 ```{r}
 wintersurv_gower <- wintersurv_summary %>% 
   ggplot(aes(x=GD_Recent_Wtr_Year_2024, y=meanWintSurv, group = pop, colour = elev_m)) +
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[17]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[18]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.1453708, y= 0.24, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -257,6 +257,7 @@ tot_fit_gower <- wl2_tot_fitness_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[17]] %>% rename(AvgGD_Recent_Water.Year=AvgGD_Recent_Wtr_Year) %>% mutate(pop=NA), aes(x=AvgGD_Recent_Water.Year, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y="Total Fitness", x="Recent Water Year Climate Dist", 
@@ -272,7 +273,7 @@ fig5_gower <- ggarrange(wintersurv_gower, repsurv2_gower,
                         labels = c("A)", "B)", "C)", "D)"), 
                         font.label = list(size=30, face = "plain"), 
                         ncol=2, nrow=2) 
-ggsave("../Figures/Figure5_WtrYrGowers.png", width = 26, height = 18, units = "in")
+ggsave("../Figures/Figure4_WtrYrGowers.png", width = 26, height = 18, units = "in")
 ```
 
 ## Figure S5: Additonal Temp and PPT water year climate distance
@@ -352,7 +353,7 @@ y1surv_gower <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[19]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[20]] %>% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.38, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 
@@ -457,7 +458,7 @@ y1_surv_gowers <- y1surv_summary %>%
   scale_colour_gradient(low = "#F5A540", high = "#0043F0") +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[18]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[19]] %>% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour="black", alpha=0.5) + 
   annotate("text", x = 0.228, y= 0.7884615, label = "WL2", 
            colour = "purple", fontface="bold", size = 22 / .pt) +
   theme_classic() + 

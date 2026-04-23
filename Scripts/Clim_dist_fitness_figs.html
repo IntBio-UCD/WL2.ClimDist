@@ -11,7 +11,7 @@
 
 <meta name="author" content="Brandie QC" />
 
-<meta name="date" content="2026-03-13" />
+<meta name="date" content="2026-04-23" />
 
 <title>Clim_dist_fitness_figs</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Clim_dist_fitness_figs</h1>
 <h4 class="author">Brandie QC</h4>
-<h4 class="date">2026-03-13</h4>
+<h4 class="date">2026-04-23</h4>
 
 </div>
 
@@ -364,11 +364,11 @@ S5-S9)</h1>
 <h2>Load libraries</h2>
 <pre class="r"><code>library(tidyverse)</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2     
+## ✔ dplyr     1.2.1     ✔ readr     2.2.0
+## ✔ forcats   1.0.1     ✔ stringr   1.6.0
+## ✔ ggplot2   4.0.2     ✔ tibble    3.3.1
+## ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
+## ✔ purrr     1.2.2     
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
@@ -601,6 +601,13 @@ pred_dat2 &lt;- pred_dat %&gt;%
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 46 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl (5): .pred, AvgGD_Recent_Wtr_Year, AvgGD_Recent_Wtr_Year_scaled, Geograp...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ## Rows: 46 Columns: 16
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -642,8 +649,9 @@ pred_dat2 &lt;- pred_dat %&gt;%
 ## [11] &quot;RepOutput_SubPreds_GSRecentTemp.csv&quot; &quot;RepOutput_SubPreds_WtrYrHistPPT.csv&quot;
 ## [13] &quot;RepSurv2_GDPreds_GrwSsnRecent.csv&quot;   &quot;RepSurv2_GDPreds_WYRecent.csv&quot;      
 ## [15] &quot;RepSurv2_GeoDist_Preds.csv&quot;          &quot;RepSurv2_SubPreds_WYRecentTemp.csv&quot; 
-## [17] &quot;WintSurv_GDPreds_WYRecent.csv&quot;       &quot;Y1Surv_GDPreds_GrwSsnHist.csv&quot;      
-## [19] &quot;Y1Surv_GDPreds_WYRecent.csv&quot;         &quot;Y1Surv_SubPreds_WYRecentTemp.csv&quot;</code></pre>
+## [17] &quot;TotalFitness_GDPreds_WYRecent.csv&quot;   &quot;WintSurv_GDPreds_WYRecent.csv&quot;      
+## [19] &quot;Y1Surv_GDPreds_GrwSsnHist.csv&quot;       &quot;Y1Surv_GDPreds_WYRecent.csv&quot;        
+## [21] &quot;Y1Surv_SubPreds_WYRecentTemp.csv&quot;</code></pre>
 </div>
 <div id="data-summaries" class="section level2">
 <h2>Data Summaries</h2>
@@ -697,50 +705,95 @@ pred_dat2 &lt;- pred_dat %&gt;%
            TempDist_Recent_GrwSsn_2023, PPTDist_Recent_GrwSsn_2023,
            GD_Historic_GrwSsn_2023) %&gt;% 
   summarise(meanEst=mean(Establishment, na.rm = TRUE), semEst=sem(Establishment, na.rm=TRUE))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Geographic_Dist&#39;,
-## &#39;GD_Recent_Wtr_Year_2023&#39;, &#39;GD_Historic_Wtr_Year_2023&#39;,
-## &#39;TempDist_Recent_Wtr_Year_2023&#39;, &#39;PPTDist_Recent_Wtr_Year_2023&#39;,
-## &#39;TempDist_Recent_GrwSsn_2023&#39;, &#39;PPTDist_Recent_GrwSsn_2023&#39;. You can override
-## using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, Geographic_Dist,
+##   GD_Recent_Wtr_Year_2023, GD_Historic_Wtr_Year_2023,
+##   TempDist_Recent_Wtr_Year_2023, PPTDist_Recent_Wtr_Year_2023,
+##   TempDist_Recent_GrwSsn_2023, PPTDist_Recent_GrwSsn_2023, and
+##   GD_Historic_GrwSsn_2023.
+## ℹ Output is grouped by pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2023,
+##   GD_Historic_Wtr_Year_2023, TempDist_Recent_Wtr_Year_2023,
+##   PPTDist_Recent_Wtr_Year_2023, TempDist_Recent_GrwSsn_2023, and
+##   PPTDist_Recent_GrwSsn_2023.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2023,
+##   GD_Historic_Wtr_Year_2023, TempDist_Recent_Wtr_Year_2023,
+##   PPTDist_Recent_Wtr_Year_2023, TempDist_Recent_GrwSsn_2023,
+##   PPTDist_Recent_GrwSsn_2023, GD_Historic_GrwSsn_2023))` for per-operation
+##   grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>y1surv_summary &lt;- first_yr_surv %&gt;% 
   group_by(pop, elev_m, GD_Recent_GrwSsn_2023, GD_Recent_Wtr_Year_2023, 
            PPTDist_Recent_GrwSsn_2023, TempDist_Recent_Wtr_Year_2023,
            GD_Historic_GrwSsn_2023) %&gt;% 
   summarise(meanY1Surv=mean(Y1Survival, na.rm = TRUE), semSurv=sem(Y1Survival, na.rm=TRUE)) </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;GD_Recent_GrwSsn_2023&#39;,
-## &#39;GD_Recent_Wtr_Year_2023&#39;, &#39;PPTDist_Recent_GrwSsn_2023&#39;,
-## &#39;TempDist_Recent_Wtr_Year_2023&#39;. You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, GD_Recent_GrwSsn_2023,
+##   GD_Recent_Wtr_Year_2023, PPTDist_Recent_GrwSsn_2023,
+##   TempDist_Recent_Wtr_Year_2023, and GD_Historic_GrwSsn_2023.
+## ℹ Output is grouped by pop, elev_m, GD_Recent_GrwSsn_2023,
+##   GD_Recent_Wtr_Year_2023, PPTDist_Recent_GrwSsn_2023, and
+##   TempDist_Recent_Wtr_Year_2023.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, GD_Recent_GrwSsn_2023,
+##   GD_Recent_Wtr_Year_2023, PPTDist_Recent_GrwSsn_2023,
+##   TempDist_Recent_Wtr_Year_2023, GD_Historic_GrwSsn_2023))` for per-operation
+##   grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>wintersurv_summary &lt;- winter_surv %&gt;% 
   filter(pop!=&quot;WR&quot;) %&gt;% #remove pops with too low sample size 
   group_by(pop, elev_m, GD_Recent_Wtr_Year_2024) %&gt;% 
   summarise(meanWintSurv=mean(WinterSurv, na.rm = TRUE), semSurv=sem(WinterSurv, na.rm=TRUE))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
-## `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, and GD_Recent_Wtr_Year_2024.
+## ℹ Output is grouped by pop and elev_m.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, GD_Recent_Wtr_Year_2024))` for
+##   per-operation grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>wl2_surv_to_bud_y2_summary &lt;- wl2_surv_to_bud_y2 %&gt;% 
   filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% #remove pops with too low sample size 
   group_by(pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2024, 
            TempDist_Recent_Wtr_Year_2024, PPTDist_Recent_Wtr_Year_2024,
            GD_Recent_GrwSsn_2024) %&gt;% 
   summarise(meanSurvtoBudY2=mean(SurvtoRep_y2, na.rm = TRUE), semEst=sem(SurvtoRep_y2, na.rm=TRUE)) </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Geographic_Dist&#39;,
-## &#39;GD_Recent_Wtr_Year_2024&#39;, &#39;TempDist_Recent_Wtr_Year_2024&#39;,
-## &#39;PPTDist_Recent_Wtr_Year_2024&#39;. You can override using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, Geographic_Dist,
+##   GD_Recent_Wtr_Year_2024, TempDist_Recent_Wtr_Year_2024,
+##   PPTDist_Recent_Wtr_Year_2024, and GD_Recent_GrwSsn_2024.
+## ℹ Output is grouped by pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2024,
+##   TempDist_Recent_Wtr_Year_2024, and PPTDist_Recent_Wtr_Year_2024.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, Geographic_Dist, GD_Recent_Wtr_Year_2024,
+##   TempDist_Recent_Wtr_Year_2024, PPTDist_Recent_Wtr_Year_2024,
+##   GD_Recent_GrwSsn_2024))` for per-operation grouping (`?dplyr::dplyr_by`)
+##   instead.</code></pre>
 <pre class="r"><code>y2_fruits_summary &lt;- wl2_fruits_y2 %&gt;% 
   filter(pop != &quot;LV1&quot;, pop != &quot;SQ1&quot;, pop != &quot;WR&quot;) %&gt;% #remove pops with too low sample size 
   group_by(pop, elev_m, GD_Recent_Wtr_Year_2024) %&gt;% 
   summarise(meanFruitsY2=mean(y2_fruits, na.rm = TRUE), semFruits=sem(y2_fruits, na.rm=TRUE))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
-## `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, and GD_Recent_Wtr_Year_2024.
+## ℹ Output is grouped by pop and elev_m.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, GD_Recent_Wtr_Year_2024))` for
+##   per-operation grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>prob_fitness_summary &lt;- wl2_prob_rep %&gt;%  
   group_by(pop, elev_m, Geographic_Dist, AvgGD_Recent_Water_Yr, AvgTempDist_Recent_Wtr_Year, 
            AvgPPTDist_Recent_Wtr_Year, AvgPPTDist_Historic_GrwSsn, AvgPPTDist_Recent_GrwSsn) %&gt;% 
   summarise(meanProbFit=mean(ProbFitness, na.rm = TRUE), semEst=sem(ProbFitness, na.rm=TRUE)) %&gt;%
   mutate(RepYear=if_else(meanProbFit==0, &quot;None&quot;,
                          if_else(pop==&quot;TM2&quot;, &quot;Both Years&quot;, &quot;Year 2 Only&quot;)))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;, &#39;Geographic_Dist&#39;,
-## &#39;AvgGD_Recent_Water_Yr&#39;, &#39;AvgTempDist_Recent_Wtr_Year&#39;,
-## &#39;AvgPPTDist_Recent_Wtr_Year&#39;, &#39;AvgPPTDist_Historic_GrwSsn&#39;. You can override
-## using the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, Geographic_Dist,
+##   AvgGD_Recent_Water_Yr, AvgTempDist_Recent_Wtr_Year,
+##   AvgPPTDist_Recent_Wtr_Year, AvgPPTDist_Historic_GrwSsn, and
+##   AvgPPTDist_Recent_GrwSsn.
+## ℹ Output is grouped by pop, elev_m, Geographic_Dist, AvgGD_Recent_Water_Yr,
+##   AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year, and
+##   AvgPPTDist_Historic_GrwSsn.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, Geographic_Dist, AvgGD_Recent_Water_Yr,
+##   AvgTempDist_Recent_Wtr_Year, AvgPPTDist_Recent_Wtr_Year,
+##   AvgPPTDist_Historic_GrwSsn, AvgPPTDist_Recent_GrwSsn))` for per-operation
+##   grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>prob_fitness_summary$RepYear &lt;- factor(prob_fitness_summary$RepYear,
                                                levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))
 
@@ -752,10 +805,18 @@ wl2_tot_fecundity_summary &lt;- wl2_tot_fecundity %&gt;%
   summarise(meanTotFruit=mean(Total_Fecundity, na.rm=TRUE), semTotFruit=sem(Total_Fecundity, na.rm=TRUE)) %&gt;% 
   mutate(RepYear=if_else(meanTotFruit==0, &quot;None&quot;,
                          if_else(pop==&quot;TM2&quot;, &quot;Both Years&quot;, &quot;Year 2 Only&quot;)))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;,
-## &#39;AvgTempDist_Recent_Wtr_Year&#39;, &#39;AvgPPTDist_Historic_Wtr_Year&#39;,
-## &#39;AvgTempDist_Recent_GrwSsn&#39;, &#39;AvgPPTDist_Recent_GrwSsn&#39;. You can override using
-## the `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, AvgTempDist_Recent_Wtr_Year,
+##   AvgPPTDist_Historic_Wtr_Year, AvgTempDist_Recent_GrwSsn,
+##   AvgPPTDist_Recent_GrwSsn, and AvgGD_Recent_Growth Season.
+## ℹ Output is grouped by pop, elev_m, AvgTempDist_Recent_Wtr_Year,
+##   AvgPPTDist_Historic_Wtr_Year, AvgTempDist_Recent_GrwSsn, and
+##   AvgPPTDist_Recent_GrwSsn.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, AvgTempDist_Recent_Wtr_Year,
+##   AvgPPTDist_Historic_Wtr_Year, AvgTempDist_Recent_GrwSsn,
+##   AvgPPTDist_Recent_GrwSsn, AvgGD_Recent_Growth Season))` for per-operation
+##   grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>wl2_tot_fecundity_summary$RepYear &lt;- factor(wl2_tot_fecundity_summary$RepYear,
                                                levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))
 
@@ -764,8 +825,12 @@ wl2_tot_fitness_summary &lt;- wl2_tot_fitness %&gt;%
   summarise(meanTotFit=mean(Total_Fitness, na.rm=TRUE), semTotFit=sem(Total_Fitness, na.rm=TRUE)) %&gt;%
   mutate(RepYear=if_else(meanTotFit==0, &quot;None&quot;,
                          if_else(pop==&quot;TM2&quot;, &quot;Both Years&quot;, &quot;Year 2 Only&quot;)))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;pop&#39;, &#39;elev_m&#39;. You can override using the
-## `.groups` argument.</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by pop, elev_m, and AvgGD_Recent_Water.Year.
+## ℹ Output is grouped by pop and elev_m.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(pop, elev_m, AvgGD_Recent_Water.Year))` for
+##   per-operation grouping (`?dplyr::dplyr_by`) instead.</code></pre>
 <pre class="r"><code>wl2_tot_fitness_summary$RepYear &lt;- factor(wl2_tot_fitness_summary$RepYear,
                                                levels = c(&#39;None&#39;,&#39;Year 2 Only&#39;, &#39;Both Years&#39;))
 
@@ -823,7 +888,7 @@ est_summary %&gt;% arrange(meanEst)</code></pre>
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[20]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[21]] %&gt;% mutate(pop=NA), aes(x=TempDist_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 1.635292, y= 0.88, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -893,7 +958,7 @@ ggsave(&quot;../Figures/Figure4_TmpPPT.png&quot;, width = 26, height = 18, units
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanWintSurv-semSurv,ymax=meanWintSurv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[17]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[18]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2024, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.1453708, y= 0.24, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -939,6 +1004,7 @@ tot_fit_gower &lt;- wl2_tot_fitness_summary %&gt;%
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(aes(shape=RepYear), size=6) + 
   geom_errorbar(aes(ymin=meanTotFit-semTotFit,ymax=meanTotFit+semTotFit),width=0,linewidth = 2) +
+  geom_line(data=pred_dat2$sheets[[17]] %&gt;% rename(AvgGD_Recent_Water.Year=AvgGD_Recent_Wtr_Year) %&gt;% mutate(pop=NA), aes(x=AvgGD_Recent_Water.Year, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   theme_classic() + 
   scale_y_continuous(expand = c(0.01, 0)) +
   labs(y=&quot;Total Fitness&quot;, x=&quot;Recent Water Year Climate Dist&quot;, 
@@ -1033,7 +1099,7 @@ y1surv_gower &lt;- y1surv_summary %&gt;%
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[19]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[20]] %&gt;% mutate(pop=NA), aes(x=GD_Recent_Wtr_Year_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.38, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
@@ -1136,7 +1202,7 @@ y1_surv_gowers &lt;- y1surv_summary %&gt;%
   scale_colour_gradient(low = &quot;#F5A540&quot;, high = &quot;#0043F0&quot;) +
   geom_point(size=6) + 
   geom_errorbar(aes(ymin=meanY1Surv-semSurv,ymax=meanY1Surv+semSurv),width=0,linewidth = 2) +
-  geom_line(data=pred_dat2$sheets[[18]] %&gt;% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
+  geom_line(data=pred_dat2$sheets[[19]] %&gt;% mutate(pop=NA), aes(x=GD_Historic_GrwSsn_2023, y=.pred), linewidth=2, colour=&quot;black&quot;, alpha=0.5) + 
   annotate(&quot;text&quot;, x = 0.228, y= 0.7884615, label = &quot;WL2&quot;, 
            colour = &quot;purple&quot;, fontface=&quot;bold&quot;, size = 22 / .pt) +
   theme_classic() + 
