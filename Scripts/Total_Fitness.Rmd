@@ -155,6 +155,13 @@ plot(predict(total_fit_zero_negbinom1, type="response"), residuals(total_fit_zer
 #not perfect, but probably fine?
 plot(residuals(total_fit_zero_negbinom1)) #index plot 
 
+plot(predict(total_fit_zero_poisson, type="response"), residuals(total_fit_zero_poisson),
+     main="glmmTMB-poisson", xlab="Fitted", ylab="Residuals") 
+deviance(total_fit_zero_poisson)/df.residual(total_fit_zero_poisson)
+
+plot(predict(total_fit_zero_negbinom, type="response"), residuals(total_fit_zero_negbinom), xlab="Fitted", ylab="Residuals") 
+deviance(total_fit_zero_negbinom)/df.residual(total_fit_zero_negbinom)
+
 #results
 summary(total_fit_zero_negbinom1)
 check_singularity(total_fit_zero_negbinom1)
@@ -277,18 +284,63 @@ plot(residuals(total_fit_poisson)) #index plot
 #results
 r2(total_fit_poisson) #marginal r2 = 0 
 ```
-
-### Predicted vs. Observed
+### Residual Plot Comparisons 
 ```{r}
+par(mfrow = c(2, 2))
+plot(predict(total_fit_zero_negbinom1, type="response"), residuals(total_fit_zero_negbinom1),
+     main="glmmTMB-negbinom", xlab="Fitted", ylab="Residuals",
+     xlim=c(0, 60), ylim=c(-20, 120)) 
+plot(predict(total_fit_zero_poisson, type="response"), residuals(total_fit_zero_poisson),
+     main="glmmTMB-poisson", xlab="Fitted", ylab="Residuals",
+     xlim=c(0, 60), ylim=c(-20, 120)) 
+plot(predict(total_fit_poisson, type="response"), residuals(total_fit_poisson),
+     main="poisson", xlab="Fitted", ylab="Residuals",
+     xlim=c(0, 60), ylim=c(-20, 120)) 
+```
+
+
+### Predicted vs. Observed Comparisons 
+```{r}
+library(ggpubr) #ggarrange
+negbinom_preds <- tibble(.pred=predict(total_fit_zero_negbinom1,
+                                       newdata=wl2_total_fitness_scaled,
+                                       type="response")) %>% 
+  bind_cols(wl2_total_fitness_scaled) %>% 
+  select(.pred, Total_Fitness)
+
+negbinom_preds_fig <- negbinom_preds %>% 
+  ggplot(aes(Total_Fitness, .pred)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  ylim(0, 70) +
+  labs(x="Observed", y="Predicted", title="glmmTMB-negbinom")
+
+zeriopoisson_preds <- tibble(.pred=predict(total_fit_zero_poisson,
+                                       newdata=wl2_total_fitness_scaled,
+                                       type="response")) %>% 
+  bind_cols(wl2_total_fitness_scaled) %>% 
+  select(.pred, Total_Fitness)
+
+zeriopoisson_preds_fig <- zeriopoisson_preds %>% 
+  ggplot(aes(Total_Fitness, .pred)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  ylim(0, 70) +
+  labs(x="Observed", y="Predicted", title="glmmTMB-poisson")
+
 poisson_preds <- tibble(.pred=predict(total_fit_poisson,
                                        newdata=wl2_total_fitness_scaled,
                                        type="response")) %>% 
   bind_cols(wl2_total_fitness_scaled) %>% 
   select(.pred, Total_Fitness)
 
-poisson_preds %>% 
-  ggplot(aes(.pred, Total_Fitness)) +
+poisson_preds_fig <- poisson_preds %>% 
+  ggplot(aes(Total_Fitness, .pred)) +
   geom_point() +
   geom_abline(intercept=0, slope=1) +
-  labs(y="Observed", x="Predicted", title="poisson")
+  ylim(0, 70) +
+  labs(x="Observed", y="Predicted", title="poisson")
+
+ggarrange(negbinom_preds_fig, zeriopoisson_preds_fig, poisson_preds_fig,
+                        ncol=2, nrow=2) 
 ```
