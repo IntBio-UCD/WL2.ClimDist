@@ -711,7 +711,7 @@ plot(residuals(total_fit_zero_negbinom1)) #index plot </code></pre>
 <pre class="r"><code>deviance(total_fit_zero_negbinom)/df.residual(total_fit_zero_negbinom)</code></pre>
 <pre><code>## [1] 1.391106</code></pre>
 <pre class="r"><code>#results
-summary(total_fit_zero_negbinom1)</code></pre>
+summary(total_fit_zero_negbinom1) #mf explains very little variation</code></pre>
 <pre><code>##  Family: nbinom1  ( log )
 ## Formula:          Total_Fitness ~ height.cm_scaled + (1 | pop/mf) + (1 | block)
 ## Zero inflation:                 ~1
@@ -755,15 +755,15 @@ summary(total_fit_zero_negbinom1)</code></pre>
 <h2>Temp/ppt dist</h2>
 <pre class="r"><code>total_fit_SUB_CD_models &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;6_WY_Recent_height&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;7_WY_Historical_height&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot; ,
-  &quot;8_GS_Recent_height&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
-  &quot;9_GS_Historical_height&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot; ,
+  &quot;8_GS_Recent_height&quot;,      &quot;Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;
 )
 
 #run the models 
@@ -792,7 +792,7 @@ total_fit_SUB_CD_models %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tid
 ## 10 4_GS_Recent     Geographic_Dist_scaled     -0.527     1.05     -0.503  0.615 
 ## # ℹ 19 more rows</code></pre>
 <pre class="r"><code>total_fit_SUB_CD_models %&gt;% 
-  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+  mutate(rsq=map(glmmTMB, r2),
          singularity=map(glmmTMB, check_singularity)) %&gt;% 
   unnest(c(rsq, singularity)) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -800,38 +800,38 @@ total_fit_SUB_CD_models %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tid
 <pre><code>## # A tibble: 18 × 3
 ##    name                        rsq singularity
 ##    &lt;chr&gt;                     &lt;dbl&gt; &lt;lgl&gt;      
-##  1 1_pop.block            1.000    TRUE       
-##  2 1_pop.block            0.000619 TRUE       
-##  3 2_WY_Recent            1.000    TRUE       
-##  4 2_WY_Recent            0.539    TRUE       
-##  5 3_WY_Historical        1.000    TRUE       
-##  6 3_WY_Historical        0.539    TRUE       
-##  7 4_GS_Recent            1.000    TRUE       
-##  8 4_GS_Recent            0.209    TRUE       
-##  9 5_GS_Historical        1.000    TRUE       
-## 10 5_GS_Historical        0.236    TRUE       
-## 11 6_WY_Recent_height     1.000    TRUE       
-## 12 6_WY_Recent_height     0.545    TRUE       
-## 13 7_WY_Historical_height 1.000    TRUE       
-## 14 7_WY_Historical_height 0.544    TRUE       
-## 15 8_GS_Recent_height     1.000    TRUE       
-## 16 8_GS_Recent_height     0.214    TRUE       
-## 17 9_GS_Historical_height 1.000    TRUE       
-## 18 9_GS_Historical_height 0.239    TRUE</code></pre>
+##  1 1_pop.block            1.000    FALSE      
+##  2 1_pop.block            0.000619 FALSE      
+##  3 2_WY_Recent            1.000    FALSE      
+##  4 2_WY_Recent            0.539    FALSE      
+##  5 3_WY_Historical        1.000    FALSE      
+##  6 3_WY_Historical        0.539    FALSE      
+##  7 4_GS_Recent            1.000    FALSE      
+##  8 4_GS_Recent            0.209    FALSE      
+##  9 5_GS_Historical        1.000    FALSE      
+## 10 5_GS_Historical        0.236    FALSE      
+## 11 6_WY_Recent_height     1.000    FALSE      
+## 12 6_WY_Recent_height     0.545    FALSE      
+## 13 7_WY_Historical_height 1.000    FALSE      
+## 14 7_WY_Historical_height 0.544    FALSE      
+## 15 8_GS_Recent_height     1.000    FALSE      
+## 16 8_GS_Recent_height     0.214    FALSE      
+## 17 9_GS_Historical_height 1.000    FALSE      
+## 18 9_GS_Historical_height 0.239    FALSE</code></pre>
 </div>
 <div id="gowers-dist" class="section level2">
 <h2>Gowers dist</h2>
 <pre class="r"><code>total_fit_models_CD_GD &lt;- tribble(
   ~name,          ~f,
-  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  (1|pop/mf) + (1|block)&quot;, 
-  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;, 
-  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;6_WY_Recent_height&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;7_WY_Historical_height&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;,
-  &quot;8_GS_Recent_height&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;, 
-  &quot;9_GS_Historical_height&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)&quot;
+  &quot;1_pop.block&quot;,      &quot;Total_Fitness ~  (1|pop) + (1|block)&quot;, 
+  &quot;2_WY_Recent&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;3_WY_Historical&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;4_GS_Recent&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;5_GS_Historical&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)&quot;,
+  &quot;6_WY_Recent_height&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;7_WY_Historical_height&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;,
+  &quot;8_GS_Recent_height&quot;,      &quot;Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;, 
+  &quot;9_GS_Historical_height&quot;,  &quot;Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)&quot;
 )
 
 #run the models 
@@ -845,29 +845,31 @@ total_fit_models_CD_GD %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tidy
   select(name, term:p.value) %&gt;% 
   filter(str_detect(term, &quot;scaled&quot;)) %&gt;%
   drop_na(p.value) </code></pre>
-<pre><code>## # A tibble: 18 × 6
+<pre><code>## # A tibble: 20 × 6
 ##    name                   term              estimate std.error statistic p.value
 ##    &lt;chr&gt;                  &lt;chr&gt;                &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
 ##  1 2_WY_Recent            AvgGD_Recent_Wtr…    2.71      1.12      2.41   0.0158
 ##  2 2_WY_Recent            Geographic_Dist_…   -1.67      1.22     -1.37   0.171 
 ##  3 3_WY_Historical        AvgGD_Historic_W…    2.50      1.46      1.71   0.0868
 ##  4 3_WY_Historical        Geographic_Dist_…   -1.97      1.48     -1.33   0.183 
-##  5 4_GS_Recent            Geographic_Dist_…   -0.883     1.62     -0.546  0.585 
-##  6 5_GS_Historical        Geographic_Dist_…   -0.756     1.42     -0.532  0.595 
-##  7 6_WY_Recent_height     AvgGD_Recent_Wtr…    2.60      1.11      2.34   0.0192
-##  8 6_WY_Recent_height     Geographic_Dist_…   -1.62      1.20     -1.35   0.178 
-##  9 6_WY_Recent_height     height.cm_scaled     0.165     0.140     1.17   0.241 
-## 10 7_WY_Historical_height AvgGD_Historic_W…    2.36      1.39      1.69   0.0901
-## 11 7_WY_Historical_height Geographic_Dist_…   -1.88      1.43     -1.31   0.189 
-## 12 7_WY_Historical_height height.cm_scaled     0.176     0.140     1.25   0.210 
-## 13 8_GS_Recent_height     AvgGD_Recent_Grw…    0.169     1.23      0.137  0.891 
-## 14 8_GS_Recent_height     Geographic_Dist_…   -0.962     1.54     -0.624  0.533 
-## 15 8_GS_Recent_height     height.cm_scaled     0.175     0.141     1.24   0.215 
-## 16 9_GS_Historical_height AvgGD_Historic_G…   -0.809     1.27     -0.635  0.525 
-## 17 9_GS_Historical_height Geographic_Dist_…   -0.779     1.24     -0.627  0.531 
-## 18 9_GS_Historical_height height.cm_scaled     0.180     0.141     1.28   0.201</code></pre>
+##  5 4_GS_Recent            AvgGD_Recent_Grw…    0.179     1.26      0.142  0.887 
+##  6 4_GS_Recent            Geographic_Dist_…   -0.883     1.62     -0.546  0.585 
+##  7 5_GS_Historical        AvgGD_Historic_G…   -0.757     1.33     -0.571  0.568 
+##  8 5_GS_Historical        Geographic_Dist_…   -0.756     1.42     -0.532  0.595 
+##  9 6_WY_Recent_height     AvgGD_Recent_Wtr…    2.60      1.11      2.34   0.0192
+## 10 6_WY_Recent_height     Geographic_Dist_…   -1.62      1.20     -1.35   0.178 
+## 11 6_WY_Recent_height     height.cm_scaled     0.165     0.140     1.17   0.241 
+## 12 7_WY_Historical_height AvgGD_Historic_W…    2.36      1.39      1.69   0.0901
+## 13 7_WY_Historical_height Geographic_Dist_…   -1.88      1.43     -1.31   0.189 
+## 14 7_WY_Historical_height height.cm_scaled     0.176     0.140     1.25   0.210 
+## 15 8_GS_Recent_height     AvgGD_Recent_Grw…    0.169     1.23      0.137  0.891 
+## 16 8_GS_Recent_height     Geographic_Dist_…   -0.962     1.54     -0.624  0.533 
+## 17 8_GS_Recent_height     height.cm_scaled     0.175     0.141     1.24   0.215 
+## 18 9_GS_Historical_height AvgGD_Historic_G…   -0.809     1.27     -0.635  0.525 
+## 19 9_GS_Historical_height Geographic_Dist_…   -0.779     1.24     -0.627  0.531 
+## 20 9_GS_Historical_height height.cm_scaled     0.180     0.141     1.28   0.201</code></pre>
 <pre class="r"><code>total_fit_models_CD_GD %&gt;% 
-  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+  mutate(rsq=map(glmmTMB, r2),
          singularity=map(glmmTMB, check_singularity)) %&gt;% 
   unnest(c(rsq, singularity)) %&gt;% 
   unnest(rsq) %&gt;% 
@@ -875,24 +877,24 @@ total_fit_models_CD_GD %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tidy
 <pre><code>## # A tibble: 18 × 3
 ##    name                      rsq singularity
 ##    &lt;chr&gt;                   &lt;dbl&gt; &lt;lgl&gt;      
-##  1 1_pop.block            1.000  TRUE       
-##  2 1_pop.block            0      TRUE       
-##  3 2_WY_Recent            1.000  TRUE       
-##  4 2_WY_Recent            0.408  TRUE       
-##  5 3_WY_Historical        1.000  TRUE       
-##  6 3_WY_Historical        0.308  TRUE       
-##  7 4_GS_Recent            1.000  TRUE       
-##  8 4_GS_Recent            0.0179 TRUE       
-##  9 5_GS_Historical        1.000  TRUE       
-## 10 5_GS_Historical        0.0479 TRUE       
-## 11 6_WY_Recent_height     1.000  TRUE       
-## 12 6_WY_Recent_height     0.415  TRUE       
-## 13 7_WY_Historical_height 1.000  TRUE       
-## 14 7_WY_Historical_height 0.316  TRUE       
-## 15 8_GS_Recent_height     1.000  TRUE       
-## 16 8_GS_Recent_height     0.0287 TRUE       
-## 17 9_GS_Historical_height 1.000  TRUE       
-## 18 9_GS_Historical_height 0.0680 TRUE</code></pre>
+##  1 1_pop.block            1.000  FALSE      
+##  2 1_pop.block            0      FALSE      
+##  3 2_WY_Recent            1.000  FALSE      
+##  4 2_WY_Recent            0.408  FALSE      
+##  5 3_WY_Historical        1.000  FALSE      
+##  6 3_WY_Historical        0.308  FALSE      
+##  7 4_GS_Recent            1.000  FALSE      
+##  8 4_GS_Recent            0.0179 FALSE      
+##  9 5_GS_Historical        1.000  FALSE      
+## 10 5_GS_Historical        0.0479 FALSE      
+## 11 6_WY_Recent_height     1.000  FALSE      
+## 12 6_WY_Recent_height     0.415  FALSE      
+## 13 7_WY_Historical_height 1.000  FALSE      
+## 14 7_WY_Historical_height 0.316  FALSE      
+## 15 8_GS_Recent_height     1.000  FALSE      
+## 16 8_GS_Recent_height     0.0287 FALSE      
+## 17 9_GS_Historical_height 1.000  FALSE      
+## 18 9_GS_Historical_height 0.0680 FALSE</code></pre>
 <pre class="r"><code>##predictions for figures:
 WY_Recent_mod &lt;- total_fit_models_CD_GD %&gt;% 
   filter(name==&quot;2_WY_Recent&quot;) %&gt;% 
