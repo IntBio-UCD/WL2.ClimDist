@@ -750,6 +750,18 @@ summary(total_fit_zero_negbinom1) #mf explains very little variation</code></pre
 ## 
 ##   Conditional R2: 1.000
 ##      Marginal R2: 0.001</code></pre>
+<pre class="r"><code>total_fit_zero_negbinom1_nomf &lt;- glmmTMB(Total_Fitness ~ height.cm_scaled + (1|pop) + (1|block),
+                                     data=wl2_total_fitness_scaled,
+                                     ziformula=~1, family=nbinom1)
+r2(total_fit_zero_negbinom1_nomf)</code></pre>
+<pre><code>## # R2 for Mixed Models
+## 
+##   Conditional R2: 1.000
+##      Marginal R2: 0.001</code></pre>
+<pre class="r"><code>r2_zeroinflated(total_fit_zero_negbinom1_nomf)</code></pre>
+<pre><code>## # R2 for Zero-Inflated and Hurdle Regression
+##        R2: 0.938
+##   adj. R2: 0.938</code></pre>
 </div>
 <div id="tempppt-dist" class="section level2">
 <h2>Temp/ppt dist</h2>
@@ -792,32 +804,23 @@ total_fit_SUB_CD_models %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tid
 ## 10 4_GS_Recent     Geographic_Dist_scaled     -0.527     1.05     -0.503  0.615 
 ## # ℹ 19 more rows</code></pre>
 <pre class="r"><code>total_fit_SUB_CD_models %&gt;% 
-  mutate(rsq=map(glmmTMB, r2),
-         singularity=map(glmmTMB, check_singularity)) %&gt;% 
-  unnest(c(rsq, singularity)) %&gt;% 
-  unnest(rsq) %&gt;% 
+  mutate(
+    R2 = map_dbl(glmmTMB, ~r2_zeroinflated(.x)$R2),
+    AdjR2=map_dbl(glmmTMB, ~r2_zeroinflated(.x)$R2_adjusted)
+  ) %&gt;% 
   select(-f:-glmmTMB)</code></pre>
-<pre><code>## # A tibble: 18 × 3
-##    name                        rsq singularity
-##    &lt;chr&gt;                     &lt;dbl&gt; &lt;lgl&gt;      
-##  1 1_pop.block            1.000    FALSE      
-##  2 1_pop.block            0.000619 FALSE      
-##  3 2_WY_Recent            1.000    FALSE      
-##  4 2_WY_Recent            0.539    FALSE      
-##  5 3_WY_Historical        1.000    FALSE      
-##  6 3_WY_Historical        0.539    FALSE      
-##  7 4_GS_Recent            1.000    FALSE      
-##  8 4_GS_Recent            0.209    FALSE      
-##  9 5_GS_Historical        1.000    FALSE      
-## 10 5_GS_Historical        0.236    FALSE      
-## 11 6_WY_Recent_height     1.000    FALSE      
-## 12 6_WY_Recent_height     0.545    FALSE      
-## 13 7_WY_Historical_height 1.000    FALSE      
-## 14 7_WY_Historical_height 0.544    FALSE      
-## 15 8_GS_Recent_height     1.000    FALSE      
-## 16 8_GS_Recent_height     0.214    FALSE      
-## 17 9_GS_Historical_height 1.000    FALSE      
-## 18 9_GS_Historical_height 0.239    FALSE</code></pre>
+<pre><code>## # A tibble: 9 × 3
+##   name                      R2 AdjR2
+##   &lt;chr&gt;                  &lt;dbl&gt; &lt;dbl&gt;
+## 1 1_pop.block            0.938 0.938
+## 2 2_WY_Recent            0.936 0.936
+## 3 3_WY_Historical        0.936 0.936
+## 4 4_GS_Recent            0.937 0.937
+## 5 5_GS_Historical        0.937 0.937
+## 6 6_WY_Recent_height     0.936 0.935
+## 7 7_WY_Historical_height 0.936 0.935
+## 8 8_GS_Recent_height     0.937 0.937
+## 9 9_GS_Historical_height 0.937 0.937</code></pre>
 </div>
 <div id="gowers-dist" class="section level2">
 <h2>Gowers dist</h2>
@@ -869,32 +872,23 @@ total_fit_models_CD_GD %&gt;% mutate(tidy=map(glmmTMB, tidy)) %&gt;% unnest(tidy
 ## 19 9_GS_Historical_height Geographic_Dist_…   -0.779     1.24     -0.627  0.531 
 ## 20 9_GS_Historical_height height.cm_scaled     0.180     0.141     1.28   0.201</code></pre>
 <pre class="r"><code>total_fit_models_CD_GD %&gt;% 
-  mutate(rsq=map(glmmTMB, r2),
-         singularity=map(glmmTMB, check_singularity)) %&gt;% 
-  unnest(c(rsq, singularity)) %&gt;% 
-  unnest(rsq) %&gt;% 
+  mutate(
+    R2 = map_dbl(glmmTMB, ~r2_zeroinflated(.x)$R2),
+    AdjR2=map_dbl(glmmTMB, ~r2_zeroinflated(.x)$R2_adjusted)
+  ) %&gt;% 
   select(-f:-glmmTMB)</code></pre>
-<pre><code>## # A tibble: 18 × 3
-##    name                      rsq singularity
-##    &lt;chr&gt;                   &lt;dbl&gt; &lt;lgl&gt;      
-##  1 1_pop.block            1.000  FALSE      
-##  2 1_pop.block            0      FALSE      
-##  3 2_WY_Recent            1.000  FALSE      
-##  4 2_WY_Recent            0.408  FALSE      
-##  5 3_WY_Historical        1.000  FALSE      
-##  6 3_WY_Historical        0.308  FALSE      
-##  7 4_GS_Recent            1.000  FALSE      
-##  8 4_GS_Recent            0.0179 FALSE      
-##  9 5_GS_Historical        1.000  FALSE      
-## 10 5_GS_Historical        0.0479 FALSE      
-## 11 6_WY_Recent_height     1.000  FALSE      
-## 12 6_WY_Recent_height     0.415  FALSE      
-## 13 7_WY_Historical_height 1.000  FALSE      
-## 14 7_WY_Historical_height 0.316  FALSE      
-## 15 8_GS_Recent_height     1.000  FALSE      
-## 16 8_GS_Recent_height     0.0287 FALSE      
-## 17 9_GS_Historical_height 1.000  FALSE      
-## 18 9_GS_Historical_height 0.0680 FALSE</code></pre>
+<pre><code>## # A tibble: 9 × 3
+##   name                      R2 AdjR2
+##   &lt;chr&gt;                  &lt;dbl&gt; &lt;dbl&gt;
+## 1 1_pop.block            0.938 0.938
+## 2 2_WY_Recent            0.936 0.936
+## 3 3_WY_Historical        0.936 0.936
+## 4 4_GS_Recent            0.938 0.937
+## 5 5_GS_Historical        0.937 0.937
+## 6 6_WY_Recent_height     0.935 0.935
+## 7 7_WY_Historical_height 0.936 0.936
+## 8 8_GS_Recent_height     0.937 0.937
+## 9 9_GS_Historical_height 0.937 0.937</code></pre>
 <pre class="r"><code>##predictions for figures:
 WY_Recent_mod &lt;- total_fit_models_CD_GD %&gt;% 
   filter(name==&quot;2_WY_Recent&quot;) %&gt;% 
