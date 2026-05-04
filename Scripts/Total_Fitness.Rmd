@@ -163,8 +163,7 @@ plot(predict(total_fit_zero_negbinom, type="response"), residuals(total_fit_zero
 deviance(total_fit_zero_negbinom)/df.residual(total_fit_zero_negbinom)
 
 #results
-summary(total_fit_zero_negbinom1)
-check_singularity(total_fit_zero_negbinom1)
+summary(total_fit_zero_negbinom1) #mf explains very little variation
 r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of singularity 
 ```
 
@@ -172,15 +171,15 @@ r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of sing
 ```{r}
 total_fit_SUB_CD_models <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "6_WY_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "7_WY_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)" ,
-  "8_GS_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "9_GS_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "Total_Fitness ~  height.cm_scaled + (1|pop) + (1|block)", 
+  "2_WY_Recent",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "6_WY_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_Wtr_Year_scaled + AvgPPTDist_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
+  "7_WY_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_Wtr_Year_scaled + AvgPPTDist_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)" ,
+  "8_GS_Recent_height",      "Total_Fitness ~  AvgTempDist_Recent_GrwSsn_scaled + AvgPPTDist_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)", 
+  "9_GS_Historical_height",  "Total_Fitness ~  AvgTempDist_Historic_GrwSsn_scaled + AvgPPTDist_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)"
 )
 
 #run the models 
@@ -207,15 +206,15 @@ total_fit_SUB_CD_models %>%
 ```{r}
 total_fit_models_CD_GD <- tribble(
   ~name,          ~f,
-  "1_pop.block",      "Total_Fitness ~  (1|pop/mf) + (1|block)", 
-  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop/mf) + (1|block)",
-  "6_WY_Recent_height",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "7_WY_Historical_height",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)",
-  "8_GS_Recent_height",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)", 
-  "9_GS_Historical_height",  "Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop/mf) + (1|block)"
+  "1_pop.block",      "Total_Fitness ~  (1|pop) + (1|block)", 
+  "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "6_WY_Recent_height",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
+  "7_WY_Historical_height",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
+  "8_GS_Recent_height",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)", 
+  "9_GS_Historical_height",  "Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)"
 )
 
 #run the models 
