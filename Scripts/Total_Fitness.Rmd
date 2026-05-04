@@ -265,13 +265,15 @@ write_csv(totalfitness_preds, "../Processed.Data/TotalFitness_GDPreds_WYRecent.c
 ```
 
 ## Quasi-Poisson
-Since the quasi part is based on the a p-value correction for overdispersion (doesn't change the model estimates), we can use the poisson model for all the diagnostics
+
+### Basic Model
 ```{r}
 library(lmerTest)
 
 total_fit_poisson <- glmer(Total_Fitness ~ height.cm_scaled + (1|pop/mf) + (1|block), 
                               family = poisson,
                               data=wl2_total_fitness_scaled)
+summary(total_fit_poisson)
 
 #diagnostics 
 deviance(total_fit_poisson)/df.residual(total_fit_poisson) #check for overdispersion (caused by excess of 0s) - over 1 which is not good 
@@ -283,7 +285,43 @@ plot(residuals(total_fit_poisson)) #index plot
 
 #results
 r2(total_fit_poisson) #marginal r2 = 0 
+
+## quasi poisson correction:
+phi_function <- function(model) {
+    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) 
+    return(phi)
+} #function for calculating the overdispersion paramter (for quasi-poisson)
+
+##Can't directly use quasi families with glmer so have to use Ben Bolker's quasi-likelihood adjustment function:
+#https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#fitting-models-with-overdispersion
+#also got help from: https://stackoverflow.com/questions/68915173/how-do-i-fit-a-quasi-poisson-model-with-lme4-or-glmmtmb
+quasi_table <- function(model,ctab=coef(summary(model))) {
+    phi <- sum(residuals(model, type="pearson")^2)/df.residual(model) #overdispersion parameter
+    qctab <- within(as.data.frame(ctab),
+    {   `Std. Error` <- `Std. Error`*sqrt(phi)
+        `z value` <- Estimate/`Std. Error`
+        `Pr(>|z|)` <- 2*pnorm(abs(`z value`), lower.tail=FALSE)
+    })
+    return(qctab)
+}
+printCoefmat(quasi_table(total_fit_poisson),digits=2)
+#As specified, the estimates are identical; the standard errors and p-values have been appropriately inflated, the z-values have been appropriately deflated.
 ```
+
+### Recent water year Gowers model
+```{r}
+total_fit_poisson_wtryrGD <- glmer(Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop/mf) + (1|block), 
+                              family = poisson,
+                              data=wl2_total_fitness_scaled)
+summary(total_fit_poisson_wtryrGD)
+
+##quasi correction:
+printCoefmat(quasi_table(total_fit_poisson_wtryrGD),digits=2) #takes away significant recent water year result
+```
+
+## Comparing quasi-poisson to glmmTMB models 
+Since the quasi part is based on the a p-value correction for overdispersion (doesn't change the model estimates), we can use the poisson model for all the diagnostics
+
 ### Residual Plot Comparisons 
 ```{r}
 par(mfrow = c(2, 2))
@@ -297,7 +335,6 @@ plot(predict(total_fit_poisson, type="response"), residuals(total_fit_poisson),
      main="poisson", xlab="Fitted", ylab="Residuals",
      xlim=c(0, 60), ylim=c(-20, 120)) 
 ```
-
 
 ### Predicted vs. Observed Comparisons 
 ```{r}
