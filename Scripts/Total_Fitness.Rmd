@@ -164,6 +164,7 @@ deviance(total_fit_zero_negbinom)/df.residual(total_fit_zero_negbinom)
 
 #results
 summary(total_fit_zero_negbinom1) #mf explains very little variation
+check_singularity(total_fit_zero_negbinom1)
 r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of singularity 
 ```
 
@@ -195,7 +196,7 @@ total_fit_SUB_CD_models %>% mutate(tidy=map(glmmTMB, tidy)) %>% unnest(tidy) %>%
   drop_na(p.value)
 
 total_fit_SUB_CD_models %>% 
-  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+  mutate(rsq=map(glmmTMB, r2),
          singularity=map(glmmTMB, check_singularity)) %>% 
   unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
@@ -209,8 +210,8 @@ total_fit_models_CD_GD <- tribble(
   "1_pop.block",      "Total_Fitness ~  (1|pop) + (1|block)", 
   "2_WY_Recent",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
   "3_WY_Historical",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
-  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)", 
-  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn + Geographic_Dist_scaled + (1|pop) + (1|block)",
+  "4_GS_Recent",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)", 
+  "5_GS_Historical",  "Total_Fitness ~  AvgGD_Historic_GrwSsn_scaled + Geographic_Dist_scaled + (1|pop) + (1|block)",
   "6_WY_Recent_height",      "Total_Fitness ~  AvgGD_Recent_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
   "7_WY_Historical_height",  "Total_Fitness ~  AvgGD_Historic_Wtr_Year_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)",
   "8_GS_Recent_height",      "Total_Fitness ~  AvgGD_Recent_GrwSsn_scaled + Geographic_Dist_scaled + height.cm_scaled + (1|pop) + (1|block)", 
@@ -230,7 +231,7 @@ total_fit_models_CD_GD %>% mutate(tidy=map(glmmTMB, tidy)) %>% unnest(tidy) %>%
   drop_na(p.value) 
 
 total_fit_models_CD_GD %>% 
-  mutate(rsq=map(glmmTMB, r2, tolerance = 1e-09),
+  mutate(rsq=map(glmmTMB, r2),
          singularity=map(glmmTMB, check_singularity)) %>% 
   unnest(c(rsq, singularity)) %>% 
   unnest(rsq) %>% 
