@@ -84,6 +84,10 @@ wl2_total_fitness %>%
   ggplot(aes(x=Total_Fitness)) +
   geom_histogram()
 #Highly zero-inflated
+
+wl2_total_fitness %>% filter(Total_Fitness==0) %>% dim() #1474 rows with 0 as total fitness
+wl2_total_fitness %>% filter(!is.na(Total_Fitness)) %>% dim() #1573 total rows in the data
+1474/1573 #94% of the data = 0s
 ```
 
 ## Try transformations
@@ -149,12 +153,6 @@ AICctab(total_fit_zero_poisson, total_fit_zero_negbinom, total_fit_zero_negbinom
 #best fit is negbinom1
 
 #diagnostics 
-deviance(total_fit_zero_negbinom1)/df.residual(total_fit_zero_negbinom1) #check for overdispersion - less than 1 which is good 
-plot(predict(total_fit_zero_negbinom1, type="response"), residuals(total_fit_zero_negbinom1),
-     main="glmmTMB-negbinom", xlab="Fitted", ylab="Residuals") #residuals plot
-#not perfect, but probably fine?
-plot(residuals(total_fit_zero_negbinom1)) #index plot 
-
 plot(predict(total_fit_zero_poisson, type="response"), residuals(total_fit_zero_poisson),
      main="glmmTMB-poisson", xlab="Fitted", ylab="Residuals") 
 deviance(total_fit_zero_poisson)/df.residual(total_fit_zero_poisson)
@@ -162,16 +160,26 @@ deviance(total_fit_zero_poisson)/df.residual(total_fit_zero_poisson)
 plot(predict(total_fit_zero_negbinom, type="response"), residuals(total_fit_zero_negbinom), xlab="Fitted", ylab="Residuals") 
 deviance(total_fit_zero_negbinom)/df.residual(total_fit_zero_negbinom)
 
+deviance(total_fit_zero_negbinom1)/df.residual(total_fit_zero_negbinom1) #check for overdispersion - less than 1 which is good 
+plot(predict(total_fit_zero_negbinom1, type="response"), residuals(total_fit_zero_negbinom1),
+     main="glmmTMB-negbinom", xlab="Fitted", ylab="Residuals") #residuals plot
+plot(residuals(total_fit_zero_negbinom1)) #index plot 
+
 #results
 summary(total_fit_zero_negbinom1) #mf explains very little variation
 check_singularity(total_fit_zero_negbinom1)
-r2(total_fit_zero_negbinom1, tolerance = 1e-09) #use marginal r2 because of singularity 
 
 total_fit_zero_negbinom1_nomf <- glmmTMB(Total_Fitness ~ height.cm_scaled + (1|pop) + (1|block),
                                      data=wl2_total_fitness_scaled,
                                      ziformula=~1, family=nbinom1)
 r2(total_fit_zero_negbinom1_nomf)
-r2_zeroinflated(total_fit_zero_negbinom1_nomf)
+r2_zeroinflated(total_fit_zero_negbinom1_nomf) #properly takes into account the zero inflation parameter #calculates an R2 value based on the residual variance divided by the total variance
+r2_zeroinflated(total_fit_zero_negbinom1_nomf, method="correlation") #computes the squared correlation between the model's actual and predicted response
+
+nullmodel <- glmmTMB(Total_Fitness ~  (1|pop) + (1|block),
+                                     data=wl2_total_fitness_scaled,
+                                     ziformula=~1, family=nbinom1)
+MuMIn::r.squaredLR(total_fit_zero_negbinom1_nomf, null=nullmodel) #pseudo R2 - compares log-likelihood of the full model against an intercept only model - doesn't account for zero inflation though 
 ```
 
 ## Temp/ppt dist
