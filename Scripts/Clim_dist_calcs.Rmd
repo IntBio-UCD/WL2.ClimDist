@@ -18,6 +18,7 @@ library(boot) #for bootstrapping
 library(broom) #for tidy function
 library(geosphere) #for calculating geographic distance
 library(lmerTest) #for mixed effect models 
+library(corrplot) #test sig of correlations 
 ```
 
 ## Load Climate Data
@@ -642,4 +643,17 @@ clim_geo_dist <- all_gowers_prep %>%
          Elev_Dist=elev_m-WL2_Elev) %>% #Add Elevation and Geographic Distance 
   select(parent.pop:AvgPPTDist_Recent_Wtr_Year, Geographic_Dist, Elev_Dist)
 write_csv(clim_geo_dist, "../Processed.Data/All_Clim_Dist.csv")
+```
+
+## Correlation between climate, elevation, and geographic distance
+```{r}
+clim_geo_dist_normalized <- clim_geo_dist %>% 
+  ungroup() %>% 
+  select(Geographic_Dist:Elev_Dist, GD_Recent_Wtr_Year_2023:AvgPPTDist_Recent_Wtr_Year) %>% 
+  scale() #center and scale the data 
+
+cor.clim_geo_dist = cor(clim_geo_dist_normalized)
+cor.sig.clim_geo_dist <- cor.mtest(clim_geo_dist_normalized, method = "pearson") #get pearson's test p-values 
+cor.clim_geo_dist
+cor.sig.clim_geo_dist
 ```
