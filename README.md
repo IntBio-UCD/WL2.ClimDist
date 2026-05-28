@@ -2,7 +2,7 @@
 
 Authors: Brandie Quarles-Chidyagwai, Sarah Ashlock, Johanna Schmitt, Julin N. Maloof, Jennifer R. Gremer
 
-Accepted for Publication in <i>Journal of Ecology<i/> 
+Accepted for Publication in <i>Journal of Ecology</i> 
 
 ## Corresponding author contact:
 -  bmquarles@ucdavis.edu
