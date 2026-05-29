@@ -18,10 +18,10 @@ Folders in this repository:
 - Figures
 
 ### Raw.Data
-This folder includes all data collected and used for analyses in this study. This data is also archived in Dryad. 
+This folder includes all data collected and used for analyses in this study. This data is also archived in Dryad (Dataset DOI: 10.5061/dryad.ncjsxktbf). 
 
 ### Processed.Data
-This folder includes all data files output by the analysis scripts. This data is also archived in Dryad. 
+This folder includes all data files output by the analysis scripts. This data is also archived in Dryad (Dataset DOI: 10.5061/dryad.ncjsxktbf). 
 
 ### Figures
 This folder includes all figures output by the anlysis scripts, including the figures in the manuscript. 
